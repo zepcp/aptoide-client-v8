@@ -6,6 +6,9 @@
 package cm.aptoide.pt.dataprovider.ws.v2.aptwords;
 
 import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -141,6 +144,9 @@ public class GetAdsRequest extends Aptwords<GetAdsResponse> {
 
 		Observable<GetAdsResponse> result = interfaces.getAds(parameters).doOnNext(getAdsResponse -> {
 
+			// TODO: 28-07-2016 Baikova getAds called.
+			sendGetAdsToMonitor(getAdsResponse);
+
 			// Impression click for those networks who need it
 			for (GetAdsResponse.Ad ad : getAdsResponse.getAds()) {
 
@@ -157,9 +163,22 @@ public class GetAdsRequest extends Aptwords<GetAdsResponse> {
 			}
 		});
 
-		// TODO: 28-07-2016 Baikova getAds called.
-
 		return result;
+	}
+
+	private void sendGetAdsToMonitor(GetAdsResponse getAdsResponse) {
+		try {
+			String s = objectMapper.writeValueAsString(getAdsResponse);
+
+			// TODO: 28-07-2016 Baikova send it!!!
+
+			// To read:
+			GetAdsResponse getAdsResponseExample = objectMapper.readValue(s, GetAdsResponse.class);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private String getExcludedPackages() {

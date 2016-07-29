@@ -37,15 +37,14 @@ import rx.schedulers.Schedulers;
  */
 public abstract class WebService<T, U> {
 
+	protected static ObjectMapper objectMapper;
 	private static Converter.Factory defaultConverterFactory;
-
 	protected final Converter.Factory converterFactory;
 	private final Class<T> clazz;
 
 	private final String baseHost;
+
 	private final OkHttpClient httpClient;
-
-
 	private Retrofit retrofit;
 	private Observable<T> service;
 
@@ -58,7 +57,7 @@ public abstract class WebService<T, U> {
 
 	public static Converter.Factory getDefaultConverter() {
 		if (defaultConverterFactory == null) {
-			ObjectMapper objectMapper = new ObjectMapper();
+			objectMapper = new ObjectMapper();
 			objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 			objectMapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
 			objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
