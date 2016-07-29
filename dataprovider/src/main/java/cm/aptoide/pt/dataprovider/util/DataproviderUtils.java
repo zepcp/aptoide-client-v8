@@ -105,17 +105,17 @@ public class DataproviderUtils {
 		}
 
 		public static void knockCpc(MinimalAd minimalAd) {
-			// TODO: 28-07-2016 Baikova clicked on ad.
+			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "clickedOnAd");
 			knock(minimalAd.getCpcUrl());
 		}
 
 		public static void knockCpd(MinimalAd minimalAd) {
-			// TODO: 28-07-2016 Baikova clicked on download button.
+			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "clickedOnDownloadButton");
 			knock(minimalAd.getCpdUrl());
 		}
 
 		public static void knockCpi(StoredMinimalAd minimalAd) {
-			// TODO: 28-07-2016 Baikova ad installed.
+			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "installed");
 			knock(minimalAd.getCpiUrl());
 		}
 

@@ -6,6 +6,9 @@
 package cm.aptoide.pt.dataprovider.ws.v2.aptwords;
 
 import java.util.List;
+import android.content.Context;
+import android.content.Intent;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
@@ -15,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.model.MinimalAd;
 import cm.aptoide.pt.dataprovider.repository.IdsRepository;
+import cm.aptoide.pt.dataprovider.util.AdMonitor;
 import cm.aptoide.pt.dataprovider.util.DataproviderUtils;
 import cm.aptoide.pt.dataprovider.util.referrer.ReferrerUtils;
 import cm.aptoide.pt.dataprovider.ws.Api;
@@ -144,8 +148,12 @@ public class GetAdsRequest extends Aptwords<GetAdsResponse> {
 
 		Observable<GetAdsResponse> result = interfaces.getAds(parameters).doOnNext(getAdsResponse -> {
 
-			// TODO: 28-07-2016 Baikova getAds called.
-			sendGetAdsToMonitor(getAdsResponse);
+			//AdMonitor entry point - getAds called.
+			try {
+				AdMonitor.sendGetAdsToMonitor(objectMapper.writeValueAsString(getAdsResponse));
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
 
 			// Impression click for those networks who need it
 			for (GetAdsResponse.Ad ad : getAdsResponse.getAds()) {
@@ -166,20 +174,7 @@ public class GetAdsRequest extends Aptwords<GetAdsResponse> {
 		return result;
 	}
 
-	private void sendGetAdsToMonitor(GetAdsResponse getAdsResponse) {
-		try {
-			String s = objectMapper.writeValueAsString(getAdsResponse);
 
-			// TODO: 28-07-2016 Baikova send it!!!
-
-			// To read:
-			GetAdsResponse getAdsResponseExample = objectMapper.readValue(s, GetAdsResponse.class);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	private String getExcludedPackages() {
 		// TODO: 09-06-2016 neuro excluded, not implemented until v8 getAds

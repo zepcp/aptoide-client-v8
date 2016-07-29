@@ -91,7 +91,7 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 	private void checkAndBroadcastReferrer(String packageName) {
 		StoredMinimalAd storedMinimalAd = Database.ReferrerQ.get(packageName, realm);
 		if (storedMinimalAd != null) {
-			ReferrerUtils.broadcastReferrer(packageName, storedMinimalAd.getReferrer());
+			ReferrerUtils.broadcastReferrer(packageName, storedMinimalAd.getAdId(), storedMinimalAd.getReferrer());
 			DataproviderUtils.AdNetworksUtils.knockCpi(storedMinimalAd);
 			Database.delete(storedMinimalAd, realm);
 		} else {

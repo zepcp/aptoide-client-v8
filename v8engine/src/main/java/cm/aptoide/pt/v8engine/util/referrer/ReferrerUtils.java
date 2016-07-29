@@ -32,6 +32,7 @@ import cm.aptoide.pt.database.Database;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.model.MinimalAd;
+import cm.aptoide.pt.dataprovider.util.AdMonitor;
 import cm.aptoide.pt.dataprovider.util.DataproviderUtils;
 import cm.aptoide.pt.dataprovider.util.referrer.SimpleTimedFuture;
 import cm.aptoide.pt.dataprovider.ws.v2.aptwords.GetAdsRequest;
@@ -105,7 +106,7 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 						Logger.d("ExtractReferrer", "Referrer successfully extracted");
 
 						if (broadcastReferrer) {
-							broadcastReferrer(packageName, referrer);
+							broadcastReferrer(packageName, minimalAd.getAdId(), referrer);
 						} else {
 							@Cleanup
 							Realm realm = Database.get();
@@ -163,10 +164,12 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
-							// TODO: 28-07-2016 Baikova Failed to extract referrer.
+							// AdMonitor- Failed to extract referrer.
+							AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "extractReferrerFailed");
 						} else {
+							// AdMonitor- referrer successfully extracted.
+							AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "referrerExtracted");
 							// A lista de excluded networks deve ser limpa a cada "ronda"
-							// TODO: 28-07-2016 Baikova referrer successfully extracted.
 							excludedNetworks.remove(packageName);
 						}
 
@@ -178,8 +181,9 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 			});
 
 			wv.loadUrl(internalClickUrl[0]);
+			// AdMonitor- Opened click_url
+			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "openedClickUrl");
 
-			// TODO: 28-07-2016 Baikova Opened click_url
 
 			windowManager.addView(view, params);
 		} catch (Exception e) {
@@ -201,7 +205,7 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 		return referrer;
 	}
 
-	public static void broadcastReferrer(String packageName, String referrer) {
+	public static void broadcastReferrer(String packageName, long adId, String referrer) {
 		Intent i = new Intent("com.android.vending.INSTALL_REFERRER");
 		i.setPackage(packageName);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
@@ -210,6 +214,8 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 		i.putExtra("referrer", referrer);
 		DataProvider.getContext().sendBroadcast(i);
 		Logger.d("InstalledBroadcastReceiver", "Sent broadcast to " + packageName + " with referrer " + referrer);
-		// TODO: 28-07-2016 Baikova referrer broadcasted.
+
+		// AdMonitor- referrer broadcasted.
+		AdMonitor.sendDataToAdMonitor(adId, "referrerBroadcasted");
 	}
 }
