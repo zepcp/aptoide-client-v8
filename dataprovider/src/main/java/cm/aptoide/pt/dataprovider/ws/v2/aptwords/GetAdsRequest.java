@@ -5,13 +5,9 @@
 
 package cm.aptoide.pt.dataprovider.ws.v2.aptwords;
 
-import java.util.List;
-import android.content.Context;
-import android.content.Intent;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -150,7 +146,8 @@ public class GetAdsRequest extends Aptwords<GetAdsResponse> {
 
 			//AdMonitor entry point - getAds called.
 			try {
-				AdMonitor.sendGetAdsToMonitor(objectMapper.writeValueAsString(getAdsResponse));
+				AdMonitor.sendGetAdsToMonitor(objectMapper.writeValueAsString(getAdsResponse),
+						objectMapper.writeValueAsString(this), location.name());
 			} catch (JsonProcessingException e) {
 				e.printStackTrace();
 			}

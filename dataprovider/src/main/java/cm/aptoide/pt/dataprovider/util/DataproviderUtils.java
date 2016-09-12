@@ -7,6 +7,7 @@ package cm.aptoide.pt.dataprovider.util;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -62,7 +63,7 @@ public class DataproviderUtils {
 	 *
 	 * @param url
 	 */
-	public static void knock(String url) {
+	public static void knock(String url, long adId, String action) {
 		if (url == null) {
 			return;
 		}
@@ -79,6 +80,10 @@ public class DataproviderUtils {
 
 			@Override
 			public void onResponse(Call call, Response response) throws IOException {
+
+				if(adId != 0 && action != null) {
+					AdMonitor.sendCpcCpiCpdToMonitor(adId, action, response.body().string());
+				}
 				response.body().close();
 			}
 		});
@@ -105,23 +110,25 @@ public class DataproviderUtils {
 		}
 
 		public static void knockCpc(MinimalAd minimalAd) {
-			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "clickedOnAd");
-			knock(minimalAd.getCpcUrl());
+			Log.i("TEST", "CLICKED ON AD");
+			knock(minimalAd.getCpcUrl(), minimalAd.getAdId(), "clickedOnAd");
+
 		}
 
 		public static void knockCpd(MinimalAd minimalAd) {
-			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "clickedOnDownloadButton");
-			knock(minimalAd.getCpdUrl());
+			Log.i("TEST", "DOWNLOAD BUTTON");
+			//AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "clickedOnDownloadButton");
+			knock(minimalAd.getCpdUrl(), minimalAd.getAdId(), "clickedOnDownloadButton");
 		}
 
 		public static void knockCpi(StoredMinimalAd minimalAd) {
-			AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "installed");
-			knock(minimalAd.getCpiUrl());
+			//AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "installed");
+			knock(minimalAd.getCpiUrl(), minimalAd.getAdId(), "installed");
 		}
 
 		// FIXME: 29-07-2016 neuro so wrong...
 		public static void knockImpression(MinimalAd minimalAd) {
-			knockCpd(minimalAd);
+			//knockCpd(minimalAd);
 		}
 	}
 }
