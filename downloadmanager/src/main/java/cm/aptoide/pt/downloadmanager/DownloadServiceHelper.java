@@ -1,18 +1,19 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 27/07/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.downloadmanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import java.util.List;
 
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionRequest;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.preferences.Application;
 import io.realm.Realm;
@@ -60,19 +61,20 @@ public class DownloadServiceHelper {
 	 * @return An observable that reports the download state
 	 */
 	public Observable<Download> startDownload(PermissionRequest permissionRequest, Download download) {
-		return permissionManager.requestExternalStoragePermission(permissionRequest).flatMap(success -> Observable.fromCallable(() -> {
-			aptoideDownloadManager.getDownload(download.getAppId()).first().subscribe(storedDownload -> {
-				startDownloadService(download.getAppId(), AptoideDownloadManager.DOWNLOADMANAGER_ACTION_START_DOWNLOAD);
-			}, throwable -> {
-				if (throwable instanceof DownloadNotFoundException) {
-					@Cleanup
-					Realm realm = Database.get();
-					Database.save(download, realm);
-					startDownloadService(download.getAppId(), AptoideDownloadManager.DOWNLOADMANAGER_ACTION_START_DOWNLOAD);
-				}
-			});
-			return download;
-		}).flatMap(aDownload -> aptoideDownloadManager.getDownload(download.getAppId())));
+		return permissionManager.requestExternalStoragePermission(permissionRequest)
+				.flatMap(success -> permissionManager.requestDownloadAccess(permissionRequest))
+				.flatMap(success -> Observable.fromCallable(() -> {
+					aptoideDownloadManager.getDownload(download.getAppId()).first().subscribe(storedDownload -> {
+						startDownloadService(download.getAppId(), AptoideDownloadManager.DOWNLOADMANAGER_ACTION_START_DOWNLOAD);
+					}, throwable -> {
+						if (throwable instanceof DownloadNotFoundException) {
+							@Cleanup Realm realm = DeprecatedDatabase.get();
+							DeprecatedDatabase.save(download, realm);
+							startDownloadService(download.getAppId(), AptoideDownloadManager.DOWNLOADMANAGER_ACTION_START_DOWNLOAD);
+						}
+					});
+					return download;
+				}).flatMap(aDownload -> aptoideDownloadManager.getDownload(download.getAppId())));
 	}
 
 	private void startDownloadService(long appId, String action) {

@@ -5,10 +5,9 @@
 
 package cm.aptoide.pt.dataprovider.ws.v7.store;
 
-import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.repository.IdsRepository;
-import cm.aptoide.pt.dataprovider.ws.Api;
+import cm.aptoide.pt.dataprovider.ws.BaseBodyDecorator;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBodyWithStore;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseRequestWithStore;
 import cm.aptoide.pt.dataprovider.ws.v7.V7Url;
@@ -16,9 +15,9 @@ import cm.aptoide.pt.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.networkclient.WebService;
 import cm.aptoide.pt.networkclient.okhttp.OkHttpClientFactory;
 import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
-import cm.aptoide.pt.utils.AptoideUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Observable;
@@ -38,28 +37,28 @@ public class GetStoreWidgetsRequest extends BaseRequestWithStore<GetStoreWidgets
 	}
 
 	public static GetStoreWidgetsRequest ofAction(String url) {
-		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
+		BaseBodyDecorator decorator = new BaseBodyDecorator(new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext()),SecurePreferencesImplementation.getInstance());
+
 		V7Url v7Url = new V7Url(url).remove("getStoreWidgets");
 		Long storeId = v7Url.getStoreId();
 		final StoreCredentials store;
 		final Body body;
 		if (storeId != null) {
 			store = getStore(storeId);
-			body = new Body(idsRepository.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG,
-					Api.isMature(), Api.Q, storeId, WidgetsArgs
+			body = new Body(storeId, WidgetsArgs
 					.createDefault());
 		} else {
 			String storeName = v7Url.getStoreName();
 			store = getStore(storeName);
-			body = new Body(idsRepository.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG,
-					Api.isMature(), Api.Q, storeName, WidgetsArgs
+			body = new Body(storeName, WidgetsArgs
 					.createDefault());
 		}
 
 		body.setStoreUser(store.getUsername());
 		body.setStorePassSha1(store.getPasswordSha1());
 
-		return new GetStoreWidgetsRequest(v7Url.get(), OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), BASE_HOST, body);
+		return new GetStoreWidgetsRequest(v7Url.get(), OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), BASE_HOST, (Body) decorator
+				.decorate(body));
 	}
 
 	@Override
@@ -70,17 +69,17 @@ public class GetStoreWidgetsRequest extends BaseRequestWithStore<GetStoreWidgets
 	@EqualsAndHashCode(callSuper = true)
 	public static class Body extends BaseBodyWithStore {
 
-		private WidgetsArgs widgetsArgs;
+		@Getter private WidgetsArgs widgetsArgs;
 
-		public Body(String aptoideId, String accessToken, int aptoideVercode, String cdn, String lang, boolean mature, String q, Long storeId,
+		public Body(Long storeId,
 		            WidgetsArgs widgetsArgs) {
-			super(aptoideId, accessToken, aptoideVercode, cdn, lang, mature, q, storeId);
+			super(storeId);
 			this.widgetsArgs = widgetsArgs;
 		}
 
-		public Body(String aptoideId, String accessToken, int aptoideVercode, String cdn, String lang, boolean mature, String q, String storeName,
+		public Body(String storeName,
 		            WidgetsArgs widgetsArgs) {
-			super(aptoideId, accessToken, aptoideVercode, cdn, lang, mature, q, storeName);
+			super(storeName);
 			this.widgetsArgs = widgetsArgs;
 		}
 	}

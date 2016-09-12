@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (c) 2016.
-  ~ Modified by SithEngineer on 02/06/2016.
-  ~ Modified by Pedro Ribeiro on 23/06/2016.
+  ~ Modified by SithEngineer on 25/08/2016.
   -->
 
 <resources>
@@ -11,7 +10,7 @@
         <item name="android:buttonStyle">?attr/customButton</item>
 
         <item name="android:windowBackground">@color/background_window</item>
-        <item name="android:ratingBarStyle">@style/RatingBarSmallAptoide</item>
+        <item name="android:ratingBarStyle">@style/RatingBarSmall</item>
 
         <item name="colorPrimary">@color/aptoide_orange</item>
         <item name="colorPrimaryDark">@color/aptoide_color_focused</item>
@@ -59,8 +58,8 @@
         <item name="timelineSendDrawable">@drawable/ic_action_send_now_light</item>
         <item name="timelinePostBackground">@drawable/timeline_post_background_light</item>
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
-        <item name="gridItemRatingBar">@style/RatingBarGridItem</item>
-        <item name="android:ratingBarStyleSmall">@style/RatingBarGridItem</item>
+        <item name="gridItemRatingBar">@style/RatingBarExtraSmall</item>
+        <item name="android:ratingBarStyleSmall">@style/RatingBarExtraSmall</item>
         <item name="titleLabelStyle">@style/titleLabel</item>
         <item name="separatorColor">@color/lighter_custom_gray</item>
 
@@ -83,8 +82,8 @@
         <item name="icRatingBadDrawable">@drawable/ic_action_bad</item>
         <item name="icWebSiteDrawable">@drawable/ic_web_site</item>
         <item name="icEmailDrawable">@drawable/ic_email</item>
-        <item name="icCancelDrawable">@drawable/ic_action_cancel</item>
-        <item name="icPlayDrawable">@drawable/ic_action_play</item>
+        <item name="icCancelDrawable">@drawable/close</item>
+        <item name="icPlayDrawable">@drawable/play</item>
         <item name="icUninstallDrawable">@drawable/ic_action_discard</item>
         <item name="icUpdateDrawable">@drawable/ic_action_update</item>
         <item name="icAboutDrawable">@drawable/ic_action_about</item>
@@ -93,7 +92,7 @@
         <item name="icDontLikeDrawable">@drawable/ic_action_bad</item>
         <item name="icStoreInfoDrawable">@drawable/ic_action_accept</item>
         <item name="icRatingFloatDrawable">@drawable/ic_action_important</item>
-        <item name="icErrorDrawable">@drawable/ic_action_cancel</item>
+        <item name="icErrorDrawable">@drawable/close</item>
         <item name="icMyAccountDrawable">@drawable/ic_action_accounts</item>
         <item name="icRollbackDrawable">@drawable/ic_action_time</item>
         <item name="icScheduledDrawable">@drawable/ic_drawer_schedule</item>
@@ -120,9 +119,18 @@
     </style>
 
 
+    <style name="AppBaseThemeTransparent" parent="AppBaseTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
     <style name="AppBaseThemeDark" parent="@style/Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/transparent_black</item>
-        <item name="android:ratingBarStyle">@style/RatingBarSmallAptoide</item>
+        <item name="android:ratingBarStyle">@style/RatingBarSmall</item>
 
         <item name="colorPrimary">@color/aptoide_orange</item>
         <item name="colorPrimaryDark">@color/aptoide_color_focused</item>
@@ -169,8 +177,8 @@
         <item name="timelineSendDrawable">@drawable/ic_action_send_now_light</item>
         <item name="timelinePostBackground">@drawable/timeline_post_background_light</item>
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
-        <item name="gridItemRatingBar">@style/RatingBarGridItem</item>
-        <item name="android:ratingBarStyleSmall">@style/RatingBarGridItem</item>
+        <item name="gridItemRatingBar">@style/RatingBarExtraSmall</item>
+        <item name="android:ratingBarStyleSmall">@style/RatingBarExtraSmall</item>
         <item name="titleLabelStyle">@style/titleLabel</item>
         <item name="separatorColor">@color/light_custom_gray</item>
 

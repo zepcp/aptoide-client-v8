@@ -18,15 +18,16 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
-import cm.aptoide.pt.dataprovider.ws.Api;
 import cm.aptoide.pt.dataprovider.ws.v7.listapps.StoreUtils;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreMetaRequest;
 import cm.aptoide.pt.model.v7.BaseV7Response;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.ShowMessage;
+import cm.aptoide.pt.v8engine.MainActivityFragment;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
+import cm.aptoide.pt.v8engine.fragment.implementations.FragmentTopStores;
 import cm.aptoide.pt.v8engine.util.StoreUtilsProxy;
 
 /**
@@ -77,12 +78,10 @@ public class AddStoreDialog extends DialogFragment {
 		});
 
 		view.findViewById(R.id.button_top_stores).setOnClickListener(v->{
-			Uri uri = Uri.parse("http://m.aptoide.com/more/toprepos/q=" + Api.Q);
-			Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+			((MainActivityFragment) getActivity()).pushFragmentV4(FragmentTopStores.newInstance());
 			if (isAdded()) {
 				dismiss();
 			}
-			startActivity(intent);
 		});
 	}
 
@@ -94,7 +93,7 @@ public class AddStoreDialog extends DialogFragment {
 
 	private void executeRequest(GetStoreMetaRequest getStoreMetaRequest) {
 		StoreUtilsProxy.subscribeStore(getStoreMetaRequest, getStoreMeta1->{
-			ShowMessage.asSnack(getView(), AptoideUtils.StringU.getFormattedString(R.string.store_subscribed,
+			ShowMessage.asSnack(getView(), AptoideUtils.StringU.getFormattedString(R.string.store_followed,
 					storeName));
 
 			dismissLoadingDialog();

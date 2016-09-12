@@ -1,15 +1,18 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 04/08/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.fragment.implementations;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -24,7 +27,7 @@ import android.widget.TextView;
 import com.trello.rxlifecycle.FragmentEvent;
 
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
 import cm.aptoide.pt.imageloader.ImageLoader;
@@ -33,10 +36,14 @@ import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.StorePagerAdapter;
+import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.interfaces.DrawerFragment;
 import cm.aptoide.pt.v8engine.interfaces.FragmentShower;
+import cm.aptoide.pt.v8engine.util.FragmentUtils;
 import cm.aptoide.pt.v8engine.util.SearchUtils;
 import cm.aptoide.pt.v8engine.view.BadgeView;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by neuro on 09-05-2016.
@@ -45,12 +52,15 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 
 	public static final String APTOIDE_FACEBOOK_LINK = "http://www.facebook.com/aptoide";
 	public static final String FACEBOOK_PACKAGE_NAME = "com.facebook.katana";
+	public static final String BACKUP_APPS_PACKAGE_NAME = "pt.aptoide.backupapps";
 	public static final String TWITTER_PACKAGE_NAME = "com.twitter.android";
 	public static final String APTOIDE_TWITTER_URL = "http://www.twitter.com/aptoide";
 	private static final String TAG = HomeFragment.class.getSimpleName();
 	private DrawerLayout mDrawerLayout;
 	private NavigationView mNavigationView;
 	private BadgeView updatesBadge;
+	@Getter @Setter private Event.Name desiredViewPagerItem = null;
+	private ChangeTabReceiver receiver;
 
 	public static HomeFragment newInstance(String storeName) {
 		return newInstance(storeName, StoreContext.store);
@@ -67,6 +77,7 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 
 	private void setupNavigationView() {
 		if (mNavigationView != null) {
+			mNavigationView.setItemIconTintList(null);
 			mNavigationView.setNavigationItemSelectedListener(menuItem -> {
 
 				int itemId = menuItem.getItemId();
@@ -85,7 +96,7 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 				} else if (itemId == R.id.navigation_item_twitter) {
 					openTwitter();
 				} else if (itemId == R.id.navigation_item_backup_apps) {
-					Snackbar.make(mNavigationView, "Backup Apps", Snackbar.LENGTH_SHORT).show();
+					openBackupApps();
 				} else if (itemId == R.id.send_feedback) {
 					startFeedbackFragment();
 				}
@@ -95,6 +106,19 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 				return false;
 			});
 		}
+	}
+
+	private void openBackupApps() {
+		Installed installedBackupApps = DeprecatedDatabase.InstalledQ.get(BACKUP_APPS_PACKAGE_NAME, realm);
+		if(installedBackupApps == null){
+			AppViewFragment.newInstance(BACKUP_APPS_PACKAGE_NAME,false);
+			FragmentUtils.replaceFragmentV4(this.getActivity(),AppViewFragment.newInstance(BACKUP_APPS_PACKAGE_NAME, false));
+		}
+		else {
+			Intent i = getContext().getPackageManager().getLaunchIntentForPackage(BACKUP_APPS_PACKAGE_NAME);
+			startActivity(i);
+		}
+
 	}
 
 	private void startFeedbackFragment() {
@@ -110,14 +134,14 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 	}
 
 	private void openFacebook() {
-		Installed installedFacebook = Database.InstalledQ.get(FACEBOOK_PACKAGE_NAME, realm);
+		Installed installedFacebook = DeprecatedDatabase.InstalledQ.get(FACEBOOK_PACKAGE_NAME, realm);
 		openSocialLink(FACEBOOK_PACKAGE_NAME, APTOIDE_FACEBOOK_LINK, getContext().getString(R.string.social_facebook_screen_title), Uri.parse(AptoideUtils
 				.SocialLinksU
 				.getFacebookPageURL(installedFacebook == null ? 0 : installedFacebook.getVersionCode(), APTOIDE_FACEBOOK_LINK)));
 	}
 
 	private void openSocialLink(String packageName, String socialUrl, String pageTitle, Uri uriToOpenApp) {
-		Installed installedFacebook = Database.InstalledQ.get(packageName, realm);
+		Installed installedFacebook = DeprecatedDatabase.InstalledQ.get(packageName, realm);
 		if (installedFacebook == null) {
 			((FragmentShower) getActivity()).pushFragmentV4(SocialFragment.newInstance(socialUrl, pageTitle));
 		} else {
@@ -131,6 +155,8 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 		super.bindViews(view);
 		mNavigationView = (NavigationView) view.findViewById(R.id.nav_view);
 		mDrawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+
+		Analytics.AppViewViewedFrom.addStepToList("HOME");
 
 		setHasOptionsMenu(true);
 	}
@@ -155,12 +181,6 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 		}
 	}
 
-	@Override
-	public void onResume() {
-		super.onResume();
-		setUserDataOnHeader();
-	}
-
 	//	@Override
 	//	public void onDestroyView() {
 	//		super.onDestroyView();
@@ -168,6 +188,26 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 	//		mDrawerLayout = null;
 	//		mNavigationView = null;
 	//	}
+
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		receiver = new ChangeTabReceiver();
+		getContext().registerReceiver(receiver, new IntentFilter(ChangeTabReceiver.SET_TAB_EVENT));
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		setUserDataOnHeader();
+	}
+
+	@Override
+	public void onDetach() {
+		getContext().unregisterReceiver(receiver);
+		receiver = null;
+		super.onDetach();
+	}
 
 	@Override
 	public int getContentViewId() {
@@ -187,9 +227,15 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 			}
 		}
 
-		Database.UpdatesQ.getAll(realm, false).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(updates -> {
+		DeprecatedDatabase.UpdatesQ.getAll(realm, false).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(updates -> {
 			refreshUpdatesBadge(updates.size());
 		});
+
+		if (desiredViewPagerItem != null) {
+			if (adapter.containsEventName(desiredViewPagerItem)) {
+				mViewPager.setCurrentItem(adapter.getEventNamePosition(desiredViewPagerItem));
+			}
+		}
 	}
 
 	@Override
@@ -246,5 +292,22 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 	@Override
 	public void closeDrawer() {
 		mDrawerLayout.closeDrawers();
+	}
+
+	public class ChangeTabReceiver extends BroadcastReceiver {
+
+		public static final String SET_TAB_EVENT = "SET_TAB_EVENT";
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			Event.Name tabToChange = (Event.Name) intent.getSerializableExtra(SET_TAB_EVENT);
+			if (tabToChange != null) {
+				StorePagerAdapter storePagerAdapter = mViewPager.getAdapter() instanceof StorePagerAdapter ? ((StorePagerAdapter) mViewPager.getAdapter()) :
+						null;
+				if (storePagerAdapter != null) {
+					mViewPager.setCurrentItem(((StorePagerAdapter) mViewPager.getAdapter()).getEventNamePosition(tabToChange));
+				}
+			}
+		}
 	}
 }

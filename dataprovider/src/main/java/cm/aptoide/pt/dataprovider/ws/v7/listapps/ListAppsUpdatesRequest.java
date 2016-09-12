@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 15/07/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.dataprovider.ws.v7.listapps;
@@ -13,12 +13,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.repository.IdsRepository;
-import cm.aptoide.pt.dataprovider.ws.Api;
+import cm.aptoide.pt.dataprovider.ws.BaseBodyDecorator;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.model.v7.listapp.ListAppsUpdates;
@@ -55,10 +54,10 @@ public class ListAppsUpdatesRequest extends V7<ListAppsUpdates, ListAppsUpdatesR
 
 	public static ListAppsUpdatesRequest of() {
 		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
+		BaseBodyDecorator decorator = new BaseBodyDecorator(idsRepository, SecurePreferencesImplementation.getInstance());
 
-		return new ListAppsUpdatesRequest(OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), new Body(idsRepository
-				.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG, Api.isMature(), Api.Q, getInstalledApks(), StoreUtils
-				.getSubscribedStoresIds()), BASE_HOST);
+		return new ListAppsUpdatesRequest(OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), (Body) decorator.decorate( new Body(getInstalledApks(),
+				StoreUtils.getSubscribedStoresIds(), idsRepository.getAdvertisingId())), BASE_HOST);
 	}
 
 	private static List<ApksData> getInstalledApks() {
@@ -78,12 +77,12 @@ public class ListAppsUpdatesRequest extends V7<ListAppsUpdates, ListAppsUpdatesR
 	private static List<ApksData> getInstalledApksDataWithoutExcluded() {
 		LinkedList<ApksData> apksDatas = new LinkedList<>();
 
-		@Cleanup Realm realm = Database.get();
+		@Cleanup Realm realm = DeprecatedDatabase.get();
 
 		//RealmResults<Update> excludedUpdates = Database.UpdatesQ.getAll(realm, true);
-		RealmResults<Installed> installeds = Database.InstalledQ.getAll(realm);
+		RealmResults<Installed> installeds = DeprecatedDatabase.InstalledQ.getAll(realm);
 		for (Installed installed : installeds) {
-			if (!Database.UpdatesQ.contains(installed.getPackageName(), true, realm)) {
+			if (!DeprecatedDatabase.UpdatesQ.contains(installed.getPackageName(), true, realm)) {
 				apksDatas.add(new ApksData(installed.getPackageName(), installed.getVersionCode(), installed
 						.getSignature()));
 			}
@@ -138,18 +137,21 @@ public class ListAppsUpdatesRequest extends V7<ListAppsUpdates, ListAppsUpdatesR
 
 		@Accessors(chain = true) @Getter @Setter private List<ApksData> apksData;
 		@Getter private List<Long> storeIds;
+		@Setter @Getter private String aaid;
 
-		public Body(String aptoideId, String accessToken, int aptoideVercode, String cdn, String lang, boolean mature, String q, List<ApksData> apksData,
-		            List<Long> storeIds) {
-			super(aptoideId, accessToken, aptoideVercode, cdn, lang, mature, q);
+		public Body(List<ApksData> apksData, List<Long> storeIds, String aaid) {
 			this.apksData = apksData;
 			this.storeIds = storeIds;
+			this.aaid = aaid;
 		}
 
 		public Body(Body body) {
-			super(body.getAptoideId(), body.getAccessToken(), body.getAptoideVercode(), body.getCdn(), body.getLang(), body.isMature(), body.getQ());
 			this.apksData = body.getApksData();
 			this.storeIds = body.getStoreIds();
+			this.setQ(body.getQ());
+			this.setAptoideVercode(body.getAptoideVercode());
+			this.aaid = body.getAaid();
+			this.setAptoideId(body.getAptoideId());
 		}
 	}
 

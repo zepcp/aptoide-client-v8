@@ -5,16 +5,17 @@
 
 package cm.aptoide.pt.dataprovider.ws.v7;
 
-import cm.aptoide.accountmanager.AptoideAccountManager;
+import android.text.TextUtils;
+
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.repository.IdsRepository;
 import cm.aptoide.pt.dataprovider.ws.Api;
+import cm.aptoide.pt.dataprovider.ws.BaseBodyDecorator;
 import cm.aptoide.pt.model.v7.ListFullReviews;
 import cm.aptoide.pt.networkclient.WebService;
 import cm.aptoide.pt.networkclient.okhttp.OkHttpClientFactory;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
-import cm.aptoide.pt.utils.AptoideUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,17 +38,31 @@ public class ListFullReviewsRequest extends V7<ListFullReviews,ListFullReviewsRe
 
 	private static final int MAX_REVIEWS = 10;
 	private static final int MAX_COMMENTS = 10;
+	private String url;
 
 	protected ListFullReviewsRequest(Body body, String baseHost) {
 		super(body, OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), baseHost);
 	}
 
-	public static ListFullReviewsRequest of(long storeId, int limit, int offset) {
-		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
-		Body body = new Body(idsRepository.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG, Api
-				.isMature(), Api.Q, storeId, offset, limit, ManagerPreferences.getAndResetForceServerRefresh());
-		return new ListFullReviewsRequest(body, BASE_HOST);
+	public ListFullReviewsRequest(String url, Body body, String baseHost) {
+		super(body, OkHttpClientFactory.getSingletonClient(), WebService.getDefaultConverter(), baseHost);
+		this.url = url;
 	}
+
+	public static ListFullReviewsRequest of(long storeId, int limit, int offset) {
+		BaseBodyDecorator decorator = new BaseBodyDecorator(new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext()),SecurePreferencesImplementation.getInstance());
+		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
+		Body body = new Body(storeId, limit, offset, ManagerPreferences.getAndResetForceServerRefresh());
+		return new ListFullReviewsRequest((Body) decorator.decorate(body), BASE_HOST);
+	}
+
+	public static ListFullReviewsRequest ofAction(String url, boolean refresh) {
+		BaseBodyDecorator decorator = new BaseBodyDecorator(new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext()),
+				SecurePreferencesImplementation
+				.getInstance());
+		return new ListFullReviewsRequest(url.replace("listFullReviews", ""), (Body) decorator.decorate(new Body(refresh)), BASE_HOST);
+	}
+
 
 	public static ListFullReviewsRequest of(String storeName, String packageName) {
 		return of(storeName, packageName, MAX_REVIEWS, MAX_COMMENTS);
@@ -64,10 +79,11 @@ public class ListFullReviewsRequest extends V7<ListFullReviews,ListFullReviewsRe
 	 * @return
 	 */
 	public static ListFullReviewsRequest of(String storeName, String packageName, int maxReviews, int maxComments) {
-		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
-		Body body = new Body(idsRepository.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG, Api
-				.isMature(), Api.Q, storeName, packageName, maxReviews, maxComments, ManagerPreferences.getAndResetForceServerRefresh());
-		return new ListFullReviewsRequest(body, BASE_HOST);
+
+		BaseBodyDecorator decorator = new BaseBodyDecorator(new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext()),SecurePreferencesImplementation.getInstance());
+
+		Body body = new Body(storeName, packageName, maxReviews, maxComments, ManagerPreferences.getAndResetForceServerRefresh());
+		return new ListFullReviewsRequest((Body) decorator.decorate(body), BASE_HOST);
 	}
 
 	/**
@@ -80,16 +96,20 @@ public class ListFullReviewsRequest extends V7<ListFullReviews,ListFullReviewsRe
 	 * @return
 	 */
 	public static ListFullReviewsRequest ofTopReviews(String storeName, String packageName, int maxReviews) {
-		IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
-		Body body = new Body(idsRepository.getAptoideClientUUID(), AptoideAccountManager.getAccessToken(), AptoideUtils.Core.getVerCode(), "pool", Api.LANG,
-				Api
-				.isMature(), Api.Q, storeName, packageName, maxReviews, 0, ManagerPreferences.getAndResetForceServerRefresh());
-		return new ListFullReviewsRequest(body, BASE_HOST);
+
+		BaseBodyDecorator decorator = new BaseBodyDecorator(new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext()),SecurePreferencesImplementation.getInstance());
+
+		Body body = new Body(storeName, packageName, maxReviews, 0, ManagerPreferences.getAndResetForceServerRefresh());
+		return new ListFullReviewsRequest((Body) decorator.decorate(body), BASE_HOST);
 	}
 
 	@Override
 	protected Observable<ListFullReviews> loadDataFromNetwork(Interfaces interfaces, boolean bypassCache) {
-		return interfaces.listFullReviews(body, bypassCache);
+		if (TextUtils.isEmpty(url)) {
+			return interfaces.listFullReviews(body, bypassCache);
+		} else {
+			return interfaces.listFullReviews(url, body, bypassCache);
+		}
 	}
 
 	@Data
@@ -113,19 +133,19 @@ public class ListFullReviewsRequest extends V7<ListFullReviews,ListFullReviewsRe
 		private String storeName;
 		private Integer subLimit;
 
-		public Body(String aptoideId, String accessToken, int aptoideVersionCode, String cdn, String lang, boolean mature, String q, long storeId, int limit,
-		            int subLimit, boolean refresh) {
-			super(aptoideId, accessToken, aptoideVersionCode, cdn, lang, mature, q);
-
-			this.storeId = storeId;
-			this.limit = limit;
-			this.subLimit = subLimit;
+		public Body(boolean refresh) {
 			this.refresh = refresh;
 		}
 
-		public Body(String aptoideId, String accessToken, int aptoideVersionCode, String cdn, String lang, boolean mature, String q, String storeName, String
-				packageName, int limit, int subLimit, boolean refresh) {
-			super(aptoideId, accessToken, aptoideVersionCode, cdn, lang, mature, q);
+		public Body(long storeId, int limit, int offset, boolean refresh) {
+
+			this.storeId = storeId;
+			this.limit = limit;
+			this.offset = offset;
+			this.refresh = refresh;
+		}
+
+		public Body(String storeName, String packageName, int limit, int subLimit, boolean refresh) {
 
 			this.packageName = packageName;
 			this.storeName = storeName;

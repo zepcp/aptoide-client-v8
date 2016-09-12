@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2016.
+ * Modified by SithEngineer on 02/09/2016.
+ */
+
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
 
 import android.content.Context;
@@ -12,17 +17,17 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Locale;
 
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.imageloader.CircleTransform;
 import cm.aptoide.pt.model.v7.store.GetStoreMeta;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.ShowMessage;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.util.StoreThemeEnum;
+import cm.aptoide.pt.v8engine.util.StoreUtilsProxy;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.GridStoreMetaDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
 import io.realm.Realm;
@@ -66,11 +71,10 @@ public class GridStoreMetaWidget extends Widget<GridStoreMetaDisplayable> {
 	@Override
 	public void bindView(GridStoreMetaDisplayable displayable) {
 
-		@Cleanup
-		Realm realm = Database.get();
+		@Cleanup Realm realm = DeprecatedDatabase.get();
 		GetStoreMeta getStoreMeta = displayable.getPojo();
 		this.theme = StoreThemeEnum.get(getStoreMeta.getData().getAppearance().getTheme());
-		subscribedBool = Database.StoreQ.get(getStoreMeta.getData().getId(), realm) != null;
+		subscribedBool = DeprecatedDatabase.StoreQ.get(getStoreMeta.getData().getId(), realm) != null;
 
 		final Context context = itemView.getContext();
 		if (TextUtils.isEmpty(getStoreMeta.getData().getAvatar())) {
@@ -106,37 +110,39 @@ public class GridStoreMetaWidget extends Widget<GridStoreMetaDisplayable> {
 		if (subscribedBool) {
 
 			ivSubscribe.setImageResource(R.drawable.ic_check_white);
-			subscribed.setText(itemView.getContext().getString(R.string.appview_subscribed_store_button_text));
+			subscribed.setText(itemView.getContext().getString(R.string.followed));
+
 			subscribeButtonLayout.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					subscribedBool = false;
-					ShowMessage.asToast(itemView.getContext(), AptoideUtils.StringU.getFormattedString(R.string.unsubscribing_store_message, getStoreMeta
-							.getData()
-							.getName()));
-					ArrayList<Long> sotoreIds = new ArrayList<>();
-					sotoreIds.add(getStoreMeta.getData().getId());
-					AptoideAccountManager.unsubscribeStore(getStoreMeta.getData().getName());
+					@Cleanup Realm realm = DeprecatedDatabase.get();
+					if (AptoideAccountManager.isLoggedIn()) {
+						AptoideAccountManager.unsubscribeStore(getStoreMeta.getData().getName());
+					}
+					DeprecatedDatabase.StoreQ.delete(getStoreMeta.getData().getId(), realm);
+					ShowMessage.asSnack(itemView, AptoideUtils.StringU.getFormattedString(R.string.unfollowing_store_message, getStoreMeta.getData().getName()));
 					handleSubscriptionLogic(getStoreMeta);
 				}
 			});
 		} else {
 			ivSubscribe.setImageResource(R.drawable.ic_plus_white);
-			subscribed.setText(itemView.getContext().getString(R.string.appview_subscribe_store_button_text));
+			subscribed.setText(itemView.getContext().getString(R.string.appview_follow_store_button_text));
 			subscribed.setCompoundDrawables(null, null, null, null);
 	        /*Drawable drawableLeft = itemView.getContext().getResources().getDrawable(R.drawable.ic_action_cancel_small_dark);
             if (drawableLeft != null) {
                 drawableLeft.setBounds(0, 0, drawableLeft.getIntrinsicWidth(), drawableLeft.getIntrinsicHeight());
                 subscribed.setCompoundDrawables(drawableLeft, null, null, null);
             }*/
+
 			subscribeButtonLayout.setOnClickListener(new View.OnClickListener() {
 				@Override
-				public void onClick(View view) {
+				public void onClick(View v) {
 					if (!subscribedBool) {
 						subscribedBool = true;
-						AptoideAccountManager.subscribeStore(getStoreMeta.getData().getName());
-						ShowMessage.asToast(itemView.getContext(), AptoideUtils.StringU.getFormattedString(R.string.store_subscribed, getStoreMeta.getData()
-								.getName()));
+						StoreUtilsProxy.subscribeStore(getStoreMeta.getData().getName(), getStoreMeta -> {
+							ShowMessage.asSnack(itemView, AptoideUtils.StringU.getFormattedString(R.string.store_followed, getStoreMeta.getData().getName()));
+						}, Throwable::printStackTrace);
 						handleSubscriptionLogic(getStoreMeta);
 					}
 				}

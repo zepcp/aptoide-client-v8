@@ -14,6 +14,7 @@ public class UTMFileParser {
 	public static final String UTM_MEDIUM = "utm_medium";
 	public static final String UTM_CAMPAIGN = "utm_campaign";
 	public static final String UTM_CONTENT = "utm_content";
+	public static final String ENTRY_POINT = "entry_point";
 
 	private BufferedReader bufferedReader;
 	private String utm_line;
@@ -35,7 +36,7 @@ public class UTMFileParser {
 	 *
 	 * @param key   Key to search in the parsed String in the UTM file.
 	 *
-	 * @return  String value of the searched key, null if no key found.
+	 * @return  String value of the searched key, unknown string if no key found.
 	 */
 	public String valueExtracter(String key){
 				String[] utms = utm_line.split("&");
@@ -44,6 +45,6 @@ public class UTMFileParser {
 						return utm.substring(key.length() + 1);        // +1 because of =
 					}
 				}
-		return null;
+		return "unknown";
 	}
 }

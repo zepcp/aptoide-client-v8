@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 03/08/2016.
+ * Modified by SithEngineer on 08/08/2016.
  */
 
 package cm.aptoide.pt.model.v3;
@@ -8,8 +8,10 @@ package cm.aptoide.pt.model.v3;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  *
@@ -19,10 +21,11 @@ import lombok.Data;
  *
  */
 @Data
-public class PaymentResponse {
+@EqualsAndHashCode(callSuper = true)
+public class PaymentResponse extends BaseV3Response {
 
-	private String status;
-	@JsonProperty("publisher_response") private PublisherResponse publisherResponse;
+	@JsonProperty("publisher_response")
+	private PublisherResponse publisherResponse;
 
 	@Data
 	public static class PublisherResponse {

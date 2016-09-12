@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2016.
+ * Modified by SithEngineer on 02/09/2016.
+ */
+
 package cm.aptoide.pt.downloadmanager;
 
 import android.app.Notification;
@@ -9,7 +14,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
-import cm.aptoide.pt.database.Database;
+import java.util.Locale;
+
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.Application;
@@ -45,7 +52,7 @@ public class DownloadService extends Service {
 
 	private void startDownload(long appId) {
 		if (appId > 0) {
-			@Cleanup Realm realm = Database.get();
+			@Cleanup Realm realm = DeprecatedDatabase.get();
 			Download download = downloadManager.getStoredDownload(appId, realm);
 			if (download != null) {
 				downloadManager.startDownload(download.clone())
@@ -149,7 +156,7 @@ public class DownloadService extends Service {
 	private NotificationCompat.Builder buildStandardNotification(Download download, PendingIntent pOpenAppsManager, PendingIntent pNotificationClick,
 	                                                             NotificationCompat.Builder builder) {
 		builder.setSmallIcon(AptoideDownloadManager.getInstance().getSettingsInterface().getMainIcon())
-				.setContentTitle(String.format(AptoideDownloadManager.getContext()
+				.setContentTitle(String.format(Locale.ENGLISH, AptoideDownloadManager.getContext()
 						.getResources()
 						.getString(R.string.aptoide_downloading), Application.getConfiguration().getMarketName()))
 				.setContentText(new StringBuilder().append(download.getAppName())

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 28/07/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.fragment.implementations;
@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import cm.aptoide.pt.actions.PermissionManager;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadServiceHelper;
@@ -34,7 +34,7 @@ import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.fragment.GridRecyclerFragment;
 import cm.aptoide.pt.v8engine.install.InstallManager;
-import cm.aptoide.pt.v8engine.install.download.DownloadInstallationProvider;
+import cm.aptoide.pt.v8engine.install.provider.DownloadInstallationProvider;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.FooterRowDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.RollbackDisplayable;
@@ -55,8 +55,7 @@ public class RollbackFragment extends GridRecyclerFragment {
 	private DownloadServiceHelper downloadManager;
 	private InstallManager installManager;
 
-	public RollbackFragment() {
-	}
+	public RollbackFragment() { }
 
 	public static Fragment newInstance() {
 		return new RollbackFragment();
@@ -86,7 +85,7 @@ public class RollbackFragment extends GridRecyclerFragment {
 			getActivity().onBackPressed();
 			return true;
 		} else if (itemId == R.id.menu_clear) {
-			Database.RollbackQ.deleteAll(realm);
+			DeprecatedDatabase.RollbackQ.deleteAll(realm);
 			clearDisplayables();
 			finishLoading();
 			return true;
@@ -97,7 +96,7 @@ public class RollbackFragment extends GridRecyclerFragment {
 
 	@Override
 	public void load(boolean refresh, Bundle savedInstanceState) {
-		Logger.d(TAG, String.format("refresh rollbacks? %s", refresh ? "yes" : "no"));
+		Logger.d(TAG, "refresh rollbacks? " + (refresh ? "yes" : "no"));
 		AptoideUtils.ThreadU.runOnUiThread(this::fetchRollbacks);
 	}
 
@@ -119,7 +118,7 @@ public class RollbackFragment extends GridRecyclerFragment {
 
 	@UiThread
 	private void fetchRollbacks() {
-		subscription = Database.RollbackQ.getAll(realm).sort(Rollback.TIMESTAMP, Sort.ASCENDING)
+		subscription = DeprecatedDatabase.RollbackQ.getAll(realm).sort(Rollback.TIMESTAMP, Sort.ASCENDING)
 				.asObservable()
 				.compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
 				.observeOn(AndroidSchedulers.mainThread())
@@ -142,7 +141,7 @@ public class RollbackFragment extends GridRecyclerFragment {
 	private String prettyTimestamp(long timestamp) {
 		return DATE_TIME_U.getTimeDiffString(getActivity(), timestamp);
 	}
-	
+
 	// FIXME: 21/07/2016 slow method. could this be improved ??
 	@UiThread
 	private void sortRollbacksAndAdd(RealmResults<Rollback> rollbacks) {

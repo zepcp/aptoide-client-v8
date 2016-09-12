@@ -6,6 +6,7 @@
 package cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.support.v4.content.ContextCompat;
 import android.text.Spannable;
@@ -15,8 +16,10 @@ import java.util.Date;
 import cm.aptoide.pt.actions.PermissionRequest;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.downloadmanager.DownloadServiceHelper;
+import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.Type;
 import cm.aptoide.pt.model.v7.timeline.AppUpdate;
+import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.install.InstallManager;
 import cm.aptoide.pt.v8engine.util.DownloadFactory;
@@ -37,11 +40,10 @@ public class AppUpdateDisplayable extends Displayable {
 	@Getter private String storeName;
 
 	private Date dateUpdated;
-	private String appVersioName;
+	private String appVersionName;
 	private SpannableFactory spannableFactory;
 	private String appName;
-	private int versionCode;
-	private String packageName;
+	@Getter private String packageName;
 	private Download download;
 	private DownloadServiceHelper downloadManager;
 	private InstallManager installManager;
@@ -53,8 +55,8 @@ public class AppUpdateDisplayable extends Displayable {
 
 	public static AppUpdateDisplayable from(AppUpdate appUpdate, SpannableFactory spannableFactory, DownloadFactory downloadFactory,
 	                                        DownloadServiceHelper downloadManager, InstallManager installManager, DateCalculator dateCalculator) {
-		return new AppUpdateDisplayable(appUpdate.getIcon(), appUpdate.getStore().getAvatar(), appUpdate.getStore().getName(), appUpdate.getUpdated(),
-				appUpdate.getFile().getVername(), spannableFactory,	appUpdate.getName(), appUpdate.getFile().getVercode(), appUpdate.getPackageName(), downloadFactory
+		return new AppUpdateDisplayable(appUpdate.getIcon(), appUpdate.getStore().getAvatar(), appUpdate.getStore().getName(), appUpdate.getAdded(),
+				appUpdate.getFile().getVername(), spannableFactory,	appUpdate.getName(), appUpdate.getPackageName(), downloadFactory
 				.create(appUpdate), downloadManager, installManager, dateCalculator, appUpdate.getId());
 	}
 
@@ -76,9 +78,22 @@ public class AppUpdateDisplayable extends Displayable {
 				.onErrorReturn(throwable -> Download.NOT_DOWNLOADED);
 	}
 
+	public int getMarginWidth(Context context, int orientation){
+		if (!context.getResources().getBoolean(R.bool.is_this_a_tablet_device)) {
+			return 0;
+		}
+
+		int width = AptoideUtils.ScreenU.getCachedDisplayWidth(orientation);
+
+		if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+			return (int)(width * 0.2);
+		} else {
+			return (int)(width * 0.1);
+		}
+	}
+
 	public Spannable getAppTitle(Context context) {
-		return spannableFactory.createColorSpan(context.getString(R.string.displayable_social_timeline_app_update_name,
-				appName), ContextCompat.getColor(context, R.color.black), appName);
+		return spannableFactory.createColorSpan(appName, ContextCompat.getColor(context, R.color.black), appName);
 	}
 
 	public String getTimeSinceLastUpdate(Context context) {
@@ -87,17 +102,16 @@ public class AppUpdateDisplayable extends Displayable {
 
 	public Spannable getHasUpdateText(Context context) {
 		final String update = context.getString(R.string.displayable_social_timeline_app_update);
-		return spannableFactory.createColorSpan(context.getString(R.string.displayable_social_timeline_app_has_update, update),
-				ContextCompat.getColor(context, R.color.card_store_title), update);
+		return spannableFactory.createStyleSpan(context.getString(R.string.displayable_social_timeline_app_has_update, update), Typeface.BOLD, update);
 	}
 
 	public Spannable getVersionText(Context context) {
-		return spannableFactory.createColorSpan(context.getString(R.string.displayable_social_timeline_app_update_version,
-				appVersioName), ContextCompat.getColor(context, R.color.black), appVersioName);
+		return spannableFactory.createStyleSpan(context.getString(R.string.displayable_social_timeline_app_update_version, appVersionName), Typeface.BOLD,
+				appVersionName);
 	}
 
 	public Spannable getUpdateAppText(Context context) {
-		String application = context.getString(R.string.displayable_social_timeline_app_update_application);
+		String application = context.getString(R.string.appstimeline_update_app);
 		return spannableFactory.createStyleSpan(context.getString(R.string.displayable_social_timeline_app_update_button,
 				application), Typeface.BOLD, application);
 	}

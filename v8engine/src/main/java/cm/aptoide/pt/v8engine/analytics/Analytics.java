@@ -1,19 +1,28 @@
 package cm.aptoide.pt.v8engine.analytics;
 
-import android.app.Application;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Properties;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.zip.ZipFile;
 
+import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.accountmanager.Constants;
+import cm.aptoide.pt.dataprovider.DataProvider;
+import cm.aptoide.pt.dataprovider.repository.IdsRepository;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.GetAppMeta;
+import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.v8engine.BuildConfig;
-import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 
 import com.flurry.android.FlurryAgent;
@@ -25,10 +34,14 @@ import com.localytics.android.Localytics;
  */
 public class Analytics {
 
-    private static final boolean ACTIVATE = BuildConfig.LOCALYTICS_CONFIGURED;
+	private static final String TAG = Analytics.class.getSimpleName();
+
+	private static boolean ACTIVATE_LOCALYTICS = BuildConfig.LOCALYTICS_CONFIGURED;
     private static final boolean ACTIVATE_FLURRY = BuildConfig.FLURRY_CONFIGURED;
-    private static final int ALL = Integer.MAX_VALUE;
+	private static boolean isFirstSession;
+	private static final int ALL = Integer.MAX_VALUE;
     private static final int LOCALYTICS = 1 << 0;
+    private static final int FLURRY = 1 << 1;
 
     // Constantes globais a todos os eventos.
     public static final String ACTION = "Action";
@@ -41,13 +54,21 @@ public class Analytics {
      * @return true caso as flags fornecidas constem em accepted.
      */
     private static boolean checkAcceptability(int flag, int accepted) {
-        return (flag & accepted) == accepted;
+        if (accepted == LOCALYTICS && !ACTIVATE_LOCALYTICS) {
+            Logger.d(TAG, "Localytics Disabled ");
+            return false;
+        } else if (accepted == FLURRY && !ACTIVATE_FLURRY) {
+            Logger.d(TAG, "Flurry Disabled");
+            return false;
+        } else {
+            return (flag & accepted) == accepted;
+        }
     }
 
     private static void track(String event, String key, String attr, int flags) {
 
         try {
-            if (!ACTIVATE)
+            if (!ACTIVATE_LOCALYTICS && !ACTIVATE_FLURRY)
                 return;
 
             HashMap stringObjectHashMap = new HashMap<>();
@@ -56,41 +77,49 @@ public class Analytics {
 
             track(event, stringObjectHashMap, flags);
 
-            Logger.d("Analytics", "Event: " + event + ", Key: " + key + ", attr: " + attr);
+            Logger.d(TAG, "Event: " + event + ", Key: " + key + ", attr: " + attr);
 
         } catch (Exception e) {
-            Log.d("Analytics", e.getStackTrace().toString());
+            Log.d(TAG, e.getStackTrace().toString());
         }
 
     }
 
     private static void track(String event, HashMap map, int flags) {
         try {
-            if (!ACTIVATE){
-                Logger.d(Analytics.class.getName(), "Localytics ACTIVATE value: " + ACTIVATE);
-
+            if (!ACTIVATE_LOCALYTICS && !ACTIVATE_FLURRY){
                 return;
             }
-            if(checkAcceptability(flags, LOCALYTICS))
+            if(checkAcceptability(flags, LOCALYTICS)){
                 Localytics.tagEvent(event, map);
+                Logger.d(TAG, "Localytics Event: " + event + ", Map: " + map);
 
-            Logger.d("Analytics", "Event: " + event + ", Map: " + map);
+            }
+
+            if (checkAcceptability(flags, FLURRY)){
+                FlurryAgent.logEvent(event, map);
+                Logger.d(TAG, "Flurry Event: " + event + ", Map: " + map);
+            }
+
 
         } catch (Exception e) {
-            Log.d("Analytics", e.getStackTrace().toString());
+            Log.d(TAG, e.getStackTrace().toString());
         }
     }
 
     private static void track(String event, int flags) {
 
         try {
-            if (!ACTIVATE)
+            if (!ACTIVATE_LOCALYTICS && !ACTIVATE_FLURRY)
                 return;
 
             if(checkAcceptability(flags, LOCALYTICS))
                 Localytics.tagEvent(event);
 
-            Logger.d("Analytics", "Event: " + event);
+            if (checkAcceptability(flags, FLURRY))
+                FlurryAgent.logEvent(event);
+
+            Logger.d(TAG, "Event: " + event);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,16 +132,35 @@ public class Analytics {
         public static class Application {
             public static void onCreate(android.app.Application application) {
 
-                if (!ACTIVATE)
+	            SharedPreferences sPref = PreferenceManager.getDefaultSharedPreferences(application.getBaseContext());
+	            ACTIVATE_LOCALYTICS = ACTIVATE_LOCALYTICS && (sPref.getBoolean(Constants.IS_LOCALYTICS_ENABLE_KEY, false));
+	            isFirstSession = sPref.getBoolean(Constants.IS_LOCALYTICS_FIRST_SESSION, false);
+                Logger.d(TAG, "teste : " + ACTIVATE_LOCALYTICS + " : " + isFirstSession);
+                if (!ACTIVATE_LOCALYTICS && !isFirstSession) {
                     return;
+                }
 
                 // Integrate Localytics
                 Localytics.autoIntegrate(application);
-                checkForUTMFileInMetaINF();
+                setupDimensions();
+
+                Logger.d(TAG, "Localytics session configured");
 
             }
 
-            private static void checkForUTMFileInMetaINF() {
+            private static void setupDimensions() {
+                if(!checkForUTMFileInMetaINF()){
+                    Dimensions.setUTMDimensionsToUnknown();
+                }
+
+                if(isFirstSession && !ACTIVATE_LOCALYTICS){
+                    Dimensions.setSamplingTypeDimension("90% sampling");
+                }else{
+                    Dimensions.setSamplingTypeDimension("Full-tracking");
+                }
+            }
+
+            private static boolean checkForUTMFileInMetaINF() {
                 ZipFile myZipFile = null;
                 try {
                     final String sourceDir = V8Engine.getContext().getPackageManager().getPackageInfo(V8Engine.getContext().getPackageName(), 0).applicationInfo
@@ -123,59 +171,112 @@ public class Analytics {
                     UTMFileParser utmFileParser = new UTMFileParser(utmInputStream);
                     myZipFile.close();
 
-                    Logger.d(Lifecycle.class.getName(), UTMFileParser.UTM_SOURCE + " : " + utmFileParser.valueExtracter(UTMFileParser.UTM_SOURCE));
-                    Logger.d(Lifecycle.class.getName(), UTMFileParser.UTM_MEDIUM + " : " + utmFileParser.valueExtracter(UTMFileParser.UTM_MEDIUM));
-                    Logger.d(Lifecycle.class.getName(), UTMFileParser.UTM_CAMPAIGN + " : " + utmFileParser.valueExtracter(UTMFileParser.UTM_CAMPAIGN));
-                    Logger.d(Lifecycle.class.getName(), UTMFileParser.UTM_CONTENT + " : " + utmFileParser.valueExtracter(UTMFileParser.UTM_CONTENT));
+	                String utmSource = utmFileParser.valueExtracter(UTMFileParser.UTM_SOURCE);
+	                String utmMedium = utmFileParser.valueExtracter(UTMFileParser.UTM_MEDIUM);
+	                String utmCampaign = utmFileParser.valueExtracter(UTMFileParser.UTM_CAMPAIGN);
+	                String utmContent = utmFileParser.valueExtracter(UTMFileParser.UTM_CONTENT);
+	                String entryPoint = utmFileParser.valueExtracter(UTMFileParser.ENTRY_POINT);
 
-                    //TODO set dimensions according to UTM file variables      no UTM value = null so we need to check for that
+	                if (!utmSource.isEmpty()) {
+	                    Analytics.Dimensions.setUTMSource(utmSource);
+	                }
+
+	                if (!utmMedium.isEmpty()) {
+		                Analytics.Dimensions.setUTMMedium(utmMedium);
+	                }
+
+	                if (!utmCampaign.isEmpty()) {
+		                Analytics.Dimensions.setUTMCampaign(utmCampaign);
+	                }
+
+	                if (!utmContent.isEmpty()) {
+		                Analytics.Dimensions.setUTMContent(utmContent);
+	                }
+
+	                if (!entryPoint.isEmpty()) {
+		                Analytics.Dimensions.setEntryPointDimension(entryPoint);
+	                }
 
                     utmInputStream.close();
                 } catch (IOException e) {
-                    Logger.d(Analytics.class.getName(), "problem parsing utm/no utm file");
+                    Logger.d(TAG, "problem parsing utm/no utm file");
+                    return false;
                 } catch (PackageManager.NameNotFoundException e) {
-                    Logger.d(Analytics.class.getName(), "No package name utm file.");
+                    Logger.d(TAG, "No package name utm file.");
+                    return false;
                 } catch (NullPointerException e){
                     if(myZipFile != null) {
                         try {
                             myZipFile.close();
                         } catch (IOException e1) {
                             e1.printStackTrace();
+                            return false;
                         }
+                        return false;
                     }
-                    Logger.d(Analytics.class.getName(), "No utm file.");
+                    Logger.d(TAG, "No utm file.");
                 }
+                return true;
             }
         }
 
         public static class Activity {
 
-            private static final String TAG = Activity.class.getName();
-
             public static void onCreate(android.app.Activity activity) {
 
-                if (!ACTIVATE_FLURRY)
+                if (!ACTIVATE_LOCALYTICS)
                     return;
 
             }
 
             public static void onDestroy(android.app.Activity activity) {
 
-                if (!ACTIVATE)
+                if (!ACTIVATE_LOCALYTICS)
                     return;
 
             }
 
             public static void onResume(android.app.Activity activity) {
 
-                if(!ACTIVATE)
+                if(!ACTIVATE_LOCALYTICS)
                     return;
 
                 Localytics.onActivityResume(activity);
 
+                if(isFirstSession) {
+                    if (!AptoideAccountManager.isLoggedIn()) {
+                        Localytics.setCustomDimension(0, "Not Logged In");
+                    } else {
+                        Localytics.setCustomDimension(0, "Logged In");
+                    }
+                }
+
+	            IdsRepository idsRepository = new IdsRepository(SecurePreferencesImplementation.getInstance(), DataProvider.getContext());
+
+	            String cpuid = idsRepository.getAptoideClientUUID();
+
+	            Localytics.setCustomerId(cpuid);
+
+	            //                String cpuid = PreferenceManager.getDefaultSharedPreferences(Aptoide.getContext())
+//                        .getString(EnumPreferences.APTOIDE_CLIENT_UUID.name(), "NoInfo");
+
+//                Localytics.setCustomerId(cpuid);
+//
+//                if (screenName != null) {
+//                    Localytics.tagScreen(screenName);
+//                }
+//
+                Localytics.handleTestMode(activity.getIntent());
+//
+//                Logger.d("Analytics", "Event: CPU_ID: " + cpuid);
+//                Logger.d("Analytics", "Screen: " + screenName);
+
             }
 
             public static void onPause(android.app.Activity activity){
+	            if (!ACTIVATE_LOCALYTICS && !isFirstSession)
+		            return;
+
                 Localytics.onActivityPaused(activity);
             }
 
@@ -199,6 +300,12 @@ public class Analytics {
                 FlurryAgent.onEndSession(activity);
 
             }
+	        public static void onNewIntent(android.app.Activity activity, Intent intent) {
+		        if (!ACTIVATE_LOCALYTICS && !isFirstSession) {
+			        return;
+		        }
+		        Localytics.onNewIntent(activity, intent);
+	        }
         }
 
     }
@@ -207,10 +314,10 @@ public class Analytics {
 
         public static void tagScreen(String screenName) {
 
-            if (!ACTIVATE)
+            if (!ACTIVATE_LOCALYTICS)
                 return;
 
-            Logger.d("Analytics", "Localytics: Screens: " + screenName);
+            Logger.d(TAG, "Localytics: Screens: " + screenName);
 
             Localytics.tagScreen(screenName);
             Localytics.upload();
@@ -326,7 +433,7 @@ public class Analytics {
             track(EVENT_NAME, ACTION, JOIN, ALL);
         }
 
-        public static void Login() {
+        public static void login() {
             track(EVENT_NAME, ACTION, LOGIN, ALL);
         }
     }
@@ -385,24 +492,11 @@ public class Analytics {
         public static final String UNLOCK = "false";
         public static final String LOCK = "true";
         public static void lock() {
-            HashMap<String,String> map = new HashMap<>();
-            map.put(ACTION, LOCK);
-            FlurryAgent.logEvent(EVENT_NAME, map);
-
-            Logger.d(AdultContent.class.getName(), "TEST");
-
-
-//            track(EVENT_NAME, ACTION, "Click on On", ALL);
+            track(EVENT_NAME, ACTION, LOCK, FLURRY);
         }
 
         public static void unlock() {
-            HashMap<String,String> map = new HashMap<>();
-            map.put(ACTION, UNLOCK);
-            FlurryAgent.logEvent(EVENT_NAME, map);
-
-            Logger.d(AdultContent.class.getName(), "TEST");
-
-//            track(EVENT_NAME, ACTION, "Click on Off", ALL);
+            track(EVENT_NAME, ACTION, UNLOCK, FLURRY);
         }
     }
 
@@ -427,7 +521,7 @@ public class Analytics {
                 map.put(ACTION, "Enter");
                 map.put(STORE_NAME, storeName);
 
-                track(EVENT_NAME, map, ALL);
+                track(EVENT_NAME, map, LOCALYTICS);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -440,7 +534,7 @@ public class Analytics {
                 map.put(ACTION, "Subscribe");
                 map.put(STORE_NAME, storeName);
 
-                track(EVENT_NAME, map, ALL);
+                track(EVENT_NAME, map, LOCALYTICS);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -456,15 +550,15 @@ public class Analytics {
         public static final String CLICKED_ON_UPDATE_ALL = "Update All";
 
         public static void update() {
-            track(EVENT_NAME, ACTION, CLICKED_ON_UPDATE, ALL);
+            track(EVENT_NAME, ACTION, CLICKED_ON_UPDATE, LOCALYTICS);
         }
 
         public static void updateAll() {
-            track(EVENT_NAME, ACTION, "Update All", ALL);
+            track(EVENT_NAME, ACTION, CLICKED_ON_UPDATE_ALL, LOCALYTICS);
         }
 
         public static void createReview() {
-            track(EVENT_NAME, ACTION, CLICKED_ON_CREATE_REVIEW, ALL);
+            track(EVENT_NAME, ACTION, CLICKED_ON_CREATE_REVIEW, LOCALYTICS);
         }
     }
 
@@ -494,13 +588,10 @@ public class Analytics {
         public static final String QUERY = "Query";
 
         public static void searchTerm(String query) {
-            track(EVENT_NAME_SEARCH_TERM, QUERY, query, ALL);
+            track(EVENT_NAME_SEARCH_TERM, QUERY, query, LOCALYTICS);
         }
 
         public static void noSearchResults(String query) {
-            HashMap<String,String> map = new HashMap<>();
-            map.put(QUERY, query);
-            FlurryAgent.logEvent(EVENT_NAME_NO_SEARCH_RESULTS, map);
             track(EVENT_NAME_NO_SEARCH_RESULTS, QUERY, query, ALL);
         }
     }
@@ -525,8 +616,6 @@ public class Analytics {
                 stringObjectHashMap.put(TYPE, type);
                 stringObjectHashMap.put(PACKAGE_NAME, packageName);
 
-                FlurryAgent.logEvent(EVENT_NAME, stringObjectHashMap);
-
                 track(EVENT_NAME, stringObjectHashMap, flags);
 
             } catch (Exception e) {
@@ -538,12 +627,12 @@ public class Analytics {
             innerTrack(packageName, INSTALLED, trustedBadge, ALL);
         }
 
-        public static void replaced(String packageName) {
-            innerTrack(packageName, REPLACED, null, ALL);
+        public static void replaced(String packageName, String trustedBadge) {
+            innerTrack(packageName, REPLACED, trustedBadge, ALL);
         }
 
-        public static void downgraded(String packageName) {
-            innerTrack(packageName, DOWNGRADED_ROLLBACK, null, ALL);
+        public static void downgraded(String packageName, String trustedBadge) {
+            innerTrack(packageName, DOWNGRADED_ROLLBACK, trustedBadge, ALL);
         }
     }
 
@@ -560,11 +649,14 @@ public class Analytics {
         public static final String URI = "Uri";
 
         public static void launcher() {
-            track(EVENT_NAME, SOURCE, LAUNCHER, ALL);
+            track(EVENT_NAME, SOURCE, LAUNCHER, LOCALYTICS);
 
         }
 
         public static void website(String uri) {
+            Logger.d(TAG, "website: " + uri);
+
+
             try {
                 HashMap<String, String> map = new HashMap<>();
                 map.put(SOURCE, WEBSITE);
@@ -602,15 +694,14 @@ public class Analytics {
         //attributes
         private static final String APPLICATION_NAME = "Application Name";
         private static final String WARNING = "Warning";
+        private static final String APPLICATION_PUBLISHER = "Application Publisher";
     
         public static void clicked(GetAppMeta.App app) {
             try {
                 HashMap<String, String> map = new HashMap<>();
 
                 map.put(APPLICATION_NAME, app.getPackageName());
-//                map.put(WARNING, app.getFile().getMalware().getRank().name());
-
-                FlurryAgent.logEvent(EVENT_NAME, map);
+                map.put(APPLICATION_PUBLISHER, app.getDeveloper().getName());
 
                 track(EVENT_NAME, map, ALL);
 
@@ -632,8 +723,6 @@ public class Analytics {
                 map.put(PACKAGE_NAME, app.getPackageName());
                 map.put(TRUSTED_BADGE, app.getFile().getMalware().getRank().name());
 
-                FlurryAgent.logEvent(EVENT_NAME, map);
-
                 track(EVENT_NAME, map, ALL);
 
             } catch (Exception e) {
@@ -642,66 +731,49 @@ public class Analytics {
         }
     }
 
-    public static class SocialTimeline {
+    public static class AppsTimeline {
 
-        public static final String EVENT_NAME = "Social Timeline";
+        public static final String EVENT_NAME = "Apps Timeline";
+        public static final String ACTION = "Action";
+        public static final String PACKAGE_NAME = "Package Name";
+        public static final String TITLE = "Title";
+        public static final String PUBLISHER = "Publisher";
+        public static final String CARD_TYPE = "Card Type";
 
-        public static final String eventName = "Social Timeline";
-        public static final String APPLICATION_NAME = "Application Name";
-        public static final String action = "Action";
-        public static final String like = "Like";
-        public static final String DISLIKE = "Dislike";
-        public static final String comment = "Comment";
-        public static final String login = "Login";
-        public static final String share = "Share";
+        public static final String BLANK = "(blank)";
+        public static final String OPEN_ARTICLE = "Open Article";
+        public static final String OPEN_ARTICLE_HEADER = "Open Article Header";
+        public static final String OPEN_VIDEO = "Open Video";
+        public static final String OPEN_VIDEO_HEADER = "Open Video Header";
+        public static final String OPEN_STORE = "Open Store";
+        public static final String OPEN_APP_VIEW = "Open App View";
+        public static final String UPDATE_APP = "Update Application";
 
-        public static void like(String appName) {
-            try {
-                HashMap<String, String> map = new HashMap<>();
-                map.put(action, like);
-                map.put(APPLICATION_NAME, appName);
+        public static void clickOnCard(String cardType, String packageName, String title, String publisher, String action) {
+            HashMap<String,String> map = new HashMap<>();
 
-                track(eventName, map, ALL);
+            map.put(ACTION, action);
+            map.put(PACKAGE_NAME, packageName);
+            map.put(TITLE, title);
+            map.put(PUBLISHER, publisher);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            localyticsTrack(map, cardType);
+            flurryTrack(map, cardType);
+
         }
 
-        public static void dislike(String appName) {
-            try {
-                HashMap<String, String> map = new HashMap<>();
-                map.put(action, DISLIKE);
-                map.put(APPLICATION_NAME, appName);
-
-                track(eventName, map, ALL);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        private static void flurryTrack(HashMap<String,String> map, String cardType) {
+            String eventName = cardType + "_" + EVENT_NAME;
+            track(eventName, map, FLURRY);
         }
 
-        public static void comment(String appName) {
-            try {
-                HashMap<String, String> map = new HashMap<>();
-                map.put(action, comment);
-                map.put(APPLICATION_NAME, appName);
-
-                track(eventName, map, ALL);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        private static void localyticsTrack(HashMap<String,String> map, String cardType) {
+            map.put(CARD_TYPE, cardType);
+            track(EVENT_NAME, map, LOCALYTICS);
         }
 
-        public static void login() {
-            // Declarado mas não utilizado, apenas para localização
-            try {
-//                track(eventName, action, login, ALL);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        public static void openTimeline() {
+            track("Open Apps Timeline", FLURRY);
         }
     }
 
@@ -723,7 +795,7 @@ public class Analytics {
                 map.put(TRUSTED_BADGE, trustedBadge);
                 //TODO MISSING POP_UP AB TESTING
 
-                track(EVENT_NAME, map, ALL);
+                track(EVENT_NAME, map, LOCALYTICS);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -732,13 +804,19 @@ public class Analytics {
     }
 
     public static class Dimensions {
+	    public static final String VERTICAL = "smartphone";
+	    public static final String PARTNER = "vanilla";
+        public static final String UNKNOWN = "unknown";
+        public static final String APKFY = "Apkfy";
+        public static final String WEBSITE = "Website";
+        public static final String INSTALLER = "Installer";
 
         private static void setDimension(int i, String s) {
-            if (!ACTIVATE) {
-                return;
-            }
+	        if (!ACTIVATE_LOCALYTICS && !isFirstSession) {
+		        return;
+	        }
 
-            Logger.d("Analytics", "Dimension: " + i + ", Value: " + s);
+            Logger.d(TAG, "Dimension: " + i + ", Value: " + s);
 
             Localytics.setCustomDimension(i, s);
         }
@@ -759,8 +837,91 @@ public class Analytics {
             }
         }
 
-        public static class Vertical {
-            public static final String SMARTPHONE = "smartphone";
+	    public static void setUTMSource(String utmSource){
+            setDimension(4, utmSource);
+	    }
+
+	    public static void setUTMMedium(String utmMedium) {
+            setDimension(5, utmMedium);
+	    }
+
+	    public static void setUTMCampaign(String utmCampaign) {
+            setDimension(6, utmCampaign);
+        }
+
+	    public static void setUTMContent(String utmContent) {
+            setDimension(7, utmContent);
+        }
+
+        public static void setUTMDimensionsToUnknown() {
+            setDimension(4, UNKNOWN);
+            setDimension(5, UNKNOWN);
+            setDimension(6, UNKNOWN);
+            setDimension(7, UNKNOWN);
+        }
+
+        public static void setSamplingTypeDimension(String samplingType) {
+            setDimension(8, samplingType);
+        }
+
+        public static void setEntryPointDimension(String entryPoint) {
+            setDimension(9, entryPoint);
+        }
+    }
+
+    public static class AppViewViewedFrom {
+
+        public static final String APP_VIEWED_OPEN_FROM_EVENT_NAME_KEY = "App_Viewed_Open_From";
+        private static ArrayList<String> STEPS = new ArrayList<>();
+
+        public static final int NUMBER_OF_STEPS_TO_RECORD = 5;
+
+        public static void appViewOpenFrom(String packageName, String developerName, String trustedBadge) {
+
+            Collections.reverse(STEPS);
+            String stringForSourceEvent = formatStepsToSingleEvent(STEPS);
+            if (stringForSourceEvent.contains("home")) {
+                HashMap<String, String> map = new HashMap<>();
+                map.put("Package Name", packageName);
+                map.put("Source", stringForSourceEvent);
+                map.put("Trusted Badge", trustedBadge);
+                map.put("Application Publisher", developerName);
+
+                track(APP_VIEWED_OPEN_FROM_EVENT_NAME_KEY, map, FLURRY);
+            }
+            STEPS.clear();
+
+
+        }
+
+        private static String formatStepsToSingleEvent(ArrayList<String> listOfSteps) {
+            String s = "";
+
+            Iterator iterator = listOfSteps.iterator();
+
+            while(iterator.hasNext()){
+                String tmp = iterator.next().toString();
+                if(iterator.hasNext() && !tmp.equals("HOME")){
+                    s += (tmp.replace(" ","-") + "_").toLowerCase();
+                }else {
+                    s += tmp.replace(" ","-").toLowerCase();
+                }
+                if(tmp.equals("HOME"))
+                    break;
+            }
+            return s;
+        }
+
+        public static void addStepToList(String step){
+            boolean flag = STEPS.size() >= NUMBER_OF_STEPS_TO_RECORD ? removeLeastRecentlyAddedElement() : STEPS.add(step);
+            if (!flag) {
+                addStepToList(step);
+            }
+        }
+
+        private static boolean removeLeastRecentlyAddedElement() {
+            STEPS.remove(STEPS.size()-1);
+            return false;
         }
     }
 
@@ -774,7 +935,7 @@ public class Analytics {
 //        }
 
         private static void ltv(String eventName, String packageName) {
-            if (!ACTIVATE) {
+            if (!ACTIVATE_LOCALYTICS) {
                 return;
             }
 
@@ -786,7 +947,7 @@ public class Analytics {
 
                 map.put("packageName", packageName);
 
-                Logger.d("Analytics", "LTV: " + eventName + ": " + packageName);
+                Logger.d(TAG, "LTV: " + eventName + ": " + packageName);
 
                 Localytics.tagEvent(eventName, map);
             } catch (NumberFormatException e) {
@@ -794,4 +955,62 @@ public class Analytics {
             }
         }
     }
+    public static class HomePageEditorsChoice {
+
+        public static final String HOME_PAGE_EDITORS_CHOICE = "Home_Page_Editors_Choice";
+
+        public static void clickOnEditorsChoiceItem(int position, String packageName, boolean isHome) {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("Application Name", packageName);
+            if (isHome) {
+                map.put("Search Position", "Home_"+ Integer.valueOf(position).toString());
+            } else {
+                map.put("Search Position", "More_"+ Integer.valueOf(position).toString());
+            }
+
+            track(HOME_PAGE_EDITORS_CHOICE, map, FLURRY);
+        }
+    }
+
+	public static class LocalyticsSessionControl{
+		public static void firstSession(SharedPreferences sPref) {
+			SharedPreferences.Editor edit = sPref.edit();
+			edit.putBoolean(Constants.IS_LOCALYTICS_FIRST_SESSION, false);
+			Logger.d(TAG, "contains" + sPref.contains(Constants.IS_LOCALYTICS_ENABLE_KEY));
+			if (!sPref.contains(Constants.IS_LOCALYTICS_ENABLE_KEY)) {
+				Random random = new Random();
+				int i = random.nextInt(10);
+				Logger.d(TAG, "firstSession: " + i);
+				edit.putBoolean(Constants.IS_LOCALYTICS_FIRST_SESSION, true);
+				edit.putBoolean(Constants.IS_LOCALYTICS_ENABLE_KEY, i == 0);
+			}
+			edit.apply();
+			Logger.d(TAG, "firstSession: IS_LOCALYTICS_FIRST_SESSION: "+ sPref.getBoolean(Constants.IS_LOCALYTICS_FIRST_SESSION,false));
+			Logger.d(TAG, "firstSession: IS_LOCALYTICS_ENABLE_KEY: "+ sPref.getBoolean(Constants.IS_LOCALYTICS_ENABLE_KEY,false));
+		}
+	}
+
+    public static class Timeline{
+
+        public static void clickOnVideoCard(){
+
+        }
+
+        public static void clickOnArticleCard() {
+
+        }
+
+        public static void clickOnUpdateCard() {
+
+        }
+
+        public static void clickOnRecommendationCard(){
+
+        }
+
+	    public static void clickOnStoreLatestApps(){
+
+	    }
+    }
+
 }

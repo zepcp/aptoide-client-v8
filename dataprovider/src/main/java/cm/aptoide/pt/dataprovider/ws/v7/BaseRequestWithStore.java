@@ -1,13 +1,12 @@
 /*
  * Copyright (c) 2016.
- * Modified by Neurophobic Animal on 25/05/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.dataprovider.ws.v7;
 
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Store;
-import cm.aptoide.pt.dataprovider.DataProvider;
 import io.realm.Realm;
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
@@ -25,10 +24,10 @@ public abstract class BaseRequestWithStore<U, B extends BaseBodyWithStore> exten
 	}
 
 	protected static StoreCredentials getStore(Long storeId) {
-		@Cleanup Realm realm = Database.get(DataProvider.getContext());
+		@Cleanup Realm realm = DeprecatedDatabase.get();
 
 		if (storeId != null) {
-			Store store = Database.StoreQ.get(storeId, realm);
+			Store store = DeprecatedDatabase.StoreQ.get(storeId, realm);
 			if (store != null) {
 				return new StoreCredentials(store.getUsername(), store.getPasswordSha1());
 			}
@@ -37,9 +36,9 @@ public abstract class BaseRequestWithStore<U, B extends BaseBodyWithStore> exten
 	}
 
 	protected static StoreCredentials getStore(String storeName) {
-		@Cleanup Realm realm = Database.get(DataProvider.getContext());
+		@Cleanup Realm realm = DeprecatedDatabase.get();
 		if (storeName != null) {
-			Store store = Database.StoreQ.get(storeName, realm);
+			Store store = DeprecatedDatabase.StoreQ.get(storeName, realm);
 			if (store != null) {
 				return new StoreCredentials(store.getUsername(), store.getPasswordSha1());
 			}

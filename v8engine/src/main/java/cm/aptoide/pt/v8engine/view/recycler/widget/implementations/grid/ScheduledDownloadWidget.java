@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 21/07/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
@@ -8,6 +8,7 @@ package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import cm.aptoide.pt.database.realm.Scheduled;
@@ -22,11 +23,12 @@ import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
  */
 @Displayables({ScheduledDownloadDisplayable.class})
 public class ScheduledDownloadWidget extends Widget<ScheduledDownloadDisplayable> {
-	
+
 	private ImageView appIcon;
 	private TextView appName;
 	private TextView appVersion;
 	private CheckBox isSelected;
+	private ProgressBar progressBarIsInstalling;
 
 	public ScheduledDownloadWidget(View itemView) {
 		super(itemView);
@@ -38,6 +40,7 @@ public class ScheduledDownloadWidget extends Widget<ScheduledDownloadDisplayable
 		appName = (TextView) itemView.findViewById(R.id.app_name);
 		appVersion = (TextView) itemView.findViewById(R.id.app_version);
 		isSelected = (CheckBox) itemView.findViewById(R.id.is_selected);
+	    progressBarIsInstalling = (ProgressBar) itemView.findViewById(R.id.progress_bar_is_installing);
 	}
 
 	@Override
@@ -52,6 +55,11 @@ public class ScheduledDownloadWidget extends Widget<ScheduledDownloadDisplayable
 		});
 
 		isSelected.setChecked(displayable.isSelected());
+
+		displayable.setProgressBarIsInstalling(progressBarIsInstalling);
+		displayable.setIsSelected(isSelected);
+
+		displayable.updateUi(scheduled.isDownloading());
 	}
 
 	@Override

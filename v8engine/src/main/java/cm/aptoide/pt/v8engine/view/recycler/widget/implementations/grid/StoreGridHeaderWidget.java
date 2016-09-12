@@ -6,6 +6,7 @@
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
 
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -14,8 +15,10 @@ import java.util.List;
 
 import cm.aptoide.pt.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.v8engine.R;
+import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.fragment.implementations.StoreGridRecyclerFragment;
 import cm.aptoide.pt.v8engine.util.FragmentUtils;
+import cm.aptoide.pt.v8engine.util.Translator;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.StoreGridHeaderDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Displayables;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
@@ -45,7 +48,7 @@ public class StoreGridHeaderWidget extends Widget<StoreGridHeaderDisplayable> {
 	public void bindView(StoreGridHeaderDisplayable displayable) {
 		final GetStoreWidgets.WSWidget pojo = displayable.getPojo();
 		final List<GetStoreWidgets.WSWidget.Action> actions = pojo.getActions();
-		title.setText(pojo.getTitle());
+		title.setText(Translator.translate(pojo.getTitle()));
 		more.setVisibility(actions != null && actions.size() > 0 && actions.get(0)
 				.getEvent()
 				.getName() != null ? View.VISIBLE : View.GONE);
@@ -56,6 +59,7 @@ public class StoreGridHeaderWidget extends Widget<StoreGridHeaderDisplayable> {
 					.getActions()
 					.get(0)
 					.getEvent(), displayable.getPojo().getTitle(), displayable.getStoreTheme()));
+			Analytics.AppViewViewedFrom.addStepToList(pojo.getTitle());
 		});
 	}
 

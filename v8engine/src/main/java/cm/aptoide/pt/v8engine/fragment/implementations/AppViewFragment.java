@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 04/08/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.fragment.implementations;
@@ -15,12 +15,14 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -28,29 +30,18 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.paypal.android.sdk.payments.PayPalConfiguration;
-import com.paypal.android.sdk.payments.PayPalPayment;
-import com.paypal.android.sdk.payments.PayPalService;
-import com.paypal.android.sdk.payments.PaymentActivity;
-import com.paypal.android.sdk.payments.PaymentConfirmation;
-import com.paypal.android.sdk.payments.ProofOfPayment;
 import com.trello.rxlifecycle.FragmentEvent;
 
-import org.json.JSONException;
-
-import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 
 import cm.aptoide.pt.actions.PermissionManager;
-import cm.aptoide.pt.database.Database;
-import cm.aptoide.pt.database.realm.PaymentPayload;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.NetworkOperatorManager;
 import cm.aptoide.pt.dataprovider.model.MinimalAd;
 import cm.aptoide.pt.dataprovider.util.DataproviderUtils;
 import cm.aptoide.pt.dataprovider.ws.v2.aptwords.GetAdsRequest;
-import cm.aptoide.pt.dataprovider.ws.v3.CheckProductPaymentRequest;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadServiceHelper;
 import cm.aptoide.pt.imageloader.ImageLoader;
@@ -58,20 +49,25 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v2.GetAdsResponse;
 import cm.aptoide.pt.model.v7.GetApp;
 import cm.aptoide.pt.model.v7.GetAppMeta;
+import cm.aptoide.pt.model.v7.Malware;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.ShowMessage;
 import cm.aptoide.pt.v8engine.R;
+import cm.aptoide.pt.v8engine.V8Engine;
+import cm.aptoide.pt.v8engine.activity.PaymentActivity;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
+import cm.aptoide.pt.v8engine.dialog.DialogBadgeV7;
 import cm.aptoide.pt.v8engine.fragment.GridRecyclerFragment;
 import cm.aptoide.pt.v8engine.install.InstallManager;
-import cm.aptoide.pt.v8engine.install.download.DownloadInstallationProvider;
+import cm.aptoide.pt.v8engine.install.provider.DownloadInstallationProvider;
 import cm.aptoide.pt.v8engine.interfaces.AppMenuOptions;
 import cm.aptoide.pt.v8engine.interfaces.Payments;
 import cm.aptoide.pt.v8engine.interfaces.Scrollable;
+import cm.aptoide.pt.v8engine.payment.ProductFactory;
+import cm.aptoide.pt.v8engine.receivers.AppBoughtReceiver;
 import cm.aptoide.pt.v8engine.repository.AdRepository;
 import cm.aptoide.pt.v8engine.repository.AppRepository;
-import cm.aptoide.pt.v8engine.services.ValidatePaymentsService;
 import cm.aptoide.pt.v8engine.util.AppUtils;
 import cm.aptoide.pt.v8engine.util.SearchUtils;
 import cm.aptoide.pt.v8engine.util.StoreThemeEnum;
@@ -107,17 +103,6 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 	private static final String BAR_EXPANDED = "BAR_EXPANDED";
 	private static final int PAY_APP_REQUEST_CODE = 12;
 
-	private static final String CONFIG_ENVIRONMENT = //BuildConfig.DEBUG ? PayPalConfiguration.ENVIRONMENT_SANDBOX :
-			PayPalConfiguration.ENVIRONMENT_PRODUCTION;
-
-	private static final String CONFIG_CLIENT_ID = //BuildConfig.DEBUG ? "ARhHzhAH_B_6_9ggd97pIHNduraLFU9jf7Wzw06QMyEj2pRotOf8vw3PM0Ls" :
-			"AW47wxAycZoTcXd5KxcJPujXWwImTLi-GNe3XvUUwFavOw8Nq4ZnlDT1SZIY";
-
-	private static PayPalConfiguration config = new PayPalConfiguration()
-			// Start with mock environment.  When ready, switch to sandbox (ENVIRONMENT_SANDBOX)
-			// or live (ENVIRONMENT_PRODUCTION)
-			.environment(CONFIG_ENVIRONMENT).clientId(CONFIG_CLIENT_ID);
-
 	// FIXME restoreInstanteState doesn't work in this case
 	private final Bundle memoryArgs = new Bundle();
 	//private static final String TAG = AppViewFragment.class.getName();
@@ -142,10 +127,19 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 	private MenuItem uninstallMenuItem;
 	private DownloadServiceHelper downloadManager;
 	private AppRepository appRepository;
+	private ProductFactory productFactory;
 	private Subscription subscription;
 	private AdRepository adRepository;
 	private boolean sponsored;
 	private List<GetAdsResponse.Ad> suggestedAds;
+
+	// buy app vars
+	private String storeName;
+	private float priceValue;
+	private String currency;
+	private double taxRate;
+
+	private AppViewInstallDisplayable installDisplayable;
 
 	public static AppViewFragment newInstance(String packageName, boolean shouldInstall) {
 		Bundle bundle = new Bundle();
@@ -197,13 +191,11 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 		downloadManager = new DownloadServiceHelper(AptoideDownloadManager.getInstance(), permissionManager);
 		installManager = new InstallManager(permissionManager, getContext().getPackageManager(),
 				new DownloadInstallationProvider(downloadManager));
-		appRepository = new AppRepository(new NetworkOperatorManager((TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE)));
+		productFactory = new ProductFactory();
+		appRepository = new AppRepository(new NetworkOperatorManager((TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE)),
+				productFactory);
 		adRepository = new AdRepository();
 
-		Context context = getContext();
-		Intent intent = new Intent(context, PayPalService.class);
-		intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
-		context.startService(intent);
 	}
 
 	@Override
@@ -219,14 +211,14 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 
 	private void setupObservables(GetApp getApp) {
 		// For stores subscription
-		Database.StoreQ.getAll(realm).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(stores -> {
-			if (Database.StoreQ.get(getApp.getNodes().getMeta().getData().getStore().getId(), realm) != null) {
+		DeprecatedDatabase.StoreQ.getAll(realm).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(stores -> {
+			if (DeprecatedDatabase.StoreQ.get(getApp.getNodes().getMeta().getData().getStore().getId(), realm) != null) {
 				adapter.notifyDataSetChanged();
 			}
 		});
 
 		// For install actions
-		Database.RollbackQ.getAll(realm).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(rollbacks -> {
+		DeprecatedDatabase.RollbackQ.getAll(realm).asObservable().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)).subscribe(rollbacks -> {
 			adapter.notifyDataSetChanged();
 		});
 
@@ -237,12 +229,19 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 		LinkedList<Displayable> displayables = new LinkedList<>();
 
 		GetAppMeta.App app = getApp.getNodes().getMeta().getData();
+		GetAppMeta.Media media = app.getMedia();
 
-		displayables.add(new AppViewInstallDisplayable(installManager, downloadManager, getApp, minimalAd, shouldInstall));
+		installDisplayable = AppViewInstallDisplayable.newInstance(getApp, installManager, minimalAd, shouldInstall);
+		displayables.add(installDisplayable);
 		displayables.add(new AppViewStoreDisplayable(getApp));
 		displayables.add(new AppViewRateAndCommentsDisplayable(getApp));
-		displayables.add(new AppViewScreenshotsDisplayable(app));
+
+		// only show screen shots / video if the app has them
+		if (isMediaAvailable(media)) {
+			displayables.add(new AppViewScreenshotsDisplayable(app));
+		}
 		displayables.add(new AppViewDescriptionDisplayable(getApp));
+
 		displayables.add(new AppViewFlagThisDisplayable(getApp));
 		if (suggestedAds != null) {
 			displayables.add(new AppViewSuggestedAppsDisplayable(suggestedAds));
@@ -252,65 +251,40 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 		setDisplayables(displayables);
 	}
 
+	private boolean hasDescription(GetAppMeta.Media media) {
+		return !TextUtils.isEmpty(media.getDescription());
+	}
+
+	private boolean isMediaAvailable(GetAppMeta.Media media) {
+		if (media != null) {
+			List<GetAppMeta.Media.Screenshot> screenshots = media.getScreenshots();
+			List<GetAppMeta.Media.Video> videos = media.getVideos();
+			boolean hasScreenShots = screenshots != null && screenshots.size() > 0;
+			boolean hasVideos = videos != null && videos.size() > 0;
+			return hasScreenShots || hasVideos;
+		}
+		return false;
+	}
+
 	public void buyApp(GetAppMeta.App app) {
-		GetAppMeta.Pay payment = app.getPay();
-
-		PayPalPayment payPalPayment = new PayPalPayment(BigDecimal.valueOf(payment.getPrice()), payment.getCurrency(), Long.toString(app.getId()),
-				PayPalPayment.PAYMENT_INTENT_SALE);
-
-		Intent intent = new Intent(getContext(), PaymentActivity.class);
-		intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
-		intent.putExtra(PaymentActivity.EXTRA_PAYMENT, payPalPayment);
-		intent.putExtra(CheckProductPaymentRequest.Constants.STORE, app.getStore().getName());
-		intent.putExtra(CheckProductPaymentRequest.Constants.PRICE, payment.getPrice());
-		intent.putExtra(CheckProductPaymentRequest.Constants.CURRENCY, payment.getCurrency());
-		intent.putExtra(CheckProductPaymentRequest.Constants.TAX_RATE, app.getPayment().payment_services.get(0).getTaxRate());
-		startActivityForResult(intent, PAY_APP_REQUEST_CODE);
+		startActivityForResult(PaymentActivity.getIntent(getActivity(), productFactory.create(app, app.getPayment())), PAY_APP_REQUEST_CODE);
 	}
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == PAY_APP_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
-				PaymentConfirmation confirm = data.getParcelableExtra(PaymentActivity.EXTRA_RESULT_CONFIRMATION);
-				if (confirm != null) {
-					try {
-						Logger.i(TAG, confirm.toJSONObject().toString(4));
 
-						// TODO: 29/07/16 sithengineer
-						// send 'confirm' to the server
-						ProofOfPayment proof = confirm.getProofOfPayment();
-
-						PaymentPayload paymentPayload = new PaymentPayload();
-						paymentPayload.setPayType(1); // magic value: paypal payment type id
-						paymentPayload.setApiVersion("3"); // magic value: webservice version
-						paymentPayload.setProductId(appId);
-						paymentPayload.setStore(data.getStringExtra(CheckProductPaymentRequest.Constants.STORE));
-						paymentPayload.setPrice(data.getDoubleExtra(CheckProductPaymentRequest.Constants.PRICE, 0.0));
-						paymentPayload.setCurrency(data.getStringExtra(CheckProductPaymentRequest.Constants.CURRENCY));
-						paymentPayload.setPayKey(proof.getPaymentId());
-						paymentPayload.setTaxRate(data.getDoubleExtra(CheckProductPaymentRequest.Constants.TAX_RATE, 0.0));
-
-						final TelephonyManager telephonyManager = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
-						paymentPayload.setSimCountryCode(telephonyManager.getSimCountryIso());
-
-						@Cleanup
-						Realm realm = Database.get();
-						realm.beginTransaction();
-						realm.copyToRealmOrUpdate(paymentPayload);
-						realm.commitTransaction();
-
-						getActivity().startService(ValidatePaymentsService.getIntent(getActivity()));
-
-					} catch (JSONException e) {
-						Logger.e(TAG, "an extremely unlikely failure occurred: ", e);
-					}
-				}
+				// download app and install app
+				FragmentActivity fragmentActivity = getActivity();
+				Intent installApp = new Intent(AppBoughtReceiver.APP_BOUGHT);
+				installApp.putExtra(AppBoughtReceiver.APP_ID, appId);
+				fragmentActivity.sendBroadcast(installApp);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				Logger.i(TAG, "The user canceled.");
 				ShowMessage.asSnack(header.badge, R.string.user_canceled);
 
-			} else if (resultCode == PaymentActivity.RESULT_EXTRAS_INVALID) {
+			} else {
 				Logger.i(TAG, "An invalid Payment or PayPalConfiguration was submitted. Please see the docs.");
 				ShowMessage.asSnack(header.badge, R.string.unknown_error);
 			}
@@ -341,8 +315,7 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 
 			return true;
 		} else if (i == R.id.menu_schedule) {
-			@Cleanup
-			Realm realm = Database.get();
+			@Cleanup Realm realm = DeprecatedDatabase.get();
 			realm.beginTransaction();
 			realm.copyToRealmOrUpdate(scheduled);
 			realm.commitTransaction();
@@ -435,6 +408,9 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
+
+		V8Engine.getRefWatcher(getContext()).watch(this);
+
 		if (storeTheme != null) {
 			ThemeUtils.setStatusBarThemeColor(getActivity(), StoreThemeEnum.get("default"));
 		}
@@ -547,13 +523,6 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 	}
 
 	@Override
-	public void onDestroy() {
-		Context context = getContext();
-		context.stopService(new Intent(context, PayPalService.class));
-		super.onDestroy();
-	}
-
-	@Override
 	public void setUnInstallMenuOptionVisible(@Nullable Action0 unInstallAction) {
 		this.unInstallAction = unInstallAction;
 		uninstallMenuItem.setVisible(unInstallAction != null);
@@ -567,6 +536,8 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 	}
 
 	private final class AppViewHeader {
+
+		private static final String BADGE_DIALOG_TAG = "badgeDialog";
 
 		private final boolean animationsEnabled;
 
@@ -609,11 +580,19 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 			String headerImageUrl = app.getGraphic();
 			List<GetAppMeta.Media.Screenshot> screenshots = app.getMedia().getScreenshots();
 
+//			final Drawable colorDrawable = new ColorDrawable(Color.argb(255, 0, 0, 0));
+
 			if (!TextUtils.isEmpty(headerImageUrl)) {
-				ImageLoader.load(app.getGraphic(), featuredGraphic);
+				ImageLoader.load(app.getGraphic(), R.drawable.app_view_header_gradient, featuredGraphic);
+//				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//					((FrameLayout)featuredGraphic.getParent()).setForeground(colorDrawable);
+//				}
 			}
 			else if (screenshots != null && screenshots.size() > 0 && !TextUtils.isEmpty(screenshots.get(0).getUrl())) {
-				ImageLoader.load(screenshots.get(0).getUrl(), featuredGraphic);
+				ImageLoader.load(screenshots.get(0).getUrl(), R.drawable.app_view_header_gradient, featuredGraphic);
+//				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//					((FrameLayout) featuredGraphic.getParent()).setForeground(colorDrawable);
+//				}
 			}
 
 			if (app.getIcon() != null) {
@@ -654,7 +633,7 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 			});
 			*/
 
-			fileSize.setText(AptoideUtils.StringU.formatBits(AppUtils.sumFileSizes(app.getSize(), app.getObb())));
+			fileSize.setText(AptoideUtils.StringU.formatBits(app.getSize()));
 
 			downloadsCount.setText(AptoideUtils.StringU.withSuffix(app.getStats().getDownloads()));
 
@@ -684,6 +663,12 @@ public class AppViewFragment extends GridRecyclerFragment implements Scrollable,
 			badgeText.setText(badgeMessageId);
 
 			Analytics.ViewedApplication.view(app.getPackageName(), app.getFile().getMalware().getRank().name());
+			Analytics.AppViewViewedFrom.appViewOpenFrom(app.getPackageName(), app.getDeveloper().getName(), app.getFile().getMalware().getRank().name());
+
+			final Malware malware = app.getFile().getMalware();
+			badge.setOnClickListener(v -> {
+				DialogBadgeV7.newInstance(malware, app.getName(), malware.getRank()).show(getFragmentManager(), BADGE_DIALOG_TAG);
+			});
 		}
 	}
 }

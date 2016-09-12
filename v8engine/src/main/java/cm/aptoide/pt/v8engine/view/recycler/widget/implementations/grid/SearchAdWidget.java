@@ -5,10 +5,16 @@
 
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
 
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
 import android.text.Html;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import cm.aptoide.pt.imageloader.ImageLoader;
 import cm.aptoide.pt.model.v2.GetAdsResponse;
@@ -26,10 +32,8 @@ public class SearchAdWidget extends Widget<SearchAdDisplayable> {
 
 	private TextView name;
 	private ImageView icon;
+	private TextView sponsored;
 	private TextView description;
-	private TextView store;
-	private TextView downloads;
-	private TextView versionName;
 
 	public SearchAdWidget(View itemView) {
 		super(itemView);
@@ -39,10 +43,8 @@ public class SearchAdWidget extends Widget<SearchAdDisplayable> {
 	protected void assignViews(View itemView) {
 		name = (TextView) itemView.findViewById(R.id.name);
 		icon = (ImageView) itemView.findViewById(R.id.icon);
-		downloads = (TextView) itemView.findViewById(R.id.downloads_number);
-		versionName = (TextView) itemView.findViewById(R.id.versionName);
 		description = (TextView) itemView.findViewById(R.id.description);
-		store = (TextView) itemView.findViewById(R.id.search_store);
+		sponsored = (TextView) itemView.findViewById(R.id.sponsored_label);
 	}
 
 	@Override
@@ -50,10 +52,9 @@ public class SearchAdWidget extends Widget<SearchAdDisplayable> {
 		GetAdsResponse.Ad ad = displayable.getPojo();
 
 		name.setText(ad.getData().getName());
-		versionName.setText(ad.getData().getVername());
-		downloads.setText(AptoideUtils.StringU.withSuffix(ad.getData().getDownloads()));
 		description.setText(Html.fromHtml(ad.getData().getDescription()));
-		store.setText(ad.getData().getRepo());
+		sponsored.setTypeface(null, Typeface.BOLD);
+		sponsored.setText((getContext().getResources().getText(R.string.sponsored) + "").toUpperCase());
 		ImageLoader.load(AptoideUtils.IconSizeU.parseIcon(ad.getData().getIcon()), icon);
 
 		itemView.setOnClickListener(view -> {

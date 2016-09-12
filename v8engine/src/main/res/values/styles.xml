@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (c) 2016.
-  ~ Modified by SithEngineer on 26/07/2016.
+  ~ Modified by SithEngineer on 29/08/2016.
   -->
 
 <resources xmlns:tools="http://schemas.android.com/tools">
@@ -61,7 +61,7 @@
     </style>
 
     <style name="Widget.Aptoide.Card.Button" parent="Widget.AppCompat.Button.Borderless">
-        <item name="android:textColor">#b9b9b9</item>
+        <item name="android:textColor">#4d4d4d</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:padding">0dp</item>
@@ -116,50 +116,47 @@
         <item name="android:focusable">true</item>
     </style>
 
-    <style name="RatingBarSmallAptoide">
-        <item name="android:progressDrawable">@drawable/rating_bar</item>
-        <item name="android:isIndicator">true</item>
-        <item name="android:minHeight">16dp</item>
-        <item name="android:maxHeight">16dp</item>
-        <item name="android:focusableInTouchMode">false</item>
-        <item name="android:clickable">false</item>
-        <item name="android:focusable">false</item>
-    </style>
-
-    <style name="RatingBarAppviewRatingCard">
-        <item name="android:progressDrawable">@drawable/rating_bar_small</item>
-        <item name="android:isIndicator">true</item>
-        <item name="android:minHeight">13dp</item>
-        <item name="android:maxHeight">13dp</item>
-        <item name="android:focusableInTouchMode">false</item>
-        <item name="android:clickable">false</item>
-        <item name="android:focusable">false</item>
-    </style>
-
-    <style name="RatingBarAppviewAppbarRating">
-        <item name="android:progressDrawable">@drawable/rating_bar_small</item>
-        <item name="android:isIndicator">true</item>
-        <item name="android:minHeight">13dp</item>
-        <item name="android:maxHeight">13dp</item>
-        <item name="android:focusableInTouchMode">false</item>
-        <item name="android:clickable">false</item>
-        <item name="android:focusable">false</item>
-    </style>
-
-    <style name="RatingBarGridItem">
+    <style name="RatingBarExtraSmall">
         <item name="android:progressDrawable">@drawable/rating_bar_grid_item</item>
         <item name="android:isIndicator">true</item>
-        <item name="android:minHeight">10dip</item>
-        <item name="android:maxHeight">10dip</item>
+        <item name="android:minHeight">10dp</item>
+        <item name="android:maxHeight">10dp</item>
         <item name="android:focusableInTouchMode">false</item>
         <item name="android:clickable">false</item>
         <item name="android:focusable">false</item>
     </style>
 
-    <style name="RateThisAppBarAppviewAppbarRating">
-        <item name="android:progressDrawable">@drawable/rating_bar_big</item>
-        <item name="android:minHeight">22dip</item>
-        <item name="android:maxHeight">22dip</item>
+    <style name="RatingBarSmall">
+        <item name="android:progressDrawable">@drawable/rating_bar_small</item>
+        <item name="android:isIndicator">true</item>
+        <item name="android:minHeight">13dp</item>
+        <item name="android:maxHeight">13dp</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+    </style>
+
+    <style name="RatingBarMedium">
+        <item name="android:progressDrawable">@drawable/rating_bar_medium</item>
+        <item name="android:isIndicator">true</item>
+        <item name="android:minHeight">22dp</item>
+        <item name="android:maxHeight">22dp</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+    </style>
+
+    <style name="RatingBarLargeSelectable">
+        <!--<item name="android:progressDrawable">@drawable/rating_bar_big</item>-->
+        <item name="android:progressDrawable">@drawable/rating_bar_medium</item>
+        <item name="android:minHeight">26dp</item>
+        <item name="android:maxHeight">26dp</item>
+    </style>
+
+    <style name="RatingBarReviewDialog">
+        <item name="android:progressDrawable">@drawable/rating_bar_review</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:maxHeight">36dp</item>
     </style>
 
     <style name="backgroundCardStyleLight">
@@ -720,6 +717,17 @@
         <item name="android:max">100</item>
         <item name="android:progress">0</item>
         <item name="android:progressDrawable">@drawable/dark_progress_bar</item>
+    </style>
+
+    <style name="WidgetButtonCustomAptoideTwoLines" parent="WidgetButtonCustomAptoide">
+        <item name="android:textSize">12sp</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:maxLines">2</item>
+    </style>
+
+    <style name="AptoideAppView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
     </style>
 
 </resources>

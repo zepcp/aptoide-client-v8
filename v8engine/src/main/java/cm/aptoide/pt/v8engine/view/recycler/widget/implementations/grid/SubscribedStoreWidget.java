@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by Neurophobic Animal on 27/05/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
@@ -14,10 +14,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
+
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.imageloader.ImageLoader;
+import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.v8engine.R;
@@ -36,7 +39,7 @@ import lombok.Cleanup;
 @Displayables({SubscribedStoreDisplayable.class})
 public class SubscribedStoreWidget extends Widget<SubscribedStoreDisplayable> {
 
-	private static final String TAG = GridStoreWidget.class.getSimpleName();
+	private static final String TAG = SubscribedStoreWidget.class.getSimpleName();
 
 	private ImageView storeAvatar;
 	private TextView storeName;
@@ -55,6 +58,7 @@ public class SubscribedStoreWidget extends Widget<SubscribedStoreDisplayable> {
 		storeUnsubscribe = (TextView) itemView.findViewById(R.id.store_unsubscribe_row);
 		storeLayout = (LinearLayout) itemView.findViewById(R.id.store_main_layout_row);
 		infoLayout = itemView.findViewById(R.id.store_layout_subscribers);
+		storeUnsubscribe.setText(R.string.unfollow);
 	}
 
 	@Override
@@ -68,9 +72,8 @@ public class SubscribedStoreWidget extends Widget<SubscribedStoreDisplayable> {
 
 		@ColorInt int color = context.getResources().getColor(StoreThemeEnum.get(store.getTheme()).getStoreHeader());
 		storeLayout.setBackgroundColor(color);
-		storeLayout.setOnClickListener(v -> FragmentUtils.replaceFragmentV4((FragmentActivity) v.getContext(),
-				StoreFragment
-				.newInstance(displayable.getPojo().getStoreName(), displayable.getPojo().getTheme())));
+		storeLayout.setOnClickListener(v -> FragmentUtils.replaceFragmentV4((FragmentActivity) v.getContext(), StoreFragment.newInstance(displayable.getPojo()
+				.getStoreName(), displayable.getPojo().getTheme())));
 
 		if (store.getStoreId() == -1 || TextUtils.isEmpty(store.getIconPath())) {
 			ImageLoader.loadWithCircleTransform(R.drawable.ic_avatar_apps, storeAvatar);
@@ -81,20 +84,23 @@ public class SubscribedStoreWidget extends Widget<SubscribedStoreDisplayable> {
 		storeUnsubscribe.setOnClickListener(v->{
 			GenericDialogs.createGenericYesNoCancelMessage(itemView.getContext(), displayable.getPojo()
 					.getStoreName(), AptoideUtils.StringU.getFormattedString(R.string
-					.unsubscribe_yes_no))
+					.unfollow_yes_no))
 					.subscribe(eResponse->{
 						switch (eResponse) {
 							case YES:
-								@Cleanup Realm realm = Database.get(itemView.getContext());
+								@Cleanup Realm realm = DeprecatedDatabase.get();
 
 								if (AptoideAccountManager.isLoggedIn()) {
 									AptoideAccountManager.unsubscribeStore(store.getStoreName());
 								}
 
-								Database.StoreQ.delete(store.getStoreId(), realm);
+								DeprecatedDatabase.StoreQ.delete(store.getStoreId(), realm);
 
 								break;
 						}
+					}, e->{
+						Logger.e(TAG, e);
+						Crashlytics.logException(e);
 					});
 		});
 	}

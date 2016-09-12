@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 04/08/2016.
+ * Modified by SithEngineer on 24/08/2016.
  */
 
 package cm.aptoide.pt.database.realm;
@@ -43,10 +43,10 @@ public class Update extends RealmObject {
 	private String apkPath;
 	private double fileSize;
 	private String updateVersionName;
-	private String alternativeApkPath;
 	private int updateVersionCode;
 	private boolean excluded;
 	private String trustedBadge;
+	private String alternativeApkPath;
 
 	// Obb
 	private String mainObbName;
@@ -98,7 +98,7 @@ public class Update extends RealmObject {
 		return appId;
 	}
 
-	public void setAppId(int appId) {
+	public void setAppId(long appId) {
 		this.appId = appId;
 	}
 
@@ -252,5 +252,9 @@ public class Update extends RealmObject {
 
 	public void setPatchObbName(String patchObbName) {
 		this.patchObbName = patchObbName;
+	}
+
+	public String getTrustedBadge() {
+		return trustedBadge;
 	}
 }

@@ -6,6 +6,7 @@
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid;
 
 import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -16,10 +17,13 @@ import com.jakewharton.rxbinding.view.RxView;
 import cm.aptoide.pt.actions.PermissionRequest;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.imageloader.ImageLoader;
+import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.v8engine.R;
+import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.fragment.implementations.AppViewFragment;
 import cm.aptoide.pt.v8engine.fragment.implementations.StoreFragment;
 import cm.aptoide.pt.v8engine.interfaces.FragmentShower;
+import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.RecommendationDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.AppUpdateDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
 import rx.Observable;
@@ -46,6 +50,7 @@ public class AppUpdateWidget extends Widget<AppUpdateDisplayable> {
 	private TextView storeName;
 	private TextView updateDate;
 	private View store;
+	private CardView cardView;
 
 	public AppUpdateWidget(View itemView) {
 		super(itemView);
@@ -63,6 +68,7 @@ public class AppUpdateWidget extends Widget<AppUpdateDisplayable> {
 		storeName = (TextView) itemView.findViewById(R.id.displayable_social_timeline_app_update_card_title);
 		updateDate = (TextView) itemView.findViewById(R.id.displayable_social_timeline_app_update_card_card_subtitle);
 		store = itemView.findViewById(R.id.displayable_social_timeline_app_update_header);
+		cardView = (CardView) itemView.findViewById(R.id.displayable_social_timeline_app_update_card);
 	}
 
 	@Override
@@ -71,11 +77,21 @@ public class AppUpdateWidget extends Widget<AppUpdateDisplayable> {
 		appName.setText(displayable.getAppTitle(getContext()));
 		appUpdate.setText(displayable.getHasUpdateText(getContext()));
 		appVersion.setText(displayable.getVersionText(getContext()));
+		setCardviewMargin(displayable);
 
 		ImageLoader.load(displayable.getAppIconUrl(), appIcon);
 		ImageLoader.loadWithShadowCircleTransform(displayable.getStoreIconUrl(), storeImage);
 		storeName.setText(displayable.getStoreName());
 		updateDate.setText(displayable.getTimeSinceLastUpdate(getContext()));
+	}
+
+	private void setCardviewMargin(AppUpdateDisplayable displayable) {
+		CardView.LayoutParams layoutParams = new CardView.LayoutParams(
+				CardView.LayoutParams.WRAP_CONTENT, CardView.LayoutParams.WRAP_CONTENT);
+		layoutParams.setMargins(displayable.getMarginWidth(getContext(), getContext().getResources().getConfiguration().orientation),0,displayable
+				.getMarginWidth
+						(getContext(), getContext().getResources().getConfiguration().orientation),30);
+		cardView.setLayoutParams(layoutParams);
 	}
 
 	@Override
@@ -84,7 +100,11 @@ public class AppUpdateWidget extends Widget<AppUpdateDisplayable> {
 			subscriptions = new CompositeSubscription();
 
 			subscriptions.add(RxView.clicks(store)
-					.subscribe(click -> ((FragmentShower) getContext()).pushFragmentV4(StoreFragment.newInstance(displayable.getStoreName()))));
+					.subscribe(click -> {
+						Analytics.AppsTimeline.clickOnCard("App Update", displayable.getPackageName(), Analytics.AppsTimeline.BLANK, displayable.getStoreName
+								(), Analytics.AppsTimeline.OPEN_STORE);
+						((FragmentShower) getContext()).pushFragmentV4(StoreFragment.newInstance(displayable.getStoreName()));
+					}));
 
 			subscriptions.add(displayable.downloadStatus()
 					.flatMap(completedToPause())
@@ -95,15 +115,28 @@ public class AppUpdateWidget extends Widget<AppUpdateDisplayable> {
 				((FragmentShower) getContext()).pushFragmentV4(AppViewFragment.newInstance(displayable.getAppId()));
 			}));
 
-			subscriptions.add(RxView.clicks(updateButton).flatMap(click -> displayable.downloadStatus().first().flatMap(status -> {
-				if (status == Download.COMPLETED) {
-					return displayable.install(getContext()).map(success -> Download.COMPLETED);
-				}
-				return displayable.download((PermissionRequest) getContext()).map(download -> download.getOverallDownloadStatus()).flatMap(completedToPause());
-			})).retryWhen(errors -> errors.observeOn(AndroidSchedulers.mainThread()).flatMap(error -> {
+			subscriptions.add(RxView.clicks(updateButton).flatMap(click -> {
+				Analytics.AppsTimeline.clickOnCard("App Update", displayable.getPackageName(), Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+						Analytics.AppsTimeline.UPDATE_APP);
+				return displayable.downloadStatus().first().flatMap(status -> {
+					if (status == Download.COMPLETED) {
+						return displayable.install(getContext()).map(success -> Download.COMPLETED);
+					}
+					return displayable.download((PermissionRequest) getContext())
+							.map(download -> download.getOverallDownloadStatus())
+							.flatMap(downloadStatus -> {
+								if (downloadStatus == Download.COMPLETED) {
+									updateDownloadStatus(displayable, downloadStatus);
+									return displayable.install(getContext()).map(success -> Download.COMPLETED);
+								}
+								return Observable.just(downloadStatus);
+							});
+				});
+			}).retryWhen(errors -> errors.observeOn(AndroidSchedulers.mainThread()).flatMap(error -> {
 				showDownloadError(displayable, error);
+				Logger.d(this.getClass().getSimpleName(), " stack : " + error.getMessage());
 				return Observable.just(null);
-			})).subscribe(status -> updateDownloadStatus(displayable, status)));
+			})).distinctUntilChanged().subscribe(status -> updateDownloadStatus(displayable, status)));
 		}
 	}
 

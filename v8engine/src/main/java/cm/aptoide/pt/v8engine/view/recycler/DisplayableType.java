@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 04/08/2016.
+ * Modified by SithEngineer on 25/08/2016.
  */
 
 package cm.aptoide.pt.v8engine.view.recycler;
@@ -31,12 +31,12 @@ import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewOtherVersionsDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewRateAndCommentsDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewRateResultsDisplayable;
-import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewRateThisDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewScreenshotsDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewStoreDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewSuggestedAppDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.appView.AppViewSuggestedAppsDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.ActiveDownloadDisplayable;
+import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.ActiveDownloadsHeaderDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.AddMoreStoresDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.AdultRowDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.AppBrickDisplayable;
@@ -69,6 +69,7 @@ import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.Sto
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.SubscribedStoreDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.UpdateDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.UpdatesHeaderDisplayable;
+import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.VideoDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.EmptyWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewCommentsWidget;
@@ -79,12 +80,12 @@ import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppVi
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewOtherVersionsWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewRateAndReviewsWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewRateResultsWidget;
-import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewRateThisWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewScreenshotsWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewStoreWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewSuggestedAppWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView.AppViewSuggestedAppsWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.ActiveDownloadWidget;
+import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.ActiveDownloadsHeaderWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.AddMoreStoresWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.AdultRowWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.AppBrickListWidget;
@@ -119,6 +120,7 @@ import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.StoreLat
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.SubscribedStoreWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.UpdateWidget;
 import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.UpdatesHeaderWidget;
+import cm.aptoide.pt.v8engine.view.recycler.widget.implementations.grid.VideoWidget;
 
 /**
  * Created by neuro on 11-05-2016.
@@ -159,6 +161,7 @@ public enum DisplayableType {
 	SOCIAL_TIMELINE_STORE_LATEST_APPS(StoreLatestAppsWidget.class, StoreLatestAppsDisplayable.class),
 	SOCIAL_TIMELINE_STORE_APP_UPDATE(AppUpdateWidget.class, AppUpdateDisplayable.class),
 	SOCIAL_TIMELINE_RECOMMENDATION(RecommendationWidget.class, RecommendationDisplayable.class),
+	SOCIAL_TIMELINE_VIDEO(VideoWidget.class, VideoDisplayable.class),
 
 	ROLLBACK(RollbackWidget.class, RollbackDisplayable.class),
 
@@ -189,7 +192,7 @@ public enum DisplayableType {
 
 	APP_VIEW_RATE_RESULTS(AppViewRateResultsWidget.class, AppViewRateResultsDisplayable.class),
 
-	APP_VIEW_RATING(AppViewRateThisWidget.class, AppViewRateThisDisplayable.class),
+	//APP_VIEW_RATING(AppViewRateThisWidget.class, AppViewRateThisDisplayable.class),
 
 	APP_VIEW_SUBSCRIPTION(AppViewStoreWidget.class, AppViewStoreDisplayable.class),
 
@@ -201,7 +204,8 @@ public enum DisplayableType {
 	SCHEDULED_DOWNLOAD(ScheduledDownloadWidget.class, ScheduledDownloadDisplayable.class),
 	COMPLETED_DOWNLOAD(CompletedDownloadWidget.class, CompletedDownloadDisplayable.class),
 	ACTIVE_DOWNLOAD(ActiveDownloadWidget.class, ActiveDownloadDisplayable.class),
-	ROW_REVIEW(RowReviewWidget.class, RowReviewDisplayable.class),
+	ACTIVE_DOWNLOAD_HEADER(ActiveDownloadsHeaderWidget.class, ActiveDownloadsHeaderDisplayable.class),
+	REVIEWS_GROUP(RowReviewWidget.class, RowReviewDisplayable.class),
 	APP_COMMENT_TO_REVIEW(CommentWidget.class, CommentDisplayable.class),
 	READ_MORE_COMMENTS(CommentsReadMoreWidget.class, CommentsReadMoreDisplayable.class);
 
@@ -309,7 +313,8 @@ public enum DisplayableType {
 	public enum Group {
 		APP_VIEW(APP_VIEW_INSTALL,
 				//				APP_VIEW_SUBSCRIPTION,
-				APP_VIEW_DESCRIPTION, APP_VIEW_SCREENSHOTS, APP_VIEW_RATING,
+				APP_VIEW_DESCRIPTION, APP_VIEW_SCREENSHOTS,
+				//              APP_VIEW_RATING,
 				//				APP_VIEW_RATE_RESULTS,
 				APP_VIEW_COMMENTS,
 				//				APP_VIEW_OTHER_VERSIONS,

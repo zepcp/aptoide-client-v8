@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 06/07/2016.
+ * Modified by SithEngineer on 18/08/2016.
  */
 
 package cm.aptoide.pt.v8engine.fragment.implementations;
@@ -11,6 +11,10 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
 
+import cm.aptoide.pt.database.accessors.AccessorFactory;
+import cm.aptoide.pt.database.realm.Installed;
+import cm.aptoide.pt.v8engine.link.LinksHandlerFactory;
+import cm.aptoide.pt.v8engine.repository.TimelineCardFilter;
 import com.trello.rxlifecycle.FragmentEvent;
 
 import java.util.Arrays;
@@ -19,8 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import cm.aptoide.pt.actions.PermissionManager;
-import cm.aptoide.pt.v8engine.repository.PackageRepository;
-import cm.aptoide.pt.v8engine.repository.TimelineRepository;
 import cm.aptoide.pt.dataprovider.util.ErrorUtils;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadServiceHelper;
@@ -31,10 +33,13 @@ import cm.aptoide.pt.model.v7.timeline.Feature;
 import cm.aptoide.pt.model.v7.timeline.Recommendation;
 import cm.aptoide.pt.model.v7.timeline.StoreLatestApps;
 import cm.aptoide.pt.model.v7.timeline.TimelineCard;
+import cm.aptoide.pt.model.v7.timeline.Video;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.fragment.GridRecyclerSwipeFragment;
 import cm.aptoide.pt.v8engine.install.InstallManager;
-import cm.aptoide.pt.v8engine.install.download.DownloadInstallationProvider;
+import cm.aptoide.pt.v8engine.install.provider.DownloadInstallationProvider;
+import cm.aptoide.pt.v8engine.repository.PackageRepository;
+import cm.aptoide.pt.v8engine.repository.TimelineRepository;
 import cm.aptoide.pt.v8engine.util.DownloadFactory;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.SpannableFactory;
@@ -45,6 +50,7 @@ import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.Art
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.DateCalculator;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.FeatureDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.StoreLatestAppsDisplayable;
+import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.VideoDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.listeners.RxEndlessRecyclerView;
 import rx.Observable;
 import rx.Subscription;
@@ -61,6 +67,7 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 	private DownloadServiceHelper downloadManager;
 	private DownloadFactory downloadFactory;
 	private SpannableFactory spannableFactory;
+	private LinksHandlerFactory linksHandlerFactory;
 	private DateCalculator dateCalculator;
 	private boolean loading;
 	private int offset;
@@ -86,19 +93,14 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 		dateCalculator = new DateCalculator();
 		spannableFactory = new SpannableFactory();
 		downloadFactory = new DownloadFactory();
+		linksHandlerFactory = new LinksHandlerFactory();
 		packageRepository = new PackageRepository(getContext().getPackageManager());
 		final PermissionManager permissionManager = new PermissionManager();
 		downloadManager = new DownloadServiceHelper(AptoideDownloadManager.getInstance(), permissionManager);
 		installManager = new InstallManager(permissionManager, getContext().getPackageManager(), new DownloadInstallationProvider(downloadManager));
-		timelineRepository = new TimelineRepository(getArguments().getString(ACTION_KEY), new TimelineRepository.TimelineCardDuplicateFilter(new HashSet<>()));
-	}
-
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		if (packages != null) {
-			outState.putStringArray(PACKAGE_LIST_KEY, packages.toArray(new String[packages.size()]));
-		}
-		super.onSaveInstanceState(outState);
+		timelineRepository = new TimelineRepository(getArguments().getString(ACTION_KEY),
+				new TimelineCardFilter(new TimelineCardFilter.TimelineCardDuplicateFilter(new HashSet<>()),
+						AccessorFactory.getAccessorFor(Installed.class)));
 	}
 
 	@Override
@@ -135,14 +137,22 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 		}
 
 		subscription = displayableObservable
-				.<Datalist<Displayable>> compose(bindUntilEvent(FragmentEvent.PAUSE))
+				.<Datalist<Displayable>> compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
 				.observeOn(AndroidSchedulers.mainThread())
 				.subscribe(items -> addItems(items), throwable -> finishLoading((Throwable) throwable));
 	}
 
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		if (packages != null) {
+			outState.putStringArray(PACKAGE_LIST_KEY, packages.toArray(new String[packages.size()]));
+		}
+		super.onSaveInstanceState(outState);
+	}
+
 	@NonNull
 	private Observable<List<String>> refreshPackages() {
-		return Observable.concat(packageRepository.getLatestInstalledPackages(5), packageRepository.getRandomInstalledPackages(5))
+		return Observable.concat(packageRepository.getLatestInstalledPackages(10), packageRepository.getRandomInstalledPackages(10))
 				.toList()
 				.doOnNext(packages -> setPackages(packages));
 	}
@@ -177,20 +187,20 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 	private Observable<Datalist<Displayable>> getDisplayableList(List<String> packages, int offset, boolean refresh) {
 		return timelineRepository.getTimelineCards(SEARCH_LIMIT, offset, packages, refresh)
 				.flatMap(datalist -> Observable.just(datalist).flatMapIterable(dataList -> dataList.getList())
-						.map(card -> cardToDisplayable(card, dateCalculator, spannableFactory, downloadFactory, downloadManager))
+						.map(card -> cardToDisplayable(card, dateCalculator, spannableFactory, downloadFactory,
+								downloadManager, linksHandlerFactory))
 						.toList().map(list -> createDisplayableDataList(datalist, list)));
-
 	}
 
 	private Datalist<Displayable> createDisplayableDataList(Datalist<TimelineCard> datalist, List<Displayable> list) {
 		Datalist<Displayable> displayableDataList = new Datalist<>();
 		displayableDataList.setNext(datalist.getNext());
 		displayableDataList.setCount(datalist.getCount());
-		displayableDataList.setLoaded(datalist.isLoaded());
 		displayableDataList.setHidden(datalist.getHidden());
 		displayableDataList.setTotal(datalist.getTotal());
 		displayableDataList.setLimit(datalist.getLimit());
 		displayableDataList.setOffset(datalist.getOffset());
+		displayableDataList.setLoaded(datalist.isLoaded());
 		displayableDataList.setList(list);
 		return displayableDataList;
 	}
@@ -209,9 +219,9 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 		return offset >= total;
 	}
 
-	private void setOffset(Datalist<Displayable> dataList) {
-		if (dataList != null && dataList.getNext() != 0) {
-			offset = dataList.getNext();
+	public void setTotal(Datalist<Displayable> dataList) {
+		if (dataList != null && dataList.getTotal() != 0) {
+			total = dataList.getTotal();
 		}
 	}
 
@@ -219,16 +229,16 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 		return offset;
 	}
 
-	public void setTotal(Datalist<Displayable> dataList) {
-		if (dataList != null && dataList.getTotal() != 0) {
-			total = dataList.getTotal();
+	private void setOffset(Datalist<Displayable> dataList) {
+		if (dataList != null && dataList.getNext() != 0) {
+			offset = dataList.getNext();
 		}
 	}
 
 	private void addLoading() {
 		if (!loading) {
 			this.loading = true;
-			adapter.addDisplayable(new ProgressBarDisplayable());
+			adapter.addDisplayable(new ProgressBarDisplayable(true));
 		}
 	}
 
@@ -266,14 +276,22 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 			addLoading();
 			return true;
 		}
+		else if(isTotal()){
+			//TODO - When you reach the end of the endless?
+			// Snackbar.make(getView(), "No more cards!", Snackbar.LENGTH_SHORT).show();
+		}
 		return false;
 	}
 
 	@NonNull
 	private Displayable cardToDisplayable(TimelineCard card, DateCalculator dateCalculator, SpannableFactory spannableFactory, DownloadFactory downloadFactory,
-	                                      DownloadServiceHelper downloadManager) {
+			DownloadServiceHelper downloadManager, LinksHandlerFactory linksHandlerFactory) {
 		if (card instanceof Article) {
-			return ArticleDisplayable.from((Article) card, dateCalculator, spannableFactory);
+			return ArticleDisplayable.from((Article) card, dateCalculator, spannableFactory,
+					linksHandlerFactory);
+		} else  if (card instanceof Video) {
+			return VideoDisplayable.from((Video) card, dateCalculator, spannableFactory,
+					linksHandlerFactory);
 		} else if (card instanceof Feature) {
 			return FeatureDisplayable.from((Feature) card, dateCalculator, spannableFactory);
 		} else if (card instanceof StoreLatestApps) {
@@ -283,7 +301,7 @@ public class AppsTimelineFragment extends GridRecyclerSwipeFragment {
 		} else if (card instanceof Recommendation) {
 			return RecommendationDisplayable.from((Recommendation) card, dateCalculator, spannableFactory);
 		}
-		throw new IllegalArgumentException("Only articles, features, store latest apps and app updates supported.");
+		throw new IllegalArgumentException("Only articles, features, store latest apps, app updates and videos supported.");
 	}
 
 }

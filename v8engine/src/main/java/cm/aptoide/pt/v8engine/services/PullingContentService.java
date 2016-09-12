@@ -25,7 +25,9 @@ import cm.aptoide.pt.model.v7.listapp.ListAppsUpdates;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.utils.AptoideUtils;
+import cm.aptoide.pt.v8engine.MainActivityFragment;
 import cm.aptoide.pt.v8engine.R;
+import cm.aptoide.pt.v8engine.receivers.DeepLinkIntentReceiver;
 import cm.aptoide.pt.v8engine.receivers.PullingContentReceiver;
 
 /**
@@ -89,8 +91,9 @@ public class PullingContentService extends Service {
 	}
 
 	private void setUpdatesNotification(ListAppsUpdates listAppsUpdates) {
-		Intent resultIntent = new Intent(Application.getContext(), PullingContentReceiver.class);
-		PendingIntent resultPendingIntent = PendingIntent.getBroadcast(Application.getContext(), 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent resultIntent = new Intent(Application.getContext(), MainActivityFragment.class);
+		resultIntent.putExtra(DeepLinkIntentReceiver.DeepLinksTargets.NEW_UPDATES, true);
+		PendingIntent resultPendingIntent = PendingIntent.getActivity(Application.getContext(), 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		int numberUpdates = listAppsUpdates.getList().size();
 		if (numberUpdates > 0 && numberUpdates != ManagerPreferences.getLastUpdates()) {
@@ -121,8 +124,8 @@ public class PullingContentService extends Service {
 		for (final GetPushNotificationsResponse.Notification pushNotification : response.getResults()) {
 			Intent resultIntent = new Intent(Application.getContext(), PullingContentReceiver.class);
 			resultIntent.setAction(PullingContentReceiver.NOTIFICATION_PRESSED_ACTION);
-			resultIntent.putExtra(PullingContentReceiver.PUSH_NOTIFICATION_TRACK_URL, pushNotification.getTrack_url());
-			resultIntent.putExtra(PullingContentReceiver.PUSH_NOTIFICATION_TARGET_URL, pushNotification.getTarget_url());
+			resultIntent.putExtra(PullingContentReceiver.PUSH_NOTIFICATION_TRACK_URL, pushNotification.getTrackUrl());
+			resultIntent.putExtra(PullingContentReceiver.PUSH_NOTIFICATION_TARGET_URL, pushNotification.getTargetUrl());
 
 			PendingIntent resultPendingIntent = PendingIntent.getBroadcast(Application.getContext(), 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 			Notification notification = new NotificationCompat.Builder(Application.getContext()).setContentIntent(resultPendingIntent)
@@ -135,9 +138,9 @@ public class PullingContentService extends Service {
 			notification.flags = Notification.DEFAULT_LIGHTS | Notification.FLAG_AUTO_CANCEL;
 			final NotificationManager managerNotification = (NotificationManager) Application.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
-			if (Build.VERSION.SDK_INT >= 16 && pushNotification.getImages() != null && TextUtils.isEmpty(pushNotification.getImages().getIcon_url())) {
+			if (Build.VERSION.SDK_INT >= 16 && pushNotification.getImages() != null && TextUtils.isEmpty(pushNotification.getImages().getIconUrl())) {
 
-				String imageUrl = pushNotification.getImages().getBanner_url();
+				String imageUrl = pushNotification.getImages().getBannerUrl();
 				RemoteViews expandedView = new RemoteViews(Application.getContext().getPackageName(), R.layout.pushnotificationlayout);
 				expandedView.setImageViewBitmap(R.id.icon, BitmapFactory.decodeResource(Application.getContext().getResources(), Application.getConfiguration()
 						.getIcon()));

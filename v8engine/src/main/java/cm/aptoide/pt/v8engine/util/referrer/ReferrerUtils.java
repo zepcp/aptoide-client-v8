@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 24/06/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.util.referrer;
@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -18,17 +20,12 @@ import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-
-import java.net.URI;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.model.MinimalAd;
@@ -46,6 +43,8 @@ import lombok.Cleanup;
  * Created by neuro on 20-06-2016.
  */
 public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.ReferrerUtils {
+
+	private static final String TAG = ReferrerUtils.class.getSimpleName();
 
 	public static void extractReferrer(MinimalAd minimalAd, final int retries, boolean broadcastReferrer) {
 
@@ -110,9 +109,8 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 						if (broadcastReferrer) {
 							broadcastReferrer(packageName, minimalAd.getAdId(), referrer);
 						} else {
-							@Cleanup
-							Realm realm = Database.get();
-							Database.save(new StoredMinimalAd(packageName, referrer, minimalAd.getCpiUrl(), minimalAd.getAdId()), realm);
+							@Cleanup Realm realm = DeprecatedDatabase.get();
+							DeprecatedDatabase.save(new StoredMinimalAd(packageName, referrer, minimalAd.getCpiUrl(), minimalAd.getAdId()), realm);
 						}
 
 						future.cancel(false);
@@ -194,15 +192,24 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 		}
 	}
 
-	private static String getReferrer(String uri) {
-		List<NameValuePair> params = URLEncodedUtils.parse(URI.create(uri), "UTF-8");
+	private static String getReferrer(String uriAsString) {
 
-		String referrer = null;
-		for (NameValuePair param : params) {
+//		URI uri = URI.create(uriAsString);
+//		List<NameValuePair> params = URLEncodedUtils.parse(uri, "UTF-8");
+//
+//		String referrer = null;
+//		for (NameValuePair param : params) {
+//
+//			if (param.getName().equals("referrer")) {
+//				referrer = param.getValue();
+//			}
+//		}
+//		return referrer;
 
-			if (param.getName().equals("referrer")) {
-				referrer = param.getValue();
-			}
+		Uri uri = Uri.parse(uriAsString);
+		String referrer = uri.getQueryParameter("referrer");
+		if(!TextUtils.isEmpty(referrer)) {
+			Logger.v(TAG, "Found referrer: " + referrer);
 		}
 		return referrer;
 	}

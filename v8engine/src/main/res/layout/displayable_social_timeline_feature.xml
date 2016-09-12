@@ -4,7 +4,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:id="@+id/card">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,21 +14,22 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="72dp"
+            android:layout_height="63.3dp"
             android:orientation="horizontal">
 
             <ImageView
                 tools:ignore="contentDescription"
                 tools:src="@drawable/img_people_mockup"
                 android:id="@+id/card_image"
-                android:layout_margin="12dp"
                 android:layout_width="40dp"
-                android:layout_height="40dp"/>
+                android:layout_height="40dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginLeft="12.7dp"/>
 
             <TextView
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14.7dp"
                 android:id="@+id/card_title"
-                style="@style/Widget.Aptoide.Card.Title.Feature"
+                style="@style/Widget.Aptoide.Card.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="72dp"

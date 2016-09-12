@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 04/08/2016.
+ * Modified by SithEngineer on 25/08/2016.
  */
 
 package cm.aptoide.pt.model.v7;
@@ -31,22 +31,20 @@ public enum Type {
 	FOOTER_ROW(true),
 
 	// App View
-	APP_VIEW_INSTALL,
-	APP_VIEW_COMMENTS,
-	APP_VIEW_DEVELOPER,
-	APP_VIEW_OTHER_VERSIONS,
-	APP_VIEW_RATE_RESULT,
-	APP_VIEW_RATE_THIS,
-	APP_VIEW_SUGGESTED_APPS,
-	APP_VIEW_SUGGESTED_APP,
-	APP_VIEW_SUBSCRIPTION,
-	APP_VIEW_DESCRIPTION,
-	APP_VIEW_IMAGES,
-	APP_VIEW_FLAG_THIS,
-	APP_VIEW_RATE_AND_COMMENT,
+	APP_VIEW_INSTALL(1, true),
+	APP_VIEW_RATE_AND_COMMENT(1, true),
+	APP_VIEW_IMAGES(1, true),
+	APP_VIEW_DESCRIPTION(1, true),
+	APP_VIEW_FLAG_THIS(1, true),
+	APP_VIEW_SUGGESTED_APPS(1, true),
+	APP_VIEW_SUGGESTED_APP(1, true),
+	APP_VIEW_DEVELOPER(1, true),
+
+	// other versions
+	OTHER_VERSION_ROW(1, true),
 
 	// Reviews screen
-	APP_COMMENT_TO_REVIEW,
+	APP_COMMENT_TO_REVIEW(1, true),
 
 	// Client
 	SUBSCRIBED_STORE(2),
@@ -60,6 +58,7 @@ public enum Type {
 	UPDATE(1),
 	EXCLUDED_UPDATE(1),
 	ROLLBACK(1),
+	SCHEDULED_DOWNLOAD(1),
 
 	SOCIAL_TIMELINE(1, true),
 
@@ -68,17 +67,23 @@ public enum Type {
 
 	// Progress
 	PROGRESS_DISPLAYABLE,
-	OTHER_VERSION,
-	RATE_AND_REVIEW,
-	SCHEDULED_DOWNLOAD,
 
 	//Download tab
 	ACTIVE_DOWNLOAD,
+	ACTIVE_DOWNLOAD_HEADER,
 	COMPLETED_DOWNLOAD,
 
 	//Reviews Screen
-	ROW_REVIEW,
-	READ_MORE_COMMENTS;
+	REVIEWS_GROUP(1, true),
+	READ_MORE_COMMENTS(1, true),
+
+	// un-used types
+	APP_VIEW_COMMENTS(1, true),
+	APP_VIEW_OTHER_VERSIONS(1, true),
+	APP_VIEW_RATE_RESULT(1, true),
+	APP_VIEW_RATE_THIS(1, true),
+	APP_VIEW_SUBSCRIPTION(1, true),
+	RATE_AND_REVIEW(1, true);
 
 	private static final int DEFAULT_PER_LINE_COUNT = 1;
 

@@ -138,6 +138,15 @@ public class SettingsFragment extends PreferenceFragmentCompat
 				return true;
 			}
 		});
+
+		CheckBoxPreference matureChkBox = (CheckBoxPreference) findPreference("matureChkBox");
+		if(AptoideAccountManager.isMatureSwitchOn()){
+			matureChkBox.setChecked(true);
+		}
+		else {
+			matureChkBox.setChecked(false);
+		}
+
 		findPreference(SettingsConstants.ADULT_CHECK_BOX).setOnPreferenceClickListener(new Preference
 				.OnPreferenceClickListener() {
 			@Override
@@ -161,6 +170,27 @@ public class SettingsFragment extends PreferenceFragmentCompat
 					Analytics.AdultContent.lock();
 					AptoideAccountManager.updateMatureSwitch(false);
 				}
+
+				return true;
+			}
+		});
+
+		findPreference(SettingsConstants.FILTER_APPS).setOnPreferenceClickListener(new Preference
+				.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference preference) {
+				final CheckBoxPreference cb = (CheckBoxPreference) preference;
+				boolean filterApps = false;
+
+				if (cb.isChecked()) {
+					cb.setChecked(true);
+					filterApps = true;
+				}
+				else {
+					cb.setChecked(false);
+				}
+
+				ManagerPreferences.setHWSpecsFilter(filterApps);
 
 				return true;
 			}

@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionRequest;
-import cm.aptoide.pt.database.Database;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
@@ -23,10 +22,9 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.ShowMessage;
 import cm.aptoide.pt.v8engine.R;
+import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid.RollbackDisplayable;
 import cm.aptoide.pt.v8engine.view.recycler.widget.Widget;
-import io.realm.Realm;
-import lombok.Cleanup;
 
 /**
  * Created by sithengineer on 14/06/16.
@@ -71,9 +69,9 @@ public class RollbackWidget extends Widget<RollbackDisplayable> {
 
 		rollbackAction.setOnClickListener( view -> {
 
-			@Cleanup
-			Realm realm = Database.get();
-			Database.RollbackQ.upadteRollbackWithAction(realm, pojo, Rollback.Action.UPDATE);
+			//			@Cleanup
+			//			Realm realm = Database.get();
+			//			Database.RollbackQ.upadteRollbackWithAction(realm, pojo, Rollback.Action.UPDATE);
 
 			final Context context = view.getContext();
 			ContextWrapper contextWrapper = (ContextWrapper) context;
@@ -85,22 +83,25 @@ public class RollbackWidget extends Widget<RollbackDisplayable> {
 				Rollback.Action action = Rollback.Action.valueOf(pojo.getAction());
 				switch (action) {
 					case DOWNGRADE:
-						ShowMessage.asSnack(view, R.string.updating_msg);
 						// find app update and download it, uninstall current and install update
 						// TODO: 28/07/16 sithengineer
-						/*
+
+						ShowMessage.asSnack(view, R.string.updating_msg);
 						downloadServiceHelper.startDownload(permissionRequest, appDownload).subscribe(download -> {
 							if (download.getOverallDownloadStatus() == Download.COMPLETED) {
 								//final String packageName = app.getPackageName();
 								//final FileToDownload downloadedFile = download.getFilesToDownload().get(0);
-								displayable.upgrade(context).subscribe();
+								//displayable.upgrade(context).subscribe();
 							}
 						});
-						*/
+
 						break;
 
 					case INSTALL:
-						displayable.uninstall(getContext(), appDownload);
+						//only if the app is installed
+						//ShowMessage.asSnack(view, R.string.uninstall_msg);
+						ShowMessage.asSnack(view, "R.string.uninstall_msg");
+						displayable.uninstall(getContext(), appDownload).subscribe();
 						break;
 
 					case UNINSTALL:
@@ -115,18 +116,17 @@ public class RollbackWidget extends Widget<RollbackDisplayable> {
 						break;
 
 					case UPDATE:
-						ShowMessage.asSnack(view, R.string.downgrading_msg);
 						// find current installed app. download previous, uninstall current and install previous
 						// TODO: 28/07/16 sithengineer
-						/*
+
+						ShowMessage.asSnack(view,R.string.downgrading_msg);
 						downloadServiceHelper.startDownload(permissionRequest, appDownload).subscribe(download -> {
 							if (download.getOverallDownloadStatus() == Download.COMPLETED) {
 								//final String packageName = app.getPackageName();
 								//final FileToDownload downloadedFile = download.getFilesToDownload().get(0);
-								displayable.downgrade(context).subscribe();
+								displayable.downgrade(context, permissionRequest, download, pojo.getAppId()).subscribe();
 							}
 						});
-						*/
 						break;
 				}
 			}, () -> {

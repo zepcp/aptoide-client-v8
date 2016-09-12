@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016.
- * Modified by SithEngineer on 29/07/2016.
+ * Modified by SithEngineer on 02/09/2016.
  */
 
 package cm.aptoide.pt.v8engine.install;
@@ -11,7 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.util.Log;
 
-import cm.aptoide.pt.database.Database;
+import cm.aptoide.pt.database.accessors.DeprecatedDatabase;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
@@ -63,7 +63,7 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 
 	private void loadRealm() {
 		if (realm == null) {
-			realm = Database.get();
+			realm = DeprecatedDatabase.get();
 		}
 	}
 
@@ -76,11 +76,10 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 	protected void onPackageAdded(String packageName) {
 		Log.d(TAG, "Package added: " + packageName);
 
-		Rollback rollback = Database.RollbackQ.get(packageName,Rollback.Action.INSTALL,realm);
+		Rollback rollback = DeprecatedDatabase.RollbackQ.get(realm, packageName, Rollback.Action.INSTALL);
 		if(rollback != null) {
 			String packageNameFromRollbackQ = rollback.getPackageName();
 			String trustedBadge = rollback.getTrustedBadge();
-			Logger.d(TAG, "LOCALYTICS TESTING : APPLICATION INSTALL - PACKAGE NAME: " + packageNameFromRollbackQ + " trustedBadge: " + trustedBadge);
 			Analytics.ApplicationInstall.installed(packageName, trustedBadge);
 		}
 
@@ -89,11 +88,11 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 	}
 
 	private void checkAndBroadcastReferrer(String packageName) {
-		StoredMinimalAd storedMinimalAd = Database.ReferrerQ.get(packageName, realm);
+		StoredMinimalAd storedMinimalAd = DeprecatedDatabase.ReferrerQ.get(packageName, realm);
 		if (storedMinimalAd != null) {
 			ReferrerUtils.broadcastReferrer(packageName, storedMinimalAd.getAdId(), storedMinimalAd.getReferrer());
 			DataproviderUtils.AdNetworksUtils.knockCpi(storedMinimalAd);
-			Database.delete(storedMinimalAd, realm);
+			DeprecatedDatabase.delete(storedMinimalAd, realm);
 		} else {
 			GetAdsRequest.ofSecondInstall(packageName)
 					.observe()
@@ -119,38 +118,43 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 	private void databaseOnPackageAdded(String packageName) {
 		PackageInfo packageInfo = AptoideUtils.SystemU.getPackageInfo(packageName);
 
-		Database.save(new Installed(packageInfo, V8Engine.getContext().getPackageManager()), realm);
+		DeprecatedDatabase.save(new Installed(packageInfo, V8Engine.getContext().getPackageManager()), realm);
 
-		Rollback rollback = Database.RollbackQ.get(packageName, Rollback.Action.INSTALL, realm);
+		Rollback rollback = DeprecatedDatabase.RollbackQ.get(realm, packageName, Rollback.Action.INSTALL);
 		if (rollback != null) {
 			confirmAction(packageName, Rollback.Action.INSTALL);
 		}
 	}
 
 	private void databaseOnPackageReplaced(String packageName, Context context) {
-		Update update = Database.UpdatesQ.get(packageName, realm);
+		Update update = DeprecatedDatabase.UpdatesQ.get(packageName, realm);
+
+		if(update != null && update.getPackageName() != null && update.getTrustedBadge() != null){
+			Analytics.ApplicationInstall.replaced(packageName, update.getTrustedBadge());
+		}
 
 		PackageInfo packageInfo = AptoideUtils.SystemU.getPackageInfo(packageName);
 		if (update != null) {
 			if (packageInfo.versionCode >= update.getVersionCode()) {
-				Database.delete(update, realm);
+				DeprecatedDatabase.delete(update, realm);
 			}
 		}
 
-		Database.save(new Installed(packageInfo, context.getPackageManager()), realm);
+		DeprecatedDatabase.save(new Installed(packageInfo, context.getPackageManager()), realm);
 
 		confirmAction(packageName, Rollback.Action.UPDATE);
 	}
 
 	private void databaseOnPackageRemoved(String packageName) {
-		Database.InstalledQ.delete(packageName, realm);
-		Database.UpdatesQ.delete(packageName, realm);
+		DeprecatedDatabase.InstalledQ.delete(packageName, realm);
+		DeprecatedDatabase.UpdatesQ.delete(packageName, realm);
 
-		Rollback rollback = Database.RollbackQ.get(packageName, Rollback.Action.DOWNGRADE, realm);
+		Rollback rollback = DeprecatedDatabase.RollbackQ.get(realm, packageName, Rollback.Action.DOWNGRADE);
 		if (rollback != null) {
 			confirmAction(packageName, Rollback.Action.DOWNGRADE);
+			Analytics.ApplicationInstall.downgraded(packageName, rollback.getTrustedBadge());
 		} else {
-			rollback = Database.RollbackQ.get(packageName, Rollback.Action.UNINSTALL, realm);
+			rollback = DeprecatedDatabase.RollbackQ.get(realm, packageName, Rollback.Action.UNINSTALL);
 			if (rollback != null) {
 				confirmAction(packageName, Rollback.Action.UNINSTALL);
 			}
@@ -158,7 +162,7 @@ public class InstalledBroadcastReceiver extends BroadcastReceiver {
 	}
 
 	private void confirmAction(String packageName, Rollback.Action action) {
-		Rollback rollback = Database.RollbackQ.get(packageName, action, realm);
+		Rollback rollback = DeprecatedDatabase.RollbackQ.get(realm, packageName, action);
 		if (rollback != null) {
 			rollback.confirm(realm);
 		}
