@@ -6,21 +6,21 @@
 package cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid;
 
 import android.content.Context;
-
 import cm.aptoide.pt.actions.PermissionRequest;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Update;
 import cm.aptoide.pt.downloadmanager.DownloadServiceHelper;
-import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.Type;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
-import cm.aptoide.pt.v8engine.install.InstallManager;
+import cm.aptoide.pt.v8engine.install.Installer;
 import cm.aptoide.pt.v8engine.util.DownloadFactory;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.Displayable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import rx.Observable;
+import rx.functions.Action0;
 
 /**
  * Created by neuro on 17-05-2016.
@@ -37,7 +37,6 @@ public class UpdateDisplayable extends Displayable {
 	@Getter private String apkPath;
 	@Getter private String alternativeApkPath;
 	@Getter private String updateVersionName;
-
 	// Obb
 	@Getter private String mainObbName;
 	@Getter private String mainObbPath;
@@ -46,29 +45,31 @@ public class UpdateDisplayable extends Displayable {
 	@Getter private String patchObbPath;
 	@Getter private String patchObbMd5;
 
-	@Getter private InstallManager installManager;
+	@Getter private Installer installManager;
 	private Download download;
-	private DownloadServiceHelper downloadManager;
+	@Getter private DownloadServiceHelper downloadManager;
+	@Setter private Action0 pauseAction;
+	@Setter private Action0 resumeAction;
 
 	public UpdateDisplayable() {
 	}
 
-	public static UpdateDisplayable create(Update update, InstallManager installManager, DownloadFactory downloadFactory, DownloadServiceHelper downloadManager) {
+	public static UpdateDisplayable create(Update update, Installer installManager, DownloadFactory downloadFactory, DownloadServiceHelper downloadManager) {
 
 		return new UpdateDisplayable(update.getPackageName(), update.getAppId(), update.getLabel(), update.getIcon(), update.getVersionCode(), update.getMd5()
 				, update
 				.getApkPath(), update.getAlternativeApkPath(), update.getUpdateVersionName(), update.getMainObbName(), update.getMainObbPath(), update
 				.getMainObbMd5(), update
-				.getPatchObbName(), update.getPatchObbPath(), update.getPatchObbMd5(), installManager, downloadFactory.create(update), downloadManager);
+				.getPatchObbName(), update.getPatchObbPath(), update.getPatchObbMd5(), installManager, downloadFactory.create(update), downloadManager, null,
+				null);
 	}
 
-	public Observable<Void> downloadAndInstall(Context context, PermissionRequest permissionRequest) {
+	public Observable<Void> downloadAndInstall(Context context) {
 		Analytics.Updates.update();
 
-		return downloadManager.startDownload(permissionRequest, download)
-				//				.ignoreElements()
-				.cast(Void.class)
-				.concatWith(installManager.install(context, permissionRequest, download.getAppId()));
+		return downloadManager.startDownload((PermissionRequest) context, download)
+				.first(download -> download.getOverallDownloadStatus() == Download.COMPLETED)
+				.concatMap(downloadCompleted -> installManager.update(context, (PermissionRequest) context, download.getAppId()));
 	}
 
 	@Override
@@ -79,5 +80,21 @@ public class UpdateDisplayable extends Displayable {
 	@Override
 	public int getViewLayout() {
 		return R.layout.update_row;
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		if (resumeAction != null) {
+			resumeAction.call();
+		}
+	}
+
+	@Override
+	public void onPause() {
+		if (pauseAction != null) {
+			pauseAction.call();
+		}
+		super.onPause();
 	}
 }

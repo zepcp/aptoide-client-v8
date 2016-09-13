@@ -6,7 +6,10 @@
 package cm.aptoide.pt.v8engine.fragment.implementations;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -29,7 +32,7 @@ import rx.Observable;
  */
 public class SubscribedStoresFragment extends GridRecyclerFragmentWithDecorator {
 
-	private Button addStoreButton;
+	private FloatingActionButton addStoreButton;
 
 	public static SubscribedStoresFragment newInstance() {
 		SubscribedStoresFragment fragment = new SubscribedStoresFragment();
@@ -51,6 +54,16 @@ public class SubscribedStoresFragment extends GridRecyclerFragmentWithDecorator 
 			new AddStoreDialog().show(((FragmentActivity) getContext())
 					.getSupportFragmentManager(), "addStoreDialog");
 		});*/
+
+		recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+			@Override
+			public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+				/*Log.d("lou",dy+"");
+				if (dy > 0 && addStoreButton.getTranslationY() > 0 && addStoreButton.isShown()) {
+					addStoreButton.setTranslationY(addStoreButton.getTranslationY()+dy);
+				}*/
+			}
+		});
 
 	}
 
@@ -83,6 +96,6 @@ public class SubscribedStoresFragment extends GridRecyclerFragmentWithDecorator 
 	@Override
 	public void bindViews(View view) {
 		super.bindViews(view);
-		addStoreButton = (Button) view.findViewById(R.id.add_more_stores);
+		addStoreButton = (FloatingActionButton) view.findViewById(R.id.fabAddStore);
 	}
 }
