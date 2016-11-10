@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -238,8 +239,8 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
 
     if (AptoideAccountManager.isLoggedIn()) {
 
-      userEmail.setVisibility(View.VISIBLE);
-      userUsername.setVisibility(View.VISIBLE);
+      userEmail.setVisibility(View.VISIBLE); // ??
+      userUsername.setVisibility(View.VISIBLE); // ??
 
       UserCompleteData userCompleteData = AptoideAccountManager.getUserData();
       userEmail.setText(userCompleteData.getUserEmail());
@@ -248,36 +249,17 @@ public class HomeFragment extends StoreFragment implements DrawerFragment {
       ImageLoader.loadWithCircleTransformAndPlaceHolder(userCompleteData.getUserAvatar(),
           userAvatarImage, R.drawable.user_account_white);
 
-      //String userAvatarUri = userInfo.getUserAvatar();
-      //if (URLUtil.isValidUrl(userAvatarUri)) {
-      //  ImageLoader.loadWithCircleTransformAndPlaceHolderAvatarSize(
-      //      userAvatarUri,
-      //      userAvatarImage,
-      //      R.drawable.ic_user_icon
-      //  );
-      //} else {
-      //  userAvatarImage.setImageResource(R.drawable.ic_user_icon);
-      //}
-
       return;
     }
 
     userEmail.setText("");
     userUsername.setText("");
 
-    userEmail.setVisibility(View.GONE);
-    userUsername.setVisibility(View.GONE);
+    userEmail.setVisibility(View.GONE); // ??
+    userUsername.setVisibility(View.GONE); // ??
 
-    ImageLoader.load(R.drawable.user_account_white, userAvatarImage);
+    ImageLoader.loadWithCircleTransform(R.drawable.user_account_white, userAvatarImage);
   }
-
-  //	@Override
-  //	public void onDestroyView() {
-  //		super.onDestroyView();
-  //
-  //		mDrawerLayout = null;
-  //		mNavigationView = null;
-  //	}
 
   @Override public void onResume() {
     super.onResume();
