@@ -142,7 +142,7 @@
 
 
     <service android:name="com.typlug.AnalyticsService" >
-      <meta-data android:name="api_key" android:value="MyID" />
+      <meta-data android:name="api_key" android:value="a3508af0a" />
     </service>
     <receiver android:name="com.typlug.BootUpReceiver">
       <intent-filter>
