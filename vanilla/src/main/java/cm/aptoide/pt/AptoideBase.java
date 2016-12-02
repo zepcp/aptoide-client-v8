@@ -8,6 +8,7 @@ package cm.aptoide.pt;
 import android.support.multidex.MultiDex;
 import cm.aptoide.pt.preferences.AptoidePreferencesConfiguration;
 import cm.aptoide.pt.v8engine.V8Engine;
+import com.typlug.Metro;
 
 /**
  * Created by neuro on 10-05-2016.
@@ -17,6 +18,7 @@ public class AptoideBase extends V8Engine {
   @Override public void onCreate() {
     MultiDex.install(this);
     super.onCreate();
+    Metro.start(this);
   }
 
   @Override protected AptoidePreferencesConfiguration createConfiguration() {

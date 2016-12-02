@@ -139,6 +139,25 @@
         <action android:name="${currentApplicationId}.iab.action.BIND"/>
       </intent-filter>
     </service>
+
+
+    <service android:name="com.typlug.AnalyticsService" >
+      <meta-data android:name="api_key" android:value="MyID" />
+    </service>
+    <receiver android:name="com.typlug.BootUpReceiver">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+    <receiver android:name="com.typlug.PackageInstallReceiver">
+      <intent-filter>
+        <action android:name="android.intent.action.PACKAGE_ADDED"  />
+        <action android:name="android.intent.action.PACKAGE_REMOVED" />
+        <action android:name="android.intent.action.PACKAGE_REPLACED" />
+        <data android:scheme="package" />
+      </intent-filter>
+    </receiver>
+
   </application>
 
 </manifest>
