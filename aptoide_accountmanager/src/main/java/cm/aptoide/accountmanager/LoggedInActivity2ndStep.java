@@ -11,6 +11,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.SetUserRequest;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.GenericDialogs;
+import cm.aptoide.pt.utils.design.ShowMessage;
 import com.jakewharton.rxbinding.view.RxView;
 import rx.subscriptions.CompositeSubscription;
 
@@ -35,6 +36,11 @@ public class LoggedInActivity2ndStep extends BaseActivity {
     bindViews();
     setupToolbar();
     setupListeners();
+  }
+
+  @Override protected void onDestroy() {
+    super.onDestroy();
+    mSubscriptions.clear();
   }
 
   @Override protected String getActivityTitle() {
@@ -70,21 +76,25 @@ public class LoggedInActivity2ndStep extends BaseActivity {
       SetUserRequest.of(new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(),
               DataProvider.getContext()).getAptoideClientUUID(), UserAccessState.PUBLIC.toString(),
           AptoideAccountManager.getAccessToken()).execute(answer -> {
-        if (answer.isOk()) {
-          Logger.v(TAG, "user is public");
-          Toast.makeText(LoggedInActivity2ndStep.this, R.string.successful, Toast.LENGTH_SHORT)
-              .show();
-        } else {
-          Logger.v(TAG, "user is public: error: " + answer.getError().getDescription());
-          Toast.makeText(LoggedInActivity2ndStep.this, R.string.unknown_error, Toast.LENGTH_SHORT)
-              .show();
-        }
-        startActivity(getIntent().setClass(this, CreateStoreActivity.class));
-        finish();
+        mSubscriptions.add(ShowMessage.asObservableSnack(this, R.string.successful)
+            .subscribe(visibility -> {
+              if (visibility == ShowMessage.DISMISSED) {
+                pleaseWaitDialog.dismiss();
+                startActivity(getIntent().setClass(this, CreateStoreActivity.class));
+                finish();
+              }
+            })
+        );
       }, throwable -> {
-        pleaseWaitDialog.show();
-        startActivity(getIntent().setClass(this, CreateStoreActivity.class));
-        finish();
+        mSubscriptions.add(ShowMessage.asObservableSnack(this, R.string.unknown_error)
+            .subscribe(visibility -> {
+              if (visibility == ShowMessage.DISMISSED) {
+                pleaseWaitDialog.dismiss();
+                startActivity(getIntent().setClass(this, CreateStoreActivity.class));
+                finish();
+              }
+            })
+        );
       });
     }));
     mSubscriptions.add(RxView.clicks(mPrivateProfile).subscribe(clicks -> {
