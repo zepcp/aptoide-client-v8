@@ -16,6 +16,7 @@ import android.widget.RelativeLayout;
 import cm.aptoide.accountmanager.ws.CreateUserRequest;
 import cm.aptoide.accountmanager.ws.ErrorsMapper;
 import cm.aptoide.pt.imageloader.ImageLoader;
+import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
@@ -101,6 +102,7 @@ public class CreateUserActivity extends PermissionsBaseActivity
     mSubscriptions.add(RxView.clicks(mUserAvatar).subscribe(click -> chooseAvatarSource()));
     mSubscriptions.add(RxView.clicks(mCreateButton).subscribe(click -> {
       username = mUsername.getText().toString();
+      AptoideUtils.SystemU.hideKeyboard(this);
       validateProfileData();
       if (CREATE_USER_REQUEST_CODE == 1) {
         ProgressDialog pleaseWaitDialog = GenericDialogs.createGenericPleaseWaitDialog(this,

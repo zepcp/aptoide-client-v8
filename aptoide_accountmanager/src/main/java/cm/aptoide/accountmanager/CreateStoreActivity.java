@@ -178,7 +178,7 @@ public class CreateStoreActivity extends PermissionsBaseActivity
     mSubscriptions.add(RxView.clicks(mStoreAvatarLayout).subscribe(click -> chooseAvatarSource()));
     mSubscriptions.add(RxView.clicks(mCreateStore).subscribe(click -> {
       storeName = mStoreName.getText().toString();
-      //TODO: Make request to create repo and to update it (checkusercredentials and setStore) and add dialog
+      AptoideUtils.SystemU.hideKeyboard(this);
       validateData();
       if (CREATE_STORE_REQUEST_CODE == 2
           || CREATE_STORE_REQUEST_CODE == 3
