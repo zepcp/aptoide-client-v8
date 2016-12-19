@@ -240,6 +240,13 @@ public class FileUtils {
     }
   }
 
+  /**
+   * Returns true path for image. Created to return path for images shown in gallery.
+   *
+   * @param uri
+   * @param context
+   * @return
+   */
   public String getPath(Uri uri, Context context) {
 
     String[] projection = { MediaStore.Images.Media.DATA };
@@ -250,6 +257,12 @@ public class FileUtils {
     return cursor.getString(column_index);
   }
 
+  /**
+   * Returns resolution of given image path
+   *
+   * @param imagePath
+   * @return HeighxWidth
+   */
   public ArrayList<Integer> getImageResolution(String imagePath) {
     ArrayList<Integer> resolution = new ArrayList<>();
     Bitmap image = BitmapFactory.decodeFile(imagePath);
