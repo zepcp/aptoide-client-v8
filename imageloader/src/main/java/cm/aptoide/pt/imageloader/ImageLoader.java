@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.widget.ImageView;
+import cm.aptoide.pt.imageloader.customImageSize.AptoideQueryStringImageSizeModel;
 import cm.aptoide.pt.utils.AptoideUtils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -130,10 +131,15 @@ public class ImageLoader {
 
   public void loadWithShadowCircleTransform(String url, ImageView imageView,
       @ColorInt int shadowColor) {
+
+    // fixme remove this and use dimensions only in query string
+    final String hammeredUrl = AptoideUtils.IconSizeU.generateSizeStoreString(url);
+
     Context context = weakContext.get();
     if (context != null) {
       Glide.with(context)
-          .load(AptoideUtils.IconSizeU.generateSizeStoreString(url))
+          .load(new AptoideQueryStringImageSizeModel(hammeredUrl))
+          //.load(new AptoideQueryStringImageSizeModel(url))
           .transform(new ShadowCircleTransformation(context, imageView, shadowColor))
           .into(imageView);
     } else {

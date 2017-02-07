@@ -153,10 +153,15 @@
       <meta-data
           android:name="android.content.SyncAdapter"
           android:resource="@xml/sync"/>
-      <meta-data
-          android:name="cm.aptoide.pt.imageloader.GlideModifications"
-          android:value="GlideModule"/>
     </service>
+
+    <!-- glide modules -->
+    <meta-data
+        android:name="cm.aptoide.pt.imageloader.GlideModifications"
+        android:value="GlideModule"/>
+    <meta-data
+        android:name="cm.aptoide.pt.imageloader.customImageSize.CustomImageSizeGlideModule"
+        android:value="GlideModule"/>
   </application>
 
 </manifest>
