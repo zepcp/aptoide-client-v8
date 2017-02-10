@@ -22,7 +22,7 @@
   <LinearLayout
       android:id="@+id/store_layout"
       android:layout_width="match_parent"
-      android:layout_height="55.6dp"
+      android:layout_height="wrap_content"
       android:layout_gravity="center_vertical"
       android:orientation="horizontal"
       android:paddingBottom="10.3dp"
@@ -35,7 +35,7 @@
     <LinearLayout
         android:id="@+id/app_store_layout"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="2"
         android:gravity="center_vertical"
         android:orientation="horizontal"
