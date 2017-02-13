@@ -8,7 +8,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/screenshots_list"
     android:layout_width="match_parent"
-    android:layout_height="240dp"
+    android:layout_height="390dp"
     android:paddingEnd="0dp"
     android:paddingLeft="0dp"
     android:paddingRight="0dp"

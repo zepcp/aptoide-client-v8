@@ -837,4 +837,8 @@
     <item name="android:clickable">false</item>
     <item name="android:focusable">false</item>
   </style>
+
+  <style name="toolbar_title_style">
+    <item name="android:textSize">20sp</item>
+  </style>
 </resources>

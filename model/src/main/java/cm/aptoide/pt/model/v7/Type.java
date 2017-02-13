@@ -15,7 +15,7 @@ public enum Type {
   _EMPTY(1, true), // FIXME for tests only
 
   // Server
-  APPS_GROUP(3, false),
+  APPS_GROUP(6, true),
   STORES_GROUP(3, false),
   DISPLAYS(2, true),
   ADS(3, false),

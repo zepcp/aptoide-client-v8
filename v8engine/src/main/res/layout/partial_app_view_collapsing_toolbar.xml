@@ -13,7 +13,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/app_bar"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/appview_header_height"
+    android:layout_height="@dimen/appview_header_height_xxl"
     android:background="#80000000"
     android:fitsSystemWindows="true"
     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
