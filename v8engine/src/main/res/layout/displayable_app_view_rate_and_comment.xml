@@ -218,12 +218,11 @@
           android:layout_height="wrap_content"
           android:layout_below="@id/users_icon_layout"
           android:gravity="center"
-          android:includeFontPadding="false"
-          android:lineSpacingMultiplier="0.9"
+          android:lineSpacingMultiplier="0.8"
           android:maxLines="1"
           android:text="@string/zero"
           android:textColor="@color/white"
-          android:textSize="42sp"
+          android:textSize="24sp"
           />
 
       <RatingBar
@@ -232,7 +231,7 @@
           android:layout_height="wrap_content"
           android:layout_below="@id/rating_value"
           android:layout_centerInParent="true"
-          android:layout_marginTop="6dp"
+          android:layout_marginTop="14dp"
           android:numStars="5"
           android:rating="0"
           android:stepSize="0.5"
