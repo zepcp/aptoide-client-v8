@@ -53,7 +53,6 @@
   <dimen name="black_header_background_height">70dp</dimen>
   <dimen name="appview_header_app_image_size">99dp</dimen>
   <dimen name="appview_store_icon_size">33dp</dimen>
-  <dimen name="appview_store_icon_size_xxl">48dp</dimen>
   <dimen name="appview_frags_size">50dp</dimen>
   <dimen name="excludeUpdatePadding">10dp</dimen>
   <dimen name="separatorMargin">10dp</dimen>
@@ -73,7 +72,6 @@
   <dimen name="appview_title_left_margin">120dp</dimen>
   <dimen name="appview_title_right_margin">74dp</dimen>
   <dimen name="appview_header_height">257.3dp</dimen>
-  <dimen name="appview_header_height_xxl">500dp</dimen>
   <dimen name="appview_top_rating_top_margin">80dp</dimen>
   <dimen name="custom_snackbar_height">44dp</dimen>
   <dimen name="flag_width">84dp</dimen>
@@ -82,7 +80,6 @@
   <dimen name="appview_vertical_margin">4dp</dimen>
   <dimen name="appview_vertical_margin_first">8dp</dimen>
   <dimen name="appview_header_side_margin">10dp</dimen>
-  <dimen name="appview_header_side_margin_xxl">20dp</dimen>
   <dimen name="appview_header_bottom_margin">11dp</dimen>
   <dimen name="appview_badge_icon_size">9dp</dimen>
   <dimen name="other_versions_header_height">164dp</dimen>
@@ -101,4 +98,9 @@
   <dimen name="app_view_padding" >16dp</dimen>
   <dimen name="header_top_margin">26dp</dimen>
   <dimen name="app_view_subscription_padding">41dp</dimen> <!-- was 31dp, increased by 10 -->
+  <dimen name="flag_icons_bottom_padding">30dp</dimen>
+  <dimen name="flag_icons_padding">40dp</dimen>
+  <dimen name="appview_header_side_margin_xxl">20dp</dimen>
+  <dimen name="appview_store_icon_size_xxl">48dp</dimen>
+  <dimen name="appview_header_height_xxl">500dp</dimen>
 </resources>
