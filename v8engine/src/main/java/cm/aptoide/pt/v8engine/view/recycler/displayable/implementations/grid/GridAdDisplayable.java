@@ -6,6 +6,7 @@
 package cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid;
 
 import cm.aptoide.pt.database.realm.MinimalAd;
+import cm.aptoide.pt.model.v7.Type;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.DisplayablePojo;
 import lombok.Getter;
@@ -26,7 +27,8 @@ public class GridAdDisplayable extends DisplayablePojo<MinimalAd> {
   }
 
   @Override protected Configs getConfig() {
-    return new Configs(3, false);
+    return new Configs(Type.ADS.getDefaultPerLineCount(),
+        Type.ADS.isFixedPerLineCount());
   }
 
   @Override public int getViewLayout() {
