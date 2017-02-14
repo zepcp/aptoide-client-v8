@@ -11,6 +11,8 @@
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
     android:orientation="vertical"
+    android:layout_marginLeft="@dimen/app_view_padding"
+    android:layout_marginRight="@dimen/app_view_padding"
     style="@style/AppViewWidget"
     >
 

@@ -6,6 +6,8 @@
     android:layout_height="200dp"
     android:paddingBottom="7.3dp"
     android:paddingTop="15dp"
+    android:layout_marginLeft="@dimen/app_view_padding"
+    android:layout_marginRight="@dimen/app_view_padding"
     style="@style/AppViewWidget"
     >
 
