@@ -38,7 +38,7 @@
         android:layout_height="@dimen/tabsHeight"
         android:background="?attr/backgroundTabs"
         android:theme="?attr/toolbarTheme"
-        app:pstsIndicatorHeight="6dp"
+        app:pstsIndicatorHeight="4dp"
         />
 
   </android.support.design.widget.AppBarLayout>

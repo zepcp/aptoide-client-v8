@@ -18,7 +18,7 @@ public enum Type {
   APPS_GROUP(6, true),
   STORES_GROUP(6, true),
   DISPLAYS(2, true),
-  ADS(3, false),
+  ADS(6, true),
   STORE_META(1, true),
   COMMENTS_GROUP(1, true),
 

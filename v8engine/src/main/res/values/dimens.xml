@@ -103,4 +103,5 @@
   <dimen name="appview_header_side_margin_xxl">20dp</dimen>
   <dimen name="appview_store_icon_size_xxl">48dp</dimen>
   <dimen name="appview_header_height_xxl">500dp</dimen>
+  <dimen name="toolbar_size">112dp</dimen>
 </resources>

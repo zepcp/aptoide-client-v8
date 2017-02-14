@@ -27,7 +27,7 @@ public class SearchDisplayable extends DisplayablePojo<ListSearchApps.SearchApps
   }
 
   @Override protected Configs getConfig() {
-    return new Configs(1, false);
+    return new Configs(2, true);
   }
 
   @Override public int getViewLayout() {
