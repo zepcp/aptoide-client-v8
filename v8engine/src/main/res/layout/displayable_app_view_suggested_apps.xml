@@ -9,6 +9,8 @@
     android:id="@+id/app_view_suggested"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginLeft="@dimen/app_view_padding"
+    android:layout_marginRight="@dimen/app_view_padding"
     android:orientation="vertical"
     style="@style/AppViewWidget"
     >
