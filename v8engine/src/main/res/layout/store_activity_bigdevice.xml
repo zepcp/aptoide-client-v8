@@ -59,6 +59,7 @@
         android:layout_height="@dimen/tabsHeight"
         android:background="?attr/backgroundTabs"
         android:theme="?attr/toolbarTheme"
+        app:pstsTabTextSize="24dp"
         app:pstsIndicatorHeight="4dp"
         />
 

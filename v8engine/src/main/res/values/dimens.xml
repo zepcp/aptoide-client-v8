@@ -6,7 +6,7 @@
 
 <resources xmlns:s="http://schemas.android.com/tools"
     xmlns:tools="urn:oasis:names:tc:xliff:document:1.2">
-  <dimen name="tabsHeight">48dp</dimen>
+  <dimen name="tabsHeight">58dp</dimen>
   <dimen name="activity_horizontal_margin">0dp</dimen>
   <dimen name="activity_vertical_margin">16dp</dimen>
 
