@@ -5,6 +5,8 @@
 
 package cm.aptoide.accountmanager;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.StringRes;
@@ -13,7 +15,15 @@ import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.design.ShowMessage;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.TwitterAuthToken;
+import com.twitter.sdk.android.core.TwitterException;
+import com.twitter.sdk.android.core.TwitterSession;
+import com.twitter.sdk.android.core.identity.TwitterLoginButton;
 
 /**
  * Created by trinkes on 4/29/16.
@@ -28,6 +38,14 @@ public class SignUpActivity extends BaseActivity implements AptoideAccountManage
   private View content;
 
   private String SIGNUP = "signup";
+  private TwitterLoginButton loginButton;
+
+  @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    // Make sure that the loginButton hears the result from any
+    // Activity that it triggered.
+    loginButton.onActivityResult(requestCode, resultCode, data);
+  }
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -35,6 +53,41 @@ public class SignUpActivity extends BaseActivity implements AptoideAccountManage
     bindViews();
     setupToolbar();
     setupListeners();
+
+    loginButton = (TwitterLoginButton) findViewById(R.id.twitter_login_button);
+    loginButton.setCallback(new Callback<TwitterSession>() {
+      @Override public void success(Result<TwitterSession> result) {
+        // The TwitterSession is also available through:
+        // Twitter.getInstance().core.getSessionManager().getActiveSession()
+        TwitterSession session = result.data;
+        // with your app's user model
+        String msg = "@" + session.getUserName() + " logged in! (#" + session.getUserId() + ")";
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+        Logger.v("TwitterKit", msg);
+        TwitterAuthToken authToken = session.getAuthToken();
+        String token = authToken.token;
+        String secret = authToken.secret;
+        Logger.v("TwitterKit", token + " " + secret);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(SignUpActivity.this);
+        builder.setMessage(msg + "\n token scret: " + token + " " + secret);
+        builder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+          @Override public void onClick(DialogInterface dialogInterface, int i) {
+
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, msg + "\n token scret: " + token + " " + secret);
+            sendIntent.setType("text/plain");
+            startActivity(sendIntent);
+          }
+        });
+        builder.create().show();
+      }
+
+      @Override public void failure(TwitterException exception) {
+        Logger.d("TwitterKit", "Login with Twitter failure", exception);
+      }
+    });
   }
 
   @Override protected String getActivityTitle() {

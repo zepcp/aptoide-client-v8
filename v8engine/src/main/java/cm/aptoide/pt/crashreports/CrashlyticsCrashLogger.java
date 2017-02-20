@@ -4,6 +4,8 @@ import android.content.Context;
 import cm.aptoide.pt.logger.Logger;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
+import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
 import io.fabric.sdk.android.Fabric;
 import lombok.Setter;
 
@@ -21,9 +23,12 @@ public class CrashlyticsCrashLogger implements CrashLogger {
   @Setter private String language;
 
   public CrashlyticsCrashLogger(Context context, boolean isDisabled) {
+
     Fabric.with(context,
         new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(isDisabled).build())
-            .build());
+            .build(), new Twitter(
+            new TwitterAuthConfig(cm.aptoide.accountmanager.BuildConfig.TWITTER_KEY,
+                cm.aptoide.accountmanager.BuildConfig.TWITTER_SECRET)));
     Logger.d(TAG, "Setup of " + this.getClass().getSimpleName() + " complete.");
   }
 
