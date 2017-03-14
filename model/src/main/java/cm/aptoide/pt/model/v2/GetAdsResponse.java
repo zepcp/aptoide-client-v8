@@ -24,8 +24,7 @@ public class GetAdsResponse {
 		private long id;
 		private String name;
 		private String repo;
-		@JsonProperty("package")
-		private String packageName;
+		@JsonProperty("package") private String packageName;
 		private String md5sum;
 		private long size;
 		private int vercode;

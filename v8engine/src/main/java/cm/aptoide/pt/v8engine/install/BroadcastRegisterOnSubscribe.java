@@ -56,3 +56,4 @@ public class BroadcastRegisterOnSubscribe implements Observable.OnSubscribe<Inte
 		context.registerReceiver(broadcastReceiver, intentFilter, broadcastPermission, schedulerHandler);
 	}
 }
+

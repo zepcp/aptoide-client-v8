@@ -262,6 +262,10 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 				downloadProgressLayout.setVisibility(View.VISIBLE);
 				actionPauseResume.setImageResource(R.drawable.ic_pause);
 
+				if (minimalAd != null && minimalAd.getCpdUrl() != null) {
+					DataproviderUtils.AdNetworksUtils.knockCpd(minimalAd);
+				}
+
 				downloadServiceHelper.startDownload(permissionRequest, appDownload).subscribe(download -> {
 
 					// TODO: 19/07/16 sithengineer logic to show / hide pause / resume download and show download progress
@@ -302,11 +306,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
 							installAndLatestVersionLayout.setVisibility(View.VISIBLE);
 							downloadProgressLayout.setVisibility(View.GONE);
-							displayable.install(getContext(), app).observeOn(AndroidSchedulers.mainThread()).doOnNext(success -> {
-								if (minimalAd != null && minimalAd.getCpdUrl() != null) {
-									DataproviderUtils.AdNetworksUtils.knockCpd(minimalAd);
-								}
-							}).subscribe(success -> {
+							displayable.install(getContext(), app).observeOn(AndroidSchedulers.mainThread()).subscribe(success -> {
 								if (actionButton.getVisibility() == View.VISIBLE) {
 									actionButton.setText(R.string.open);
 									// FIXME: 20/07/16 sithengineer refactor this ugly code

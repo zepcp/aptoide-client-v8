@@ -232,7 +232,12 @@ public class StoreTabGridRecyclerFragment extends GridRecyclerSwipeFragment {
 					CountDownLatch countDownLatch = new CountDownLatch(list.size());
 
 					Observable.from(list)
-							.forEach(wsWidget -> WSWidgetsUtils.loadInnerNodes(wsWidget, countDownLatch, refresh, throwable -> countDownLatch.countDown()));
+							.forEach(wsWidget -> WSWidgetsUtils.loadInnerNodes(wsWidget, countDownLatch, refresh, new Action1<Throwable>() {
+								@Override
+								public void call(Throwable throwable) {
+									countDownLatch.countDown();
+								}
+							}));
 
 					try {
 						countDownLatch.await(5, TimeUnit.SECONDS);

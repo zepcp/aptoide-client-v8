@@ -91,6 +91,7 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 			wv.getSettings().setJavaScriptEnabled(true);
 			wv.setWebViewClient(new WebViewClient() {
 
+				public String referrer;
 				Future<Void> future;
 
 				@Override
@@ -99,7 +100,8 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 					if (clickUrl.startsWith("market://") || clickUrl.startsWith("https://play.google.com") ||
 							clickUrl.startsWith("http://play.google.com")) {
 						Logger.d("ExtractReferrer", "Clickurl landed on market");
-						final String referrer = getReferrer(clickUrl);
+						 referrer = getReferrer(clickUrl);
+
 						//                        if (simpleFuture != null) {
 						//                            simpleFuture.set(referrer);
 						//                        }
@@ -165,10 +167,10 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 								e.printStackTrace();
 							}
 							// AdMonitor- Failed to extract referrer.
-							AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "extractReferrerFailed");
+							AdMonitor.sendReferrerToAdMonitor(minimalAd.getAdId(),referrer, "extractReferrerFailed");
 						} else {
 							// AdMonitor- referrer successfully extracted.
-							AdMonitor.sendDataToAdMonitor(minimalAd.getAdId(), "referrerExtracted");
+							AdMonitor.sendReferrerToAdMonitor(minimalAd.getAdId(), referrer, "referrerExtracted");
 							// A lista de excluded networks deve ser limpa a cada "ronda"
 							excludedNetworks.remove(packageName);
 						}
