@@ -20,10 +20,10 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.Event;
 import cm.aptoide.pt.model.v7.store.Store;
 import cm.aptoide.pt.model.v7.timeline.UserTimeline;
-import cm.aptoide.pt.navigation.AccountNavigator;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
+import cm.aptoide.pt.v8engine.account.AccountNavigator;
 import cm.aptoide.pt.v8engine.customviews.LikeButtonView;
 import cm.aptoide.pt.v8engine.fragment.implementations.StoreFragment;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.timeline.SocialCardDisplayable;
@@ -73,7 +73,8 @@ abstract class SocialCardWidget<T extends SocialCardDisplayable> extends CardWid
   @Override @CallSuper public void bindView(T displayable) {
     super.bindView(displayable);
     accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
-    accountNavigator = new AccountNavigator(getContext(), getNavigationManager(), accountManager);
+    accountNavigator =
+        new AccountNavigator(getFragmentNavigator(), accountManager, getActivityNavigator());
 
     if (displayable.getUserSharer() != null) {
       if (displayable.getUserSharer().getName() != null && !displayable.getUser()
@@ -111,7 +112,7 @@ abstract class SocialCardWidget<T extends SocialCardDisplayable> extends CardWid
       }
 
       compositeSubscription.add(RxView.clicks(likeButton)
-          .flatMap(__ -> accountManager.getAccountAsync().toObservable())
+          .flatMap(__ -> accountManager.accountStatus().first().toSingle().toObservable())
           .observeOn(AndroidSchedulers.mainThread())
           .subscribe(account -> {
             if (likeCard(displayable, 1, account)) {
@@ -157,7 +158,7 @@ abstract class SocialCardWidget<T extends SocialCardDisplayable> extends CardWid
     showLikesPreview(displayable);
 
     compositeSubscription.add(RxView.clicks(likePreviewContainer)
-        .subscribe(click -> displayable.likesPreviewClick(getNavigationManager()),
+        .subscribe(click -> displayable.likesPreviewClick(getFragmentNavigator()),
             err -> CrashReport.getInstance().log(err)));
 
     compositeSubscription.add(
@@ -176,7 +177,7 @@ abstract class SocialCardWidget<T extends SocialCardDisplayable> extends CardWid
       final String elementId = displayable.getTimelineCard().getCardId();
       Fragment fragment = V8Engine.getFragmentProvider()
           .newCommentGridRecyclerFragment(CommentType.TIMELINE, elementId);
-      getNavigationManager().navigateTo(fragment);
+      getFragmentNavigator().navigateTo(fragment);
       return null;
     });
   }
@@ -239,13 +240,13 @@ abstract class SocialCardWidget<T extends SocialCardDisplayable> extends CardWid
   }
 
   private void openStore(long userId, String storeTheme) {
-    getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+    getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
         .newStoreFragment(userId, storeTheme, Event.Name.getUserTimeline,
             StoreFragment.OpenType.GetHome));
   }
 
   private void openStore(String storeName, String storeTheme) {
-    getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+    getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
         .newStoreFragment(storeName, storeTheme, Event.Name.getUserTimeline,
             StoreFragment.OpenType.GetHome));
   }

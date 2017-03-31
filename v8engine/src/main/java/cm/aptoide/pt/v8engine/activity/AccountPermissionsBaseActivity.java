@@ -53,6 +53,55 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
   private File avatar;
   private CompositeSubscription mSubscriptions;
 
+  public static String checkAndAskPermission(final AppCompatActivity activity, String type) {
+
+    if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+      if (type.equals(TYPE_STORAGE)) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE)
+            != PackageManager.PERMISSION_GRANTED) {
+
+          if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+              Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+            ActivityCompat.requestPermissions(activity,
+                new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, STORAGE_REQUEST_CODE);
+            return STORAGE_PERMISSION_REQUESTED;
+          } else {
+            ActivityCompat.requestPermissions(activity,
+                new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, STORAGE_REQUEST_CODE);
+          }
+        } else {
+          return STORAGE_PERMISSION_GIVEN;
+        }
+      } else if (type.equals(TYPE_CAMERA)) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+          if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+              Manifest.permission.CAMERA)) {
+
+            ActivityCompat.requestPermissions(activity, new String[] {
+                Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE
+            }, CAMERA_REQUEST_CODE);
+            return CAMERA_PERMISSION_REQUESTED;
+          } else {
+            ActivityCompat.requestPermissions(activity, new String[] {
+                Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE
+            }, CAMERA_REQUEST_CODE);
+          }
+        } else {
+          return CAMERA_PERMISSION_GIVEN;
+        }
+      }
+    } else {
+      if (type.equals(TYPE_CAMERA)) {
+        return CAMERA_PERMISSION_GIVEN;
+      } else if (type.equals(TYPE_STORAGE)) {
+        return STORAGE_PERMISSION_GIVEN;
+      }
+    }
+    return "";
+  }
+
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mSubscriptions = new CompositeSubscription();
@@ -101,55 +150,6 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
         callGallery();
         break;
     }
-  }
-
-  public static String checkAndAskPermission(final AppCompatActivity activity, String type) {
-
-    if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-      if (type.equals(TYPE_STORAGE)) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-
-          if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-              Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-            ActivityCompat.requestPermissions(activity,
-                new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, STORAGE_REQUEST_CODE);
-            return STORAGE_PERMISSION_REQUESTED;
-          } else {
-            ActivityCompat.requestPermissions(activity,
-                new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, STORAGE_REQUEST_CODE);
-          }
-        } else {
-          return STORAGE_PERMISSION_GIVEN;
-        }
-      } else if (type.equals(TYPE_CAMERA)) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED) {
-          if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-              Manifest.permission.CAMERA)) {
-
-            ActivityCompat.requestPermissions(activity, new String[] {
-                Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE
-            }, CAMERA_REQUEST_CODE);
-            return CAMERA_PERMISSION_REQUESTED;
-          } else {
-            ActivityCompat.requestPermissions(activity, new String[] {
-                Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE
-            }, CAMERA_REQUEST_CODE);
-          }
-        } else {
-          return CAMERA_PERMISSION_GIVEN;
-        }
-      }
-    } else {
-      if (type.equals(TYPE_CAMERA)) {
-        return CAMERA_PERMISSION_GIVEN;
-      } else if (type.equals(TYPE_STORAGE)) {
-        return STORAGE_PERMISSION_GIVEN;
-      }
-    }
-    return "";
   }
 
   public void changePermissionValue(boolean b) {
@@ -206,17 +206,17 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
 
   protected void checkAvatarRequirements(String avatarPath, Uri avatarUrl) {
     if (!TextUtils.isEmpty(avatarPath)) {
-      List<AptoideUtils.IconSizeU.ImageSizeErrors> imageSizeErrors =
+      List<AptoideUtils.IconSizeU.ImageErrors> imageErrors =
           AptoideUtils.IconSizeU.checkIconSizeProperties(avatarPath,
               getResources().getInteger(R.integer.min_avatar_height),
               getResources().getInteger(R.integer.max_avatar_height),
               getResources().getInteger(R.integer.min_avatar_width),
               getResources().getInteger(R.integer.max_avatar_width),
               getResources().getInteger(R.integer.max_avatar_Size));
-      if (imageSizeErrors.isEmpty()) {
+      if (imageErrors.isEmpty()) {
         loadImage(avatarUrl);
       } else {
-        showIconPropertiesError(getErrorsMessage(imageSizeErrors));
+        showIconPropertiesError(getErrorsMessage(imageErrors));
       }
     }
   }
@@ -225,10 +225,10 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
 
   public abstract void showIconPropertiesError(String errors);
 
-  private String getErrorsMessage(List<AptoideUtils.IconSizeU.ImageSizeErrors> imageSizeErrors) {
+  private String getErrorsMessage(List<AptoideUtils.IconSizeU.ImageErrors> imageErrors) {
     StringBuilder message = new StringBuilder();
     message.append(getString(cm.aptoide.accountmanager.R.string.image_requirements_popup_message));
-    for (AptoideUtils.IconSizeU.ImageSizeErrors imageSizeError : imageSizeErrors) {
+    for (AptoideUtils.IconSizeU.ImageErrors imageSizeError : imageErrors) {
       switch (imageSizeError) {
         case MIN_HEIGHT:
           message.append(
@@ -249,6 +249,9 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
         case MAX_IMAGE_SIZE:
           message.append(
               getString(cm.aptoide.accountmanager.R.string.image_requirements_error_max_file_size));
+          break;
+        case ERROR_DECODING:
+          message.append(getString(R.string.image_requirements_error_open_image));
           break;
       }
     }

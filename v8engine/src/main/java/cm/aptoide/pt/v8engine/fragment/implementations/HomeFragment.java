@@ -26,14 +26,14 @@ import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
 import cm.aptoide.pt.imageloader.ImageLoader;
 import cm.aptoide.pt.model.v7.Event;
-import cm.aptoide.pt.navigation.AccountNavigator;
-import cm.aptoide.pt.navigation.NavigationManagerV4;
+import cm.aptoide.pt.navigation.FragmentNavigator;
 import cm.aptoide.pt.navigation.TabNavigator;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.StorePagerAdapter;
 import cm.aptoide.pt.v8engine.V8Engine;
+import cm.aptoide.pt.v8engine.account.AccountNavigator;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.analytics.AptoideAnalytics.events.SpotAndShareAnalytics;
 import cm.aptoide.pt.v8engine.repository.RepositoryFactory;
@@ -106,10 +106,7 @@ public class HomeFragment extends StoreFragment {
     userUsername = (TextView) baseHeaderView.findViewById(R.id.profile_name_text);
     userAvatarImage = (ImageView) baseHeaderView.findViewById(R.id.profile_image);
 
-    accountManager.getAccountAsync()
-        .toObservable()
-        .onErrorResumeNext(
-            Observable.just(null))//fixme fix this in the account manager and remove this line
+    accountManager.accountStatus()
         .observeOn(AndroidSchedulers.mainThread())
         .compose(bindUntilEvent(FragmentEvent.PAUSE))
         .subscribe(account -> {
@@ -174,6 +171,32 @@ public class HomeFragment extends StoreFragment {
         }, err -> CrashReport.getInstance().log(err));
   }
 
+  @Override public int getContentViewId() {
+    return R.layout.activity_main;
+  }
+
+  @Override protected void setupSearch(Menu menu) {
+    SearchUtils.setupGlobalSearchView(menu, this);
+  }
+
+  @Override public void setupViews() {
+    super.setupViews();
+    accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
+    accountNavigator =
+        new AccountNavigator(getFragmentNavigator(), accountManager, getActivityNavigator());
+    setupNavigationView();
+  }
+
+  protected boolean displayHomeUpAsEnabled() {
+    return false;
+  }
+
+  @Override public void setupToolbarDetails(Toolbar toolbar) {
+    toolbar.setTitle("");
+    toolbar.setNavigationIcon(R.drawable.ic_drawer);
+    toolbar.setNavigationOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+  }
+
   public void refreshUpdatesBadge(int num) {
     // No updates present
     if (updatesBadge == null) {
@@ -194,21 +217,6 @@ public class HomeFragment extends StoreFragment {
     }
   }
 
-  @Override public int getContentViewId() {
-    return R.layout.activity_main;
-  }
-
-  @Override protected void setupSearch(Menu menu) {
-    SearchUtils.setupGlobalSearchView(menu, this);
-  }
-
-  @Override public void setupViews() {
-    super.setupViews();
-    accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
-    accountNavigator = new AccountNavigator(getContext(), getNavigationManager(), accountManager);
-    setupNavigationView();
-  }
-
   private void setupNavigationView() {
     if (navigationView != null) {
 
@@ -227,20 +235,18 @@ public class HomeFragment extends StoreFragment {
         if (itemId == R.id.navigation_item_my_account) {
           accountNavigator.navigateToAccountView();
         } else {
-          final NavigationManagerV4 navigationManager = getNavigationManager();
+          final FragmentNavigator navigator = getFragmentNavigator();
           if (itemId == R.id.shareapps) {
             SpotAndShareAnalytics.clickShareApps();
-            navigationManager.navigateTo(V8Engine.getFragmentProvider().newSpotShareFragment(true));
+            navigator.navigateTo(V8Engine.getFragmentProvider().newSpotShareFragment(true));
           } else if (itemId == R.id.navigation_item_rollback) {
-            navigationManager.navigateTo(V8Engine.getFragmentProvider().newRollbackFragment());
+            navigator.navigateTo(V8Engine.getFragmentProvider().newRollbackFragment());
           } else if (itemId == R.id.navigation_item_setting_scheduled_downloads) {
-            navigationManager.navigateTo(
-                V8Engine.getFragmentProvider().newScheduledDownloadsFragment());
+            navigator.navigateTo(V8Engine.getFragmentProvider().newScheduledDownloadsFragment());
           } else if (itemId == R.id.navigation_item_excluded_updates) {
-            navigationManager.navigateTo(
-                V8Engine.getFragmentProvider().newExcludedUpdatesFragment());
+            navigator.navigateTo(V8Engine.getFragmentProvider().newExcludedUpdatesFragment());
           } else if (itemId == R.id.navigation_item_settings) {
-            navigationManager.navigateTo(V8Engine.getFragmentProvider().newSettingsFragment());
+            navigator.navigateTo(V8Engine.getFragmentProvider().newSettingsFragment());
           } else if (itemId == R.id.navigation_item_facebook) {
             openFacebook();
           } else if (itemId == R.id.navigation_item_twitter) {
@@ -288,7 +294,7 @@ public class HomeFragment extends StoreFragment {
         .compose(bindUntilEvent(LifecycleEvent.DESTROY))
         .subscribe(installed -> {
           if (installed == null) {
-            getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+            getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
                 .newAppViewFragment(BACKUP_APPS_PACKAGE_NAME, AppViewFragment.OpenType.OPEN_ONLY));
           } else {
             Intent i = getContext().getPackageManager()
@@ -304,7 +310,7 @@ public class HomeFragment extends StoreFragment {
     String downloadFolderPath = Application.getContext().getCacheDir().getPath();
     String screenshotFileName = getActivity().getClass().getSimpleName() + ".jpg";
     AptoideUtils.ScreenU.takeScreenshot(getActivity(), downloadFolderPath, screenshotFileName);
-    getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+    getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
         .newSendFeedbackFragment(downloadFolderPath + screenshotFileName));
   }
 
@@ -316,7 +322,7 @@ public class HomeFragment extends StoreFragment {
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
         .subscribe(installedFacebook -> {
           if (installedFacebook == null) {
-            getNavigationManager().navigateTo(
+            getFragmentNavigator().navigateTo(
                 V8Engine.getFragmentProvider().newSocialFragment(socialUrl, pageTitle));
           } else {
             Intent sharingIntent = new Intent(Intent.ACTION_VIEW, uriToOpenApp);
@@ -325,16 +331,6 @@ public class HomeFragment extends StoreFragment {
         }, err -> {
           CrashReport.getInstance().log(err);
         });
-  }
-
-  protected boolean displayHomeUpAsEnabled() {
-    return false;
-  }
-
-  @Override public void setupToolbarDetails(Toolbar toolbar) {
-    toolbar.setTitle("");
-    toolbar.setNavigationIcon(R.drawable.ic_drawer);
-    toolbar.setNavigationOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
   }
 
   private Event.Name getEventName(int tab) {

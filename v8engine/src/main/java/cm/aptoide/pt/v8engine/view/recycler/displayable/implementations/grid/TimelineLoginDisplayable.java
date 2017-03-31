@@ -1,7 +1,7 @@
 package cm.aptoide.pt.v8engine.view.recycler.displayable.implementations.grid;
 
 import cm.aptoide.pt.v8engine.R;
-import cm.aptoide.pt.navigation.AccountNavigator;
+import cm.aptoide.pt.v8engine.account.AccountNavigator;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.Displayable;
 
 /**
@@ -12,7 +12,8 @@ public class TimelineLoginDisplayable extends Displayable {
 
   private AccountNavigator accountNavigator;
 
-  public TimelineLoginDisplayable() {}
+  public TimelineLoginDisplayable() {
+  }
 
   @Override protected Configs getConfig() {
     return new Configs(1, true);

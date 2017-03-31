@@ -83,18 +83,18 @@ public class StoreLatestAppsWidget extends CardWidget<StoreLatestAppsDisplayable
             Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
             Analytics.AppsTimeline.OPEN_APP_VIEW);
         displayable.sendOpenAppEvent(packageName);
-        getNavigationManager().navigateTo(
+        getFragmentNavigator().navigateTo(
             V8Engine.getFragmentProvider().newAppViewFragment(apps.get(app), packageName));
       }));
     }
 
     compositeSubscription.add(RxView.clicks(store).subscribe(click -> {
       knockWithSixpackCredentials(displayable.getAbUrl());
-      Analytics.AppsTimeline.clickOnCard(StoreLatestAppsDisplayable.CARD_TYPE_NAME, Analytics.AppsTimeline.BLANK,
-          Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+      Analytics.AppsTimeline.clickOnCard(StoreLatestAppsDisplayable.CARD_TYPE_NAME,
+          Analytics.AppsTimeline.BLANK, Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
           Analytics.AppsTimeline.OPEN_STORE);
       displayable.sendOpenStoreEvent();
-      getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+      getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
           .newStoreFragment(displayable.getStoreName(), displayable.getStoreTheme()));
     }));
   }

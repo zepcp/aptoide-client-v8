@@ -437,7 +437,7 @@ public class AptoideUtils {
       return context.getResources().getConfiguration().orientation;
     }
 
-    public static int getPixels(int dipValue) {
+    public static int getPixelsForDip(int dipValue) {
       Resources r = context.getResources();
       int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue,
           r.getDisplayMetrics());
@@ -576,7 +576,9 @@ public class AptoideUtils {
      *
      * @param iterable the {@code Iterable} providing the values to join together, may be null
      * @param separator the separator character to use, null treated as ""
+     *
      * @return the joined String, {@code null} if null iterator input
+     *
      * @since 2.3
      */
     public static String join(final Iterable<?> iterable, final String separator) {
@@ -594,6 +596,7 @@ public class AptoideUtils {
      *
      * @param iterator the {@code Iterator} of values to join together, may be null
      * @param separator the separator character to use, null treated as ""
+     *
      * @return the joined String, {@code null} if null iterator input
      */
     public static String join(final Iterator<?> iterator, final String separator) {
@@ -657,6 +660,7 @@ public class AptoideUtils {
 
     /**
      * @param bytes file size
+     *
      * @return formatted string for file file showing a Human perceptible file size
      */
     public static String formatBytes(long bytes, boolean speed) {
@@ -1134,7 +1138,9 @@ public class AptoideUtils {
      * Singleton constructor, needed to get access to the application context & strings for i18n
      *
      * @param context Context
+     *
      * @return DateTimeUtils singleton instance
+     *
      * @throws Exception
      */
     public static DateTimeU getInstance(Context context) {
@@ -1174,6 +1180,7 @@ public class AptoideUtils {
      * Checks if the given date is yesterday.
      *
      * @param date - Date to check.
+     *
      * @return TRUE if the date is yesterday, FALSE otherwise.
      */
     private static boolean isYesterday(long date) {
@@ -1224,6 +1231,7 @@ public class AptoideUtils {
      * Displays a user-friendly date difference string
      *
      * @param timedate Timestamp to format as date difference from now
+     *
      * @return Friendly-formatted date diff string
      */
     public String getTimeDiffString(Context context, long timedate) {
@@ -1495,6 +1503,7 @@ public class AptoideUtils {
      * filename ends with <b>_icon</b> it is an HD icon.
      *
      * @param iconUrl The String with the URL of the icon
+     *
      * @return A String with
      */
     private static String parseIcon(String iconUrl) {
@@ -1576,43 +1585,49 @@ public class AptoideUtils {
       return originalUrl;
     }
 
-    public static List<ImageSizeErrors> checkIconSizeProperties(String avatarPath, int minHeight,
+    public static List<ImageErrors> checkIconSizeProperties(String avatarPath, int minHeight,
         int maxHeight, int minWidth, int maxWidth, int maxImageSize) {
       ImageInfo imageInfo = getImageInfo(avatarPath);
-      List<ImageSizeErrors> errors = new LinkedList<>();
-      if (imageInfo.getHeight() < minHeight) {
-        errors.add(ImageSizeErrors.MIN_HEIGHT);
-      }
-      if (imageInfo.getWidth() < minWidth) {
-        errors.add(ImageSizeErrors.MIN_WIDTH);
-      }
-      if (imageInfo.getHeight() > maxHeight) {
-        errors.add(ImageSizeErrors.MAX_HEIGHT);
-      }
-      if (imageInfo.getWidth() > maxWidth) {
-        errors.add(ImageSizeErrors.MAX_WIDTH);
-      }
-      if (imageInfo.getSize() > maxImageSize) {
-        errors.add(ImageSizeErrors.MAX_IMAGE_SIZE);
+      List<ImageErrors> errors = new LinkedList<>();
+      if (imageInfo == null) {
+        errors.add(ImageErrors.ERROR_DECODING);
+      } else {
+        if (imageInfo.getHeight() < minHeight) {
+          errors.add(ImageErrors.MIN_HEIGHT);
+        }
+        if (imageInfo.getWidth() < minWidth) {
+          errors.add(ImageErrors.MIN_WIDTH);
+        }
+        if (imageInfo.getHeight() > maxHeight) {
+          errors.add(ImageErrors.MAX_HEIGHT);
+        }
+        if (imageInfo.getWidth() > maxWidth) {
+          errors.add(ImageErrors.MAX_WIDTH);
+        }
+        if (imageInfo.getSize() > maxImageSize) {
+          errors.add(ImageErrors.MAX_IMAGE_SIZE);
+        }
       }
       return errors;
     }
 
-    public static ImageInfo getImageInfo(String imagePath) {
-      ImageInfo imageInfo = new ImageInfo();
+    static ImageInfo getImageInfo(String imagePath) {
+      ImageInfo imageInfo = null;
       Bitmap image = BitmapFactory.decodeFile(imagePath);
-      imageInfo.setWidth(image.getWidth());
-      imageInfo.setHeight(image.getHeight());
-      imageInfo.setSize(new File(imagePath).length());
-
+      if (image != null) {
+        imageInfo = new ImageInfo();
+        imageInfo.setWidth(image.getWidth());
+        imageInfo.setHeight(image.getHeight());
+        imageInfo.setSize(new File(imagePath).length());
+      }
       return imageInfo;
     }
 
-    public enum ImageSizeErrors {
-      MIN_HEIGHT, MAX_HEIGHT, MIN_WIDTH, MAX_WIDTH, MAX_IMAGE_SIZE
+    public enum ImageErrors {
+      ERROR_DECODING, MIN_HEIGHT, MAX_HEIGHT, MIN_WIDTH, MAX_WIDTH, MAX_IMAGE_SIZE
     }
 
-    @Data public static class ImageInfo {
+    @Data static class ImageInfo {
       int height, width;
       long size;
     }
@@ -1650,6 +1665,7 @@ public class AptoideUtils {
      * code from <a href="http://blog.danlew.net/2015/03/02/dont-break-the-chain/">http://blog.danlew.net/2015/03/02/dont-break-the-chain/</a>
      *
      * @param <T> Observable of T
+     *
      * @return original Observable subscribed in an io thread and observed in the main thread
      */
     public static <T> Observable.Transformer<T, T> applySchedulers() {

@@ -95,26 +95,26 @@ public class AppUpdateWidget extends CardWidget<AppUpdateDisplayable> {
 
     compositeSubscription.add(RxView.clicks(store).subscribe(click -> {
       knockWithSixpackCredentials(displayable.getAbUrl());
-      Analytics.AppsTimeline.clickOnCard(AppUpdateDisplayable.CARD_TYPE_NAME, displayable.getPackageName(),
-          Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+      Analytics.AppsTimeline.clickOnCard(AppUpdateDisplayable.CARD_TYPE_NAME,
+          displayable.getPackageName(), Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
           Analytics.AppsTimeline.OPEN_STORE);
 
       displayable.sendOpenStoreEvent();
-      getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+      getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
           .newStoreFragment(displayable.getStoreName(), displayable.getStoreTheme()));
     }));
 
     compositeSubscription.add(RxView.clicks(appIcon).subscribe(click -> {
       knockWithSixpackCredentials(displayable.getAbUrl());
       displayable.sendOpenAppEvent();
-      getNavigationManager().navigateTo(V8Engine.getFragmentProvider()
+      getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
           .newAppViewFragment(displayable.getAppId(), displayable.getPackageName()));
     }));
 
     compositeSubscription.add(RxView.clicks(updateButton).flatMap(click -> {
       knockWithSixpackCredentials(displayable.getAbUrl());
-      Analytics.AppsTimeline.clickOnCard(AppUpdateDisplayable.CARD_TYPE_NAME, displayable.getPackageName(),
-          Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+      Analytics.AppsTimeline.clickOnCard(AppUpdateDisplayable.CARD_TYPE_NAME,
+          displayable.getPackageName(), Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
           Analytics.AppsTimeline.UPDATE_APP);
       displayable.sendUpdateAppEvent();
       return displayable.requestPermission(context).flatMap(success -> displayable.update(context));

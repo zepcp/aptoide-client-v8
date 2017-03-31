@@ -38,6 +38,18 @@ public class AdsRepository {
     partnerIdProvider = () -> DataProvider.getConfiguration().getPartnerId();
   }
 
+  public static boolean validAds(List<GetAdsResponse.Ad> ads) {
+    return ads != null
+        && !ads.isEmpty()
+        && ads.get(0) != null
+        && ads.get(0).getPartner() != null
+        && ads.get(0).getPartner().getData() != null;
+  }
+
+  public static boolean validAds(GetAdsResponse getAdsResponse) {
+    return getAdsResponse != null && validAds(getAdsResponse.getAds());
+  }
+
   public Observable<MinimalAd> getAdsFromAppView(String packageName, String storeName) {
     return mapToMinimalAd(GetAdsRequest.ofAppviewOrganic(packageName, storeName,
         aptoideClientUUID.getUniqueIdentifier(),
@@ -55,14 +67,6 @@ public class AdsRepository {
           return Observable.just(ads.get(0));
         })
         .map((ad) -> MinimalAd.from(ad));
-  }
-
-  public static boolean validAds(List<GetAdsResponse.Ad> ads) {
-    return ads != null
-        && !ads.isEmpty()
-        && ads.get(0) != null
-        && ads.get(0).getPartner() != null
-        && ads.get(0).getPartner().getData() != null;
   }
 
   public Observable<List<MinimalAd>> getAdsFromHomepageMore(boolean refresh) {
@@ -87,10 +91,6 @@ public class AdsRepository {
     });
   }
 
-  public static boolean validAds(GetAdsResponse getAdsResponse) {
-    return getAdsResponse != null && validAds(getAdsResponse.getAds());
-  }
-
   public Observable<List<MinimalAd>> getAdsFromAppviewSuggested(String packageName,
       List<String> keywords) {
     return mapToMinimalAds(
@@ -106,7 +106,7 @@ public class AdsRepository {
   }
 
   public Observable<MinimalAd> getAdsFromSecondInstall(String packageName) {
-    return accountManager.getAccountAsync()
+    return accountManager.accountStatus().first().toSingle()
         .flatMapObservable(account -> mapToMinimalAd(
             GetAdsRequest.ofSecondInstall(packageName, aptoideClientUUID.getUniqueIdentifier(),
                 googlePlayServicesAvailabilityChecker.isAvailable(V8Engine.getContext()),

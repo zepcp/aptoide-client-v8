@@ -8,7 +8,7 @@ package cm.aptoide.pt.v8engine.presenter;
 import android.os.Bundle;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.navigation.AccountNavigator;
+import cm.aptoide.pt.v8engine.account.AccountNavigator;
 import cm.aptoide.pt.v8engine.payment.AptoidePay;
 import cm.aptoide.pt.v8engine.payment.Payment;
 import cm.aptoide.pt.v8engine.payment.PaymentConfirmation;
@@ -96,9 +96,9 @@ public class PaymentPresenter implements Presenter {
             aptoidePay.payments().observeOn(AndroidSchedulers.mainThread()),
             aptoidePay.confirmation(product).observeOn(AndroidSchedulers.mainThread()),
             (payments, confirmation) -> {
-              return showProductAndPayments(payments).<Purchase>andThen(
+              return showProductAndPayments(payments).<Purchase> andThen(
                   treatLoadingAndGetPurchase(confirmation));
-            })).<Purchase>flatMap(observable -> observable).compose(
+            })).<Purchase> flatMap(observable -> observable).compose(
         view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(purchase -> dismiss(purchase), throwable -> dismiss(throwable));

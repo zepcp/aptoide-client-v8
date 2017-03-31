@@ -17,24 +17,16 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.accountmanager.BuildConfig;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
-import cm.aptoide.pt.navigation.NavigationManagerV4;
+import cm.aptoide.pt.navigation.FragmentNavigator;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.fragment.FragmentView;
-import cm.aptoide.pt.v8engine.fragment.GooglePlayServicesFragment;
 import cm.aptoide.pt.v8engine.presenter.MyAccountPresenter;
 import cm.aptoide.pt.v8engine.view.MyAccountView;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Scope;
 import com.jakewharton.rxbinding.view.RxView;
 import rx.Observable;
-
-import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
 
 /**
  * Created by trinkes on 5/2/16.
@@ -52,8 +44,7 @@ public class MyAccountFragment extends FragmentView implements MyAccountView {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    accountManager =
-        ((V8Engine) getActivity().getApplicationContext()).getAccountManager();
+    accountManager = ((V8Engine) getActivity().getApplicationContext()).getAccountManager();
   }
 
   @Nullable @Override
@@ -75,7 +66,7 @@ public class MyAccountFragment extends FragmentView implements MyAccountView {
   }
 
   @Override public void navigateToHome() {
-    final NavigationManagerV4 navManager = getNavigationManager();
+    final FragmentNavigator navManager = getFragmentNavigator();
     Fragment home =
         HomeFragment.newInstance(V8Engine.getConfiguration().getDefaultStore(), StoreContext.home,
             V8Engine.getConfiguration().getDefaultTheme());
@@ -90,7 +81,8 @@ public class MyAccountFragment extends FragmentView implements MyAccountView {
 
     setupToolbar(view, getString(R.string.my_account));
 
-    attachPresenter(new MyAccountPresenter(this, accountManager, CrashReport.getInstance()), savedInstanceState);
+    attachPresenter(new MyAccountPresenter(this, accountManager, CrashReport.getInstance()),
+        savedInstanceState);
   }
 
   private Toolbar setupToolbar(View view, String title) {
