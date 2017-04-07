@@ -4,17 +4,16 @@ import cm.aptoide.pt.dataprovider.exception.AptoideWsV3Exception;
 import cm.aptoide.pt.dataprovider.ws.v3.ChangeUserSettingsRequest;
 import cm.aptoide.pt.dataprovider.ws.v3.CheckUserCredentialsRequest;
 import cm.aptoide.pt.dataprovider.ws.v3.CreateUserRequest;
-import cm.aptoide.pt.dataprovider.ws.v3.GetUserRepoSubscriptionRequest;
 import cm.aptoide.pt.dataprovider.ws.v3.OAuth2AuthenticationRequest;
 import cm.aptoide.pt.dataprovider.ws.v3.V3;
 import cm.aptoide.pt.dataprovider.ws.v7.ChangeStoreSubscriptionResponse;
+import cm.aptoide.pt.dataprovider.ws.v7.GetMySubscribedStoresRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.SetUserRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.store.ChangeStoreSubscriptionRequest;
 import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.model.v3.CheckUserCredentialsJson;
 import cm.aptoide.pt.model.v3.OAuth;
-import cm.aptoide.pt.model.v3.Subscription;
 import java.util.List;
 import rx.Completable;
 import rx.Single;
@@ -34,7 +33,7 @@ public class AccountManagerService {
 
   public Completable createAccount(String email, String password) {
     return CreateUserRequest.of(email.toLowerCase(), password,
-        aptoideClientUUID.getUniqueIdentifier())
+        aptoideClientUUID.getUniqueIdentifier(), interceptorFactory.createV3())
         .observe(true)
         .toSingle()
         .flatMapCompletable(response -> {
@@ -54,7 +53,10 @@ public class AccountManagerService {
 
   public Single<OAuth> login(String type, String email, String password, String name) {
     return OAuth2AuthenticationRequest.of(email, password, type, name,
-        aptoideClientUUID.getUniqueIdentifier()).observe().toSingle().flatMap(oAuth -> {
+        aptoideClientUUID.getUniqueIdentifier(), interceptorFactory.createV3())
+        .observe()
+        .toSingle()
+        .flatMap(oAuth -> {
       if (!oAuth.hasErrors()) {
         return Single.just(oAuth);
       } else {
@@ -72,7 +74,7 @@ public class AccountManagerService {
   public Completable updateAccount(String email, String nickname, String password,
       String avatarPath, String accessToken) {
     return CreateUserRequest.of(email, nickname, password, avatarPath,
-        aptoideClientUUID.getUniqueIdentifier(), accessToken)
+        aptoideClientUUID.getUniqueIdentifier(), accessToken, interceptorFactory.createV3())
         .observe(true)
         .toSingle()
         .flatMapCompletable(response -> {
@@ -85,7 +87,7 @@ public class AccountManagerService {
   }
 
   public Completable updateAccount(String accessLevel, AptoideAccountManager accountManager) {
-    return SetUserRequest.of(accessLevel, interceptorFactory.create(accountManager))
+    return SetUserRequest.of(accessLevel, interceptorFactory.createV7(accountManager))
         .observe(true)
         .toSingle()
         .flatMapCompletable(response -> {
@@ -113,36 +115,39 @@ public class AccountManagerService {
       String storePassword, AptoideAccountManager accountManager,
       ChangeStoreSubscriptionResponse.StoreSubscriptionState subscription) {
     return ChangeStoreSubscriptionRequest.of(storeName, subscription, storeUserName, storePassword,
-        interceptorFactory.create(accountManager)).observe().toSingle().toCompletable();
+        interceptorFactory.createV7(accountManager)).observe().toSingle().toCompletable();
   }
 
-  private Single<List<Store>> getSubscribedStores(String accessToken) {
-    return GetUserRepoSubscriptionRequest.of(accessToken)
-        .observe()
-        .map(getUserRepoSubscription -> getUserRepoSubscription.getSubscription())
+  private Single<List<Store>> getSubscribedStores(String accessToken,
+      AptoideAccountManager accountManager) {
+    return new GetMySubscribedStoresRequest(accessToken,
+        interceptorFactory.createV7(accountManager)).observe()
+        .map(getUserRepoSubscription -> getUserRepoSubscription.getDatalist().getList())
         .flatMapIterable(list -> list)
         .map(store -> mapToStore(store))
         .toList()
         .toSingle();
   }
 
-  private Store mapToStore(Subscription subscription) {
-    Store store = new Store(Long.parseLong(subscription.getDownloads()),
-        subscription.getAvatarHd() != null ? subscription.getAvatarHd() : subscription.getAvatar(),
-        subscription.getId().longValue(), subscription.getName(), subscription.getTheme(), null,
+  private Store mapToStore(cm.aptoide.pt.model.v7.store.Store store) {
+    return new Store(store.getStats().getDownloads(), store.getAvatar(), store.getId(),
+        store.getName(), store.getAppearance().getTheme(), null,
         null);
-    return store;
   }
 
   public Single<Account> getAccount(String accessToken, String refreshToken,
-      String encryptedPassword, String type) {
-    return Single.zip(getServerAccount(accessToken), getSubscribedStores(accessToken),
+      String encryptedPassword, String type, AptoideAccountManager accountManager) {
+    return Single.zip(getServerAccount(accessToken),
+        getSubscribedStores(accessToken, accountManager),
         (response, stores) -> mapServerAccountToAccount(response, refreshToken, accessToken,
             encryptedPassword, type, stores));
   }
 
   private Single<CheckUserCredentialsJson> getServerAccount(String accessToken) {
-    return CheckUserCredentialsRequest.of(accessToken).observe().toSingle().flatMap(response -> {
+    return CheckUserCredentialsRequest.of(accessToken, interceptorFactory.createV3())
+        .observe()
+        .toSingle()
+        .flatMap(response -> {
       if (response.getStatus().equals("OK")) {
         return Single.just(response);
       }
@@ -162,7 +167,8 @@ public class AccountManagerService {
   }
 
   public Completable updateAccount(boolean adultContentEnabled, String accessToken) {
-    return ChangeUserSettingsRequest.of(adultContentEnabled, accessToken)
+    return ChangeUserSettingsRequest.of(adultContentEnabled, accessToken,
+        interceptorFactory.createV3())
         .observe(true)
         .toSingle()
         .flatMapCompletable(response -> {

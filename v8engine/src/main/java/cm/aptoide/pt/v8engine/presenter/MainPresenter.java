@@ -6,15 +6,13 @@
 package cm.aptoide.pt.v8engine.presenter;
 
 import android.os.Bundle;
-import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.v8engine.crashreports.CrashReport;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.preferences.secure.SecurePreferences;
 import cm.aptoide.pt.v8engine.AutoUpdate;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.services.ContentPuller;
 import cm.aptoide.pt.v8engine.util.ApkFy;
-import cm.aptoide.pt.v8engine.view.MainView;
-import cm.aptoide.pt.v8engine.view.View;
 
 /**
  * Created by marcelobenites on 18/01/17.
@@ -39,7 +37,7 @@ public class MainPresenter implements Presenter {
   @Override public void present() {
     view.getLifecycle()
         .filter(event -> View.LifecycleEvent.CREATE.equals(event))
-        .doOnNext(created -> apkFy.run())
+          .doOnNext(created -> apkFy.run())
         .filter(created -> firstCreated)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(created -> {
@@ -49,12 +47,15 @@ public class MainPresenter implements Presenter {
             // only call auto update when the app was not on the background
             autoUpdate.execute();
           }
-          if (SecurePreferences.isWizardAvailable()) {
-            view.changeOrientationToPortrait();
-            view.showWizard();
+          if (view.showDeepLink()) {
             SecurePreferences.setWizardAvailable(false);
+          } else {
+            if (SecurePreferences.isWizardAvailable()) {
+              view.changeOrientationToPortrait();
+              view.showWizard();
+              SecurePreferences.setWizardAvailable(false);
+            }
           }
-          view.showDeepLink();
         }, throwable -> CrashReport.getInstance().log(throwable));
   }
 

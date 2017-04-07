@@ -4,6 +4,7 @@ import android.content.Context;
 import cm.aptoide.accountmanager.Account;
 import cm.aptoide.accountmanager.AptoideAccount;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.LikeCardRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.ShareCardRequest;
@@ -22,9 +23,10 @@ import rx.schedulers.Schedulers;
 public class SocialRepository {
 
   private final AptoideAccountManager accountManager;
-  private final BodyInterceptor bodyInterceptor;
+  private final BodyInterceptor<BaseBody> bodyInterceptor;
 
-  public SocialRepository(AptoideAccountManager accountManager, BodyInterceptor bodyInterceptor) {
+  public SocialRepository(AptoideAccountManager accountManager,
+      BodyInterceptor<BaseBody> bodyInterceptor) {
     this.accountManager = accountManager;
     this.bodyInterceptor = bodyInterceptor;
   }
@@ -36,8 +38,29 @@ public class SocialRepository {
         .toSingle()
         .flatMapCompletable(response -> {
           if (response.isOk()) {
-            shareCardCallback.onCardShared(response.getData().getCardUid());
+            if (shareCardCallback != null) {
+              shareCardCallback.onCardShared(response.getData().getCardUid());
+            }
             return accountManager.updateAccount(getAccountAccess(privacy));
+          }
+          return Completable.error(
+              new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
+        })
+        .subscribe(() -> {
+        }, throwable -> throwable.printStackTrace());
+  }
+
+  public void share(TimelineCard timelineCard, Context context,
+      ShareCardCallback shareCardCallback) {
+    ShareCardRequest.of(timelineCard, bodyInterceptor)
+        .observe()
+        .toSingle()
+        .flatMapCompletable(response -> {
+          if (response.isOk()) {
+            if (shareCardCallback != null) {
+              shareCardCallback.onCardShared(response.getData().getCardUid());
+            }
+            return Completable.complete();
           }
           return Completable.error(
               new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
@@ -70,8 +93,23 @@ public class SocialRepository {
         }, throwable -> throwable.printStackTrace());
   }
 
-  private AptoideAccount.Access getAccountAccess(boolean privacy) {
-    return privacy ? Account.Access.UNLISTED : Account.Access.PUBLIC;
+  public void share(String packageName, String shareType) {
+    ShareInstallCardRequest.of(packageName, shareType, bodyInterceptor)
+        .observe()
+        .toSingle()
+        .flatMapCompletable(response -> {
+          if (response.isOk()) {
+            return Completable.complete();
+          }
+          return Completable.error(
+              new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
+        })
+        .subscribe(() -> {
+        }, throwable -> throwable.printStackTrace());
+  }
+
+  private AptoideAccount.Access getAccountAccess(boolean privateAccess) {
+    return privateAccess ? Account.Access.PRIVATE : Account.Access.PUBLIC;
   }
 }
 

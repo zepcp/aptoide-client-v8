@@ -24,6 +24,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.store.PostCommentForStore;
 import cm.aptoide.pt.model.v7.BaseV7Response;
 import cm.aptoide.pt.model.v7.GetApp;
 import cm.aptoide.pt.model.v7.GetFollowers;
+import cm.aptoide.pt.model.v7.GetMySubscribedStoresResponse;
 import cm.aptoide.pt.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.model.v7.ListApps;
 import cm.aptoide.pt.model.v7.ListComments;
@@ -72,13 +73,13 @@ public abstract class V7<U, B> extends WebService<V7.Interfaces, U> {
       + BuildConfig.APTOIDE_WEB_SERVICES_V7_HOST
       + "/api/7/";
   @Getter protected final B body;
-  private final BodyInterceptor bodyInterceptor;
+  private final BodyInterceptor<? super B> bodyInterceptor;
   private final String INVALID_ACCESS_TOKEN_CODE = "AUTH-2";
   private final int MAX_RETRY_COUNT = 3;
   private boolean accessTokenRetry = false;
 
   protected V7(B body, String baseHost, OkHttpClient httpClient, Converter.Factory converterFactory,
-      BodyInterceptor bodyInterceptor) {
+      BodyInterceptor<? super B> bodyInterceptor) {
     super(Interfaces.class, httpClient, converterFactory, baseHost);
     this.body = body;
     this.bodyInterceptor = bodyInterceptor;
@@ -358,6 +359,11 @@ public abstract class V7<U, B> extends WebService<V7.Interfaces, U> {
     Observable<ChangeStoreSubscriptionResponse> changeStoreSubscription(
         @Header(PostCacheInterceptor.BYPASS_HEADER_KEY) boolean bypassCache,
         @retrofit2.http.Body ChangeStoreSubscriptionRequest.Body body);
+
+    @POST("my/stores/getSubscribed/")
+    Observable<GetMySubscribedStoresResponse> getMySubscribedStores(
+        @Header(PostCacheInterceptor.BYPASS_HEADER_KEY) boolean bypassCache,
+        @retrofit2.http.Body GetMySubscribedStoresRequest.Body body);
   }
 }
 

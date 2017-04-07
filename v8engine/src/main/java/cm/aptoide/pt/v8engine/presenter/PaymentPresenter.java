@@ -7,15 +7,13 @@ package cm.aptoide.pt.v8engine.presenter;
 
 import android.os.Bundle;
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.v8engine.account.AccountNavigator;
+import cm.aptoide.pt.v8engine.crashreports.CrashReport;
 import cm.aptoide.pt.v8engine.payment.AptoidePay;
 import cm.aptoide.pt.v8engine.payment.Payment;
 import cm.aptoide.pt.v8engine.payment.PaymentConfirmation;
 import cm.aptoide.pt.v8engine.payment.Product;
 import cm.aptoide.pt.v8engine.payment.Purchase;
-import cm.aptoide.pt.v8engine.view.PaymentView;
-import cm.aptoide.pt.v8engine.view.View;
+import cm.aptoide.pt.v8engine.view.account.AccountNavigator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +36,7 @@ public class PaymentPresenter implements Presenter {
   private final Product product;
   private final AptoideAccountManager accountManager;
   private final PaymentSelector paymentSelector;
-  private AccountNavigator accountNavigator;
+  private final AccountNavigator accountNavigator;
 
   private boolean processingLogin;
   private List<Payment> payments;

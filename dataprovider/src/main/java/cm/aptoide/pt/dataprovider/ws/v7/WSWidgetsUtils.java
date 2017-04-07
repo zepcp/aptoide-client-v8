@@ -34,7 +34,7 @@ public class WSWidgetsUtils {
       GetStoreWidgets.WSWidget wsWidget, BaseRequestWithStore.StoreCredentials storeCredentials,
       boolean refresh, String accessToken, String aptoideClientUuid,
       boolean googlePlayServicesAvailable, String oemid, boolean mature,
-      BodyInterceptor bodyInterceptor) {
+      BodyInterceptor<BaseBody> bodyInterceptor) {
 
     if (isKnownType(wsWidget.getType())) {
 
@@ -122,7 +122,9 @@ public class WSWidgetsUtils {
 
         case MY_STORE_META:
           return GetMyStoreMetaRequest.of(bodyInterceptor)
-              .observe(refresh).observeOn(Schedulers.io()).map(getStoreMeta -> {
+              .observe(refresh)
+              .observeOn(Schedulers.io())
+              .map(getStoreMeta -> {
                 GetHomeMeta.Data data = new GetHomeMeta.Data();
                 data.setStore(getStoreMeta.getData());
                 GetHomeMeta homeMeta = new GetHomeMeta();

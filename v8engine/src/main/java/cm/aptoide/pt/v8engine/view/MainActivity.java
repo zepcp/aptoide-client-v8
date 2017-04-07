@@ -16,7 +16,7 @@ import android.text.TextUtils;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.annotation.Partners;
-import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.v8engine.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
@@ -32,12 +32,13 @@ import cm.aptoide.pt.v8engine.AutoUpdate;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
-import cm.aptoide.pt.v8engine.fragment.FragmentView;
-import cm.aptoide.pt.v8engine.fragment.WizardFragment;
-import cm.aptoide.pt.v8engine.fragment.implementations.AppViewFragment;
-import cm.aptoide.pt.v8engine.fragment.implementations.HomeFragment;
-import cm.aptoide.pt.v8engine.fragment.implementations.ScheduledDownloadsFragment;
-import cm.aptoide.pt.v8engine.fragment.implementations.storetab.StoreTabFragmentChooser;
+import cm.aptoide.pt.v8engine.presenter.MainView;
+import cm.aptoide.pt.v8engine.view.fragment.FragmentView;
+import cm.aptoide.pt.v8engine.view.wizard.WizardFragment;
+import cm.aptoide.pt.v8engine.view.app.AppViewFragment;
+import cm.aptoide.pt.v8engine.view.store.home.HomeFragment;
+import cm.aptoide.pt.v8engine.view.downloads.scheduled.ScheduledDownloadsFragment;
+import cm.aptoide.pt.v8engine.view.store.StoreTabFragmentChooser;
 import cm.aptoide.pt.v8engine.install.InstallerFactory;
 import cm.aptoide.pt.v8engine.presenter.MainPresenter;
 import cm.aptoide.pt.v8engine.receivers.DeepLinkIntentReceiver;
@@ -47,6 +48,7 @@ import cm.aptoide.pt.v8engine.util.DownloadFactory;
 import cm.aptoide.pt.v8engine.util.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.v8engine.util.StoreUtils;
 import cm.aptoide.pt.v8engine.util.StoreUtilsProxy;
+import cm.aptoide.pt.v8engine.view.navigator.TabNavigatorActivity;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -69,7 +71,7 @@ public class MainActivity extends TabNavigatorActivity implements MainView {
 
     AptoideAccountManager accountManager = ((V8Engine) getApplicationContext()).getAccountManager();
     storeUtilsProxy = new StoreUtilsProxy(accountManager,
-        ((V8Engine) getApplicationContext()).getBaseBodyInterceptor(),
+        ((V8Engine) getApplicationContext()).getBaseBodyInterceptorV7(),
         new StoreCredentialsProviderImpl(), AccessorFactory.getAccessorFor(Store.class));
     final AutoUpdate autoUpdate =
         new AutoUpdate(this, new InstallerFactory().create(this, InstallerFactory.DEFAULT),
@@ -94,11 +96,11 @@ public class MainActivity extends TabNavigatorActivity implements MainView {
     getFragmentNavigator().navigateToWithoutBackSave(home);
   }
 
-  @Override public void showDeepLink() {
-    handleDeepLinks();
+  @Override public boolean showDeepLink() {
+    return handleDeepLinks();
   }
 
-  private void handleDeepLinks() {
+  private boolean handleDeepLinks() {
     final Intent intent = getIntent();
     if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.APP_VIEW_FRAGMENT)) {
 
@@ -133,7 +135,10 @@ public class MainActivity extends TabNavigatorActivity implements MainView {
           intent.getParcelableExtra(DeepLinkIntentReceiver.DeepLinksKeys.URI));
     } else {
       Analytics.ApplicationLaunch.launcher();
+      return false;
     }
+
+    return true;
   }
 
   private void appViewDeepLink(String md5) {
