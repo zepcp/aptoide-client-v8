@@ -32,6 +32,7 @@ public class SocialRecommendationDisplayable extends SocialCardDisplayable {
 
   private SpannableFactory spannableFactory;
   private SocialRepository socialRepository;
+  private float appRating;
 
   public SocialRecommendationDisplayable() {
   }
@@ -55,6 +56,7 @@ public class SocialRecommendationDisplayable extends SocialCardDisplayable {
     this.abUrl = abUrl;
     this.spannableFactory = spannableFactory;
     this.socialRepository = socialRepository;
+    this.appRating = socialRecommendation.getApp().getStats().getRating().getAvg();
   }
 
   public static Displayable from(SocialRecommendation socialRecommendation,
@@ -109,5 +111,9 @@ public class SocialRecommendationDisplayable extends SocialCardDisplayable {
 
   @Override public void like(Context context, String cardId, String cardType, int rating) {
     socialRepository.like(cardId, cardType, "", rating);
+  }
+
+  public float getAppRating() {
+    return appRating;
   }
 }
