@@ -65,7 +65,7 @@ public class StoredMinimalAd extends RealmObject implements StoredMinimalAdInter
     this.timestamp = timestamp;
   }
 
-  public long getAdId() {
+  public Long getAdId() {
     return adId;
   }
 

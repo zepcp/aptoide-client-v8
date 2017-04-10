@@ -143,7 +143,7 @@ public class InstalledIntentService extends IntentService {
     Subscription unManagedSubscription =
         storeMinimalAdAccessor.get(packageName).subscribe(storeMinimalAd -> {
           if (storeMinimalAd != null) {
-            ReferrerUtils.broadcastReferrer(packageName, storeMinimalAd.getReferrer());
+            ReferrerUtils.broadcastReferrer(packageName, storeMinimalAd.getAdId(), storeMinimalAd.getReferrer());
             DataproviderUtils.AdNetworksUtils.knockCpi(storeMinimalAd);
             storeMinimalAdAccessor.remove(storeMinimalAd);
           } else {

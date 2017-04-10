@@ -6,8 +6,14 @@
 package cm.aptoide.pt.dataprovider.ws.v2.aptwords;
 
 import android.text.TextUtils;
+import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.dataprovider.util.DataproviderUtils;
+import cm.aptoide.pt.dataprovider.util.referrer.AdMonitor;
 import cm.aptoide.pt.dataprovider.util.referrer.ReferrerUtils;
 import cm.aptoide.pt.dataprovider.ws.Api;
 import cm.aptoide.pt.model.v2.GetAdsResponse;
@@ -164,6 +170,7 @@ import rx.Observable;
     parameters.put("keywords", keyword);
     parameters.put("oem_id", oemid);
     parameters.put("country", forcedCountry);
+    parameters.put("debug", "true");
 
     if (ManagerPreferences.isDebug()) {
       String forceCountry = ManagerPreferences.getForceCountry();
@@ -187,17 +194,31 @@ import rx.Observable;
     parameters.put("excluded_partners", excludedNetworks);
 
     Observable<GetAdsResponse> result = interfaces.getAds(parameters).doOnNext(getAdsResponse -> {
+  
+      //AdMonitor entry point - getAds called.
+      try {
+        ObjectMapper objectMapper = new ObjectMapper();
+        
+        AdMonitor.sendGetAdsToMonitor(objectMapper.writeValueAsString(getAdsResponse),
+                objectMapper.writeValueAsString(this), location.name());
+  
+        System.out.println("GEt ADS");
+        System.out.println(objectMapper.writeValueAsString(getAdsResponse));
+        Log.i("GET ADS RESPONSE ", objectMapper.writeValueAsString(getAdsResponse));
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
+      }
 
       // Impression click for those networks who need it
       for (GetAdsResponse.Ad ad : getAdsResponse.getAds()) {
         DataproviderUtils.AdNetworksUtils.knockImpression(ad);
       }
     });
-
-    // TODO: 28-07-2016 Baikova getAds called.
-
-    return result;
-  }
+  
+      
+      
+      return result;
+    }
 
   private String getExcludedPackages() {
     // TODO: 09-06-2016 neuro excluded, not implemented until v8 getAds

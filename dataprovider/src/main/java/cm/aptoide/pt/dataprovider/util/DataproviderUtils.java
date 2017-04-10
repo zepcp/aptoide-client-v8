@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.dataprovider.repository.IdsRepository;
+import cm.aptoide.pt.dataprovider.util.referrer.AdMonitor;
 import cm.aptoide.pt.model.MinimalAdInterface;
 import cm.aptoide.pt.model.StoredMinimalAdInterface;
 import cm.aptoide.pt.model.v2.GetAdsResponse;
@@ -33,7 +34,7 @@ public class DataproviderUtils {
   /**
    * Execute a simple request (knock at the door) to the given URL.
    */
-  public static void knock(String url) {
+  public static void knock(String url, long adId, String action) {
     if (url == null) {
       return;
     }
@@ -48,6 +49,11 @@ public class DataproviderUtils {
       }
 
       @Override public void onResponse(Call call, Response response) throws IOException {
+  
+        if(adId != 0 && action != null) {
+          AdMonitor.sendCpcCpiCpdToMonitor(adId, action, response.body().string());
+        }
+        
         response.body().close();
       }
     });
@@ -75,23 +81,23 @@ public class DataproviderUtils {
 
     public static void knockCpc(MinimalAdInterface minimalAd) {
       // TODO: 28-07-2016 Baikova clicked on ad.
-      knock(minimalAd.getCpcUrl());
+      knock(minimalAd.getCpcUrl(), minimalAd.getAdId(), "clickedOnAd");
     }
 
     public static void knockCpd(MinimalAdInterface minimalAd) {
       // TODO: 28-07-2016 Baikova clicked on download button.
-      knock(minimalAd.getCpdUrl());
+      knock(minimalAd.getCpdUrl(), minimalAd.getAdId(), "clickedOnDownloadButton");
     }
 
     public static void knockCpi(StoredMinimalAdInterface minimalAd) {
       // TODO: 28-07-2016 Baikova ad installed.
-      knock(minimalAd.getCpiUrl());
+      knock(minimalAd.getCpiUrl(),  minimalAd.getAdId(), "installed");
     }
 
     // FIXME: 29-07-2016 neuro so wrong...
     public static void knockImpression(GetAdsResponse.Ad ad) {
       if (isImpressionUrlPresent(ad)) {
-        knock(ad.getPartner().getData().getImpressionUrl());
+        knock(ad.getPartner().getData().getImpressionUrl(), 0, null);
       }
     }
 

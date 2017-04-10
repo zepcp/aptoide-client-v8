@@ -40,7 +40,7 @@ public class PullingContentReceiver extends BroadcastReceiver {
   private void pushNotificationPressed(Context context, Intent intent) {
     String trackUrl = intent.getStringExtra(PUSH_NOTIFICATION_TRACK_URL);
     if (!TextUtils.isEmpty(trackUrl)) {
-      DataproviderUtils.knock(trackUrl);
+      DataproviderUtils.knock(trackUrl, 0, null);
     }
     String targetUrl = intent.getStringExtra(PUSH_NOTIFICATION_TARGET_URL);
     Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl));
