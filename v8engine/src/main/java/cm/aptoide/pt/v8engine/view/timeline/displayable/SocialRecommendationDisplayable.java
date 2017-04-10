@@ -1,6 +1,7 @@
 package cm.aptoide.pt.v8engine.view.timeline.displayable;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.support.v4.content.ContextCompat;
 import android.text.Spannable;
 import cm.aptoide.pt.model.v7.Comment;
@@ -82,8 +83,7 @@ public class SocialRecommendationDisplayable extends SocialCardDisplayable {
   }
 
   public String getTitle() {
-    return AptoideUtils.StringU.getFormattedString(titleResource,
-        Application.getConfiguration().getMarketName());
+    return AptoideUtils.StringU.getFormattedString(titleResource, getStore().getName());
   }
 
   public Spannable getAppText(Context context) {
@@ -115,5 +115,11 @@ public class SocialRecommendationDisplayable extends SocialCardDisplayable {
 
   public float getAppRating() {
     return appRating;
+  }
+
+  public Spannable getStyledTitle(Context context) {
+    return spannableFactory.createStyleSpan(context.getString(
+        R.string.displayable_social_timeline_recommendation_atptoide_team_recommends,
+        getStore().getName()), Typeface.BOLD, getStore().getName());
   }
 }
