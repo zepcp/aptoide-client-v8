@@ -113,7 +113,7 @@ public class HomeFragment extends StoreFragment {
         .observeOn(AndroidSchedulers.mainThread())
         .compose(bindUntilEvent(FragmentEvent.PAUSE))
         .subscribe(account -> {
-          if (account == null) {
+          if (account == null || !account.isLoggedIn()) {
             setInvisibleUserImageAndName();
             return;
           }
@@ -170,7 +170,8 @@ public class HomeFragment extends StoreFragment {
         .doOnNext(tab -> viewPager.setCurrentItem(
             ((StorePagerAdapter) viewPager.getAdapter()).getEventNamePosition(getEventName(tab))))
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe();
+        .subscribe(__ -> {
+        }, err -> CrashReport.getInstance().log(err));
   }
 
   public void refreshUpdatesBadge(int num) {
@@ -210,6 +211,15 @@ public class HomeFragment extends StoreFragment {
 
   private void setupNavigationView() {
     if (navigationView != null) {
+
+      try {
+        //TODO emoji did not work on xml file. this sould be deleted in the next release
+        navigationView.getMenu()
+            .findItem(R.id.shareapps)
+            .setTitle(getString(R.string.spot_share) + new String(" \uD83D\uDD38"));
+      } catch (Exception e) {
+        CrashReport.getInstance().log(e);
+      }
       navigationView.setItemIconTintList(null);
       navigationView.setNavigationItemSelectedListener(menuItem -> {
 

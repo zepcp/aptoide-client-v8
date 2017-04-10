@@ -13,14 +13,12 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
-import android.view.MenuItem;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
@@ -28,11 +26,9 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.Event;
 import cm.aptoide.pt.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.model.v7.Layout;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.v8engine.AutoUpdate;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
@@ -67,17 +63,14 @@ public class MainActivity extends TabNavigatorActivity implements MainView, Frag
 
   private static final String TAG = MainActivity.class.getSimpleName();
   private StoreUtilsProxy storeUtilsProxy;
-  private AptoideAccountManager accountManager;
 
   @Partners @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.frame_layout);
-
-    accountManager = ((V8Engine) getApplicationContext()).getAccountManager();
-    final IdsRepositoryImpl aptoideClientUUID =
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), this);
+	  
+	  AptoideAccountManager accountManager = ((V8Engine) getApplicationContext()).getAccountManager();
     storeUtilsProxy = new StoreUtilsProxy(accountManager,
-        new BaseBodyInterceptor(aptoideClientUUID, accountManager),
+        ((V8Engine) getApplicationContext()).getBaseBodyInterceptor(),
         new StoreCredentialsProviderImpl(), AccessorFactory.getAccessorFor(Store.class));
     final AutoUpdate autoUpdate =
         new AutoUpdate(this, new InstallerFactory().create(this, InstallerFactory.DEFAULT),
@@ -102,11 +95,11 @@ public class MainActivity extends TabNavigatorActivity implements MainView, Frag
     getNavigationManager().navigateToWithoutBackSave(home);
   }
 
-  @Override public void showDeepLink() {
-    handleDeepLinks();
+  @Override public boolean showDeepLink() {
+    return handleDeepLinks();
   }
 
-  private void handleDeepLinks() {
+  private boolean handleDeepLinks() {
     final Intent intent = getIntent();
     if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.APP_VIEW_FRAGMENT)) {
 
@@ -141,7 +134,10 @@ public class MainActivity extends TabNavigatorActivity implements MainView, Frag
           intent.getParcelableExtra(DeepLinkIntentReceiver.DeepLinksKeys.URI));
     } else {
       Analytics.ApplicationLaunch.launcher();
+      return false;
     }
+
+    return true;
   }
 
   private void appViewDeepLink(String md5) {
@@ -252,16 +248,6 @@ public class MainActivity extends TabNavigatorActivity implements MainView, Frag
         && !TextUtils.isEmpty(queryName)
         && !TextUtils.isEmpty(queryAction)
         && StoreTabFragmentChooser.validateAcceptedName(Event.Name.valueOf(queryName));
-  }
-
-  @Override public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case android.R.id.home: {
-        onBackPressed();
-        break;
-      }
-    }
-    return super.onOptionsItemSelected(item);
   }
 
   @Override public void onBackPressed() {

@@ -17,17 +17,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.dataprovider.DataProvider;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
 import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.ListSearchAppsRequest;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.model.v7.ListSearchApps;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.SearchPagerAdapter;
 import cm.aptoide.pt.v8engine.V8Engine;
@@ -47,8 +41,6 @@ import rx.android.schedulers.AndroidSchedulers;
  */
 public class SearchFragment extends BasePagerToolbarFragment {
   private static final String TAG = SearchFragment.class.getSimpleName();
-  private AptoideClientUUID aptoideClientUUID;
-  private AptoideAccountManager accountManager;
   private String query;
 
   transient private boolean hasSubscribedResults;
@@ -94,10 +86,7 @@ public class SearchFragment extends BasePagerToolbarFragment {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    aptoideClientUUID = new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(),
-        DataProvider.getContext());
-    accountManager = ((V8Engine)getContext().getApplicationContext()).getAccountManager();
-    bodyInterceptor = new BaseBodyInterceptor(aptoideClientUUID, accountManager);
+    bodyInterceptor = ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
   }
 
   @Override public void loadExtras(Bundle args) {
@@ -253,33 +242,31 @@ public class SearchFragment extends BasePagerToolbarFragment {
       }, e -> finishLoading());
     } else {
       ListSearchAppsRequest.of(query, true, onlyTrustedApps, StoreUtils.getSubscribedStoresIds(),
-          bodyInterceptor)
-          .execute(listSearchApps -> {
-            List<ListSearchApps.SearchAppsApp> list = listSearchApps.getDatalist().getList();
+          bodyInterceptor).execute(listSearchApps -> {
+        List<ListSearchApps.SearchAppsApp> list = listSearchApps.getDatalist().getList();
 
-            if (list != null && list.size() > 0) {
-              hasSubscribedResults = true;
-              handleFinishLoading(create);
-            } else {
-              hasSubscribedResults = false;
-              handleFinishLoading(create);
-            }
-          }, e -> finishLoading());
+        if (list != null && list.size() > 0) {
+          hasSubscribedResults = true;
+          handleFinishLoading(create);
+        } else {
+          hasSubscribedResults = false;
+          handleFinishLoading(create);
+        }
+      }, e -> finishLoading());
 
       // Other stores
       ListSearchAppsRequest.of(query, false, onlyTrustedApps, StoreUtils.getSubscribedStoresIds(),
-          bodyInterceptor)
-          .execute(listSearchApps -> {
-            List<ListSearchApps.SearchAppsApp> list = listSearchApps.getDatalist().getList();
+          bodyInterceptor).execute(listSearchApps -> {
+        List<ListSearchApps.SearchAppsApp> list = listSearchApps.getDatalist().getList();
 
-            if (list != null && list.size() > 0) {
-              hasEverywhereResults = true;
-              handleFinishLoading(create);
-            } else {
-              hasEverywhereResults = false;
-              handleFinishLoading(create);
-            }
-          }, e -> finishLoading());
+        if (list != null && list.size() > 0) {
+          hasEverywhereResults = true;
+          handleFinishLoading(create);
+        } else {
+          hasEverywhereResults = false;
+          handleFinishLoading(create);
+        }
+      }, e -> finishLoading());
 
       // could this be a solution ?? despite the boolean flags
       //			Observable.concat(ListSearchAppsRequest.of(query, true).observe(),ListSearchAppsRequest.of(query, false).observe()).subscribe
@@ -355,6 +342,10 @@ public class SearchFragment extends BasePagerToolbarFragment {
       storeName = savedInstanceState.getString(BundleCons.STORE_NAME);
       setButtonBackgrounds(savedInstanceState.getInt(BundleCons.SELECTED_BUTTON));
     }
+  }
+
+  @Override protected int[] getViewsToShowAfterLoadingId() {
+    return new int[] {};
   }
 
   @Override protected int getViewToShowAfterLoadingId() {

@@ -1,7 +1,11 @@
 package cm.aptoide.pt.v8engine.fragment.implementations;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.view.View;
+import cm.aptoide.accountmanager.Account;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.Event;
@@ -62,8 +66,8 @@ public class MyStoresFragment extends GetStoreWidgetsFragment {
     return displayables;
   }
 
-  @Override public void onViewCreated() {
-    super.onViewCreated();
+  @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
     registerForViewChanges();
   }
 
@@ -71,13 +75,13 @@ public class MyStoresFragment extends GetStoreWidgetsFragment {
     AptoideAccountManager accountManager =
         ((V8Engine) getContext().getApplicationContext()).getAccountManager();
 
-    Observable<Boolean> loginObservable = accountManager.loginStatus().doOnNext(__ -> reloadData());
+    Observable<Account> loginObservable =
+        accountManager.accountStatus().doOnNext(__ -> reloadData());
 
-    Observable<List<Store>> storesObservable =
-        storeRepository.getAll().skip(1).doOnNext(__ -> {
-          Logger.d(TAG, "Store database changed, reloading...");
-          reloadData();
-        });
+    Observable<List<Store>> storesObservable = storeRepository.getAll().skip(1).doOnNext(__ -> {
+      Logger.d(TAG, "Store database changed, reloading...");
+      reloadData();
+    });
 
     //
     // until this fragment is destroyed we listen for DB changes and login state changes
@@ -86,7 +90,8 @@ public class MyStoresFragment extends GetStoreWidgetsFragment {
     Observable.merge(loginObservable, storesObservable)
         .observeOn(AndroidSchedulers.mainThread())
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe();
+        .subscribe(__ -> {
+        }, err -> CrashReport.getInstance().log(err));
   }
 
   private void reloadData() {

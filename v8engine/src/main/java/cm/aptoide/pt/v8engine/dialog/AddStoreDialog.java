@@ -25,8 +25,9 @@ import cm.aptoide.pt.database.accessors.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
 import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreMetaRequest;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.BaseV7Response;
 import cm.aptoide.pt.navigation.NavigationManagerV4;
@@ -34,7 +35,6 @@ import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.activity.StoreSearchActivity;
@@ -58,7 +58,6 @@ public class AddStoreDialog extends BaseDialog {
   private static final String TAG = AddStoreDialog.class.getName();
   private static StoreAutoCompleteWebSocket storeAutoCompleteWebSocket;
   private final int PRIVATE_STORE_REQUEST_CODE = 20;
-  private AptoideClientUUID aptoideClientUUID;
   private AptoideAccountManager accountManager;
   private NavigationManagerV4 navigationManager;
   private String storeName;
@@ -69,9 +68,11 @@ public class AddStoreDialog extends BaseDialog {
   private LinearLayout topStoresButton;
   private TextView topStoreText1;
   private TextView topStoreText2;
+  private ImageView image;
   private String givenStoreName;
-  private BaseBodyInterceptor bodyDecorator;
+  private BodyInterceptor<BaseBody> baseBodyBodyInterceptor;
   private StoreCredentialsProvider storeCredentialsProvider;
+  private SearchView.SearchAutoComplete searchAutoComplete;
 
   public AddStoreDialog attachFragmentManager(NavigationManagerV4 navigationManager) {
     this.navigationManager = navigationManager;
@@ -101,9 +102,8 @@ public class AddStoreDialog extends BaseDialog {
     super.onCreate(savedInstanceState);
     accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
     storeCredentialsProvider = new StoreCredentialsProviderImpl();
-    aptoideClientUUID =
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), getContext());
-    bodyDecorator = new BaseBodyInterceptor(aptoideClientUUID, accountManager);
+    baseBodyBodyInterceptor =
+        ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
     mSubscriptions = new CompositeSubscription();
     if (savedInstanceState != null) {
       storeName = savedInstanceState.getString(BundleArgs.STORE_NAME.name());
@@ -161,7 +161,6 @@ public class AddStoreDialog extends BaseDialog {
     givenStoreName = searchView.getQuery().toString();
     if (givenStoreName.length() > 0) {
       AddStoreDialog.this.storeName = givenStoreName;
-      AptoideUtils.SystemU.hideKeyboard(getActivity());
       getStore(givenStoreName);
       showLoadingDialog();
     }
@@ -173,12 +172,22 @@ public class AddStoreDialog extends BaseDialog {
     topStoresButton = (LinearLayout) view.findViewById(R.id.button_top_stores);
     topStoreText1 = (TextView) view.findViewById(R.id.top_stores_text_1);
     topStoreText2 = (TextView) view.findViewById(R.id.top_stores_text_2);
+    image = (ImageView) view.findViewById(R.id.search_mag_icon);
+    searchAutoComplete = (SearchView.SearchAutoComplete) view.findViewById(R.id.search_src_text);
   }
 
   private void setupSearchView(View view) {
     searchView.setIconifiedByDefault(false);
-    ImageView image = ((ImageView) view.findViewById(R.id.search_mag_icon));
     image.setImageDrawable(null);
+    searchAutoComplete.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+      @Override public void onFocusChange(View view, boolean b) {
+        if (getDialog() != null) {
+          if (!searchAutoComplete.isFocused() && getDialog().isShowing() && isResumed()) {
+            dismiss();
+          }
+        }
+      }
+    });
   }
 
   private void setupStoreSearch(SearchView searchView) {
@@ -251,13 +260,14 @@ public class AddStoreDialog extends BaseDialog {
 
   private GetStoreMetaRequest buildRequest(String storeName) {
     return GetStoreMetaRequest.of(
-        StoreUtils.getStoreCredentials(storeName, storeCredentialsProvider), bodyDecorator);
+        StoreUtils.getStoreCredentials(storeName, storeCredentialsProvider),
+        baseBodyBodyInterceptor);
   }
 
   private void executeRequest(GetStoreMetaRequest getHomeMetaRequest) {
     final IdsRepositoryImpl clientUuid =
         new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), getContext());
-    new StoreUtilsProxy(accountManager, bodyDecorator, storeCredentialsProvider,
+    new StoreUtilsProxy(accountManager, baseBodyBodyInterceptor, storeCredentialsProvider,
         AccessorFactory.getAccessorFor(Store.class)).subscribeStore(getHomeMetaRequest,
         getStoreMeta1 -> {
           ShowMessage.asSnack(getView(),
@@ -277,10 +287,10 @@ public class AddStoreDialog extends BaseDialog {
                 dialogFragment.show(getFragmentManager(), PrivateStoreDialog.class.getName());
                 break;
               default:
-                ShowMessage.asSnack(getActivity(), error.getDescription());
+                ShowMessage.asSnack(this, error.getDescription());
             }
           } else {
-            ShowMessage.asSnack(getActivity(), R.string.error_occured);
+            ShowMessage.asSnack(this, R.string.error_occured);
           }
         }, storeName, accountManager);
   }

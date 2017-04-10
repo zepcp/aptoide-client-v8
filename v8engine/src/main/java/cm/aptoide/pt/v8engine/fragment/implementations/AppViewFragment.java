@@ -45,26 +45,22 @@ import cm.aptoide.pt.database.realm.MinimalAd;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.database.realm.Store;
-import cm.aptoide.pt.dataprovider.DataProvider;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
 import cm.aptoide.pt.dataprovider.util.DataproviderUtils;
 import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.iab.BillingBinder;
 import cm.aptoide.pt.imageloader.ImageLoader;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.GetApp;
 import cm.aptoide.pt.model.v7.GetAppMeta;
 import cm.aptoide.pt.model.v7.Malware;
+import cm.aptoide.pt.navigation.AccountNavigator;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.SimpleSubscriber;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.InstallManager;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
@@ -172,6 +168,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private StoreCredentialsProvider storeCredentialsProvider;
   private BodyInterceptor bodyInterceptor;
   private SocialRepository socialRepository;
+  private AccountNavigator accountNavigator;
 
   public static AppViewFragment newInstance(String md5) {
     Bundle bundle = new Bundle();
@@ -240,16 +237,13 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     permissionManager = new PermissionManager();
     Installer installer = new InstallerFactory().create(getContext(), InstallerFactory.ROLLBACK);
     installManager = new InstallManager(AptoideDownloadManager.getInstance(), installer);
-    final AptoideClientUUID aptoideClientUUID =
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), getContext());
-    bodyInterceptor =
-        new BaseBodyInterceptor(aptoideClientUUID, accountManager);
+    bodyInterceptor = ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
     socialRepository = new SocialRepository(accountManager, bodyInterceptor);
     productFactory = new ProductFactory();
     appRepository = RepositoryFactory.getAppRepository(getContext());
-    adsRepository = new AdsRepository(
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(),
-            DataProvider.getContext()), accountManager);
+    adsRepository =
+        new AdsRepository(((V8Engine) getContext().getApplicationContext()).getAptoideClientUUID(),
+            accountManager);
     installedRepository = RepositoryFactory.getInstalledRepository();
     storeCredentialsProvider = new StoreCredentialsProviderImpl();
   }
@@ -273,6 +267,11 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   @Override public int getContentViewId() {
     return VIEW_ID;
+  }
+
+  @Override public void setupViews() {
+    super.setupViews();
+    accountNavigator = new AccountNavigator(getContext(), getNavigationManager(), accountManager);
   }
 
   @Partners @Override public void bindViews(View view) {
@@ -646,10 +645,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   @Override public boolean onOptionsItemSelected(MenuItem item) {
     int i = item.getItemId();
 
-    //if (i == android.R.id.home) {
-    //  getActivity().onBackPressed();
-    //  return true;
-    //} else
     if (i == R.id.menu_share) {
       shareApp(appName, packageName, wUrl);
       return true;
@@ -670,7 +665,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
       if (AptoideUtils.SystemU.getConnectionType().equals("mobile")) {
         GenericDialogs.createGenericOkMessage(getContext(),
             getContext().getString(R.string.remote_install_menu_title),
-            getContext().getString(R.string.install_on_tv_mobile_error)).subscribe();
+            getContext().getString(R.string.install_on_tv_mobile_error)).subscribe(__ -> {
+        }, err -> CrashReport.getInstance().log(err));
       } else {
         DialogFragment newFragment = RemoteInstallDialog.newInstance(appId);
         newFragment.show(getActivity().getSupportFragmentManager(),
@@ -686,34 +682,31 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   //
 
   private void shareApp(String appName, String packageName, String wUrl) {
+    GenericDialogs.createGenericShareDialog(getContext(), getString(R.string.share))
+        .subscribe(eResponse -> {
+          if (GenericDialogs.EResponse.SHARE_EXTERNAL == eResponse) {
 
-    if (accountManager.isLoggedIn()) {
-
-      GenericDialogs.createGenericShareDialog(getContext(), getString(R.string.share))
-          .subscribe(eResponse -> {
-            if (GenericDialogs.EResponse.SHARE_EXTERNAL == eResponse) {
-
-              shareDefault(appName, packageName, wUrl);
-            } else if (GenericDialogs.EResponse.SHARE_TIMELINE == eResponse) {
-              if (accountManager.isLoggedIn() && Application.getConfiguration()
-                  .isCreateStoreAndSetUserPrivacyAvailable()) {
-                SharePreviewDialog sharePreviewDialog =
-                    new SharePreviewDialog(accountManager, false);
-                AlertDialog.Builder alertDialog =
-                    sharePreviewDialog.getCustomRecommendationPreviewDialogBuilder(getContext(),
-                        appName, app.getIcon());
-                SocialRepository socialRepository =
-                    new SocialRepository(accountManager, bodyInterceptor);
-
-                sharePreviewDialog.showShareCardPreviewDialog(packageName, "app", getContext(),
-                    sharePreviewDialog, alertDialog, socialRepository);
-              }
+            shareDefault(appName, packageName, wUrl);
+          } else if (GenericDialogs.EResponse.SHARE_TIMELINE == eResponse) {
+            if (!accountManager.isLoggedIn()) {
+              ShowMessage.asSnack(getActivity(), R.string.you_need_to_be_logged_in, R.string.login,
+                  snackView -> accountNavigator.navigateToAccountView());
+              return;
             }
-          }, err -> err.printStackTrace());
-    } else {
+            if (Application.getConfiguration().isCreateStoreAndSetUserPrivacyAvailable()) {
+              SharePreviewDialog sharePreviewDialog = new SharePreviewDialog(accountManager, false,
+                  SharePreviewDialog.SharePreviewOpenMode.SHARE);
+              AlertDialog.Builder alertDialog =
+                  sharePreviewDialog.getCustomRecommendationPreviewDialogBuilder(getContext(),
+                      appName, app.getIcon());
+              SocialRepository socialRepository =
+                  new SocialRepository(accountManager, bodyInterceptor);
 
-      shareDefault(appName, packageName, wUrl);
-    }
+              sharePreviewDialog.showShareCardPreviewDialog(packageName, "app", getContext(),
+                  sharePreviewDialog, alertDialog, socialRepository);
+            }
+          }
+        }, err -> err.printStackTrace());
   }
 
   @Partners protected void shareDefault(String appName, String packageName, String wUrl) {

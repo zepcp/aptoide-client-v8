@@ -18,15 +18,13 @@ import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.AccessorFactory;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.database.realm.Store;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.imageloader.ImageLoader;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.model.v7.store.GetHomeMeta;
 import cm.aptoide.pt.model.v7.store.HomeUser;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.activity.CreateStoreActivity;
@@ -53,7 +51,7 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
   private ImageView mainIcon;
   private TextView mainName;
   private TextView description;
-  private Button subscribeButton;
+  private Button followStoreButton;
   private Button editStoreButton;
   private TextView followersCountTv;
   private TextView appsCountTv;
@@ -74,7 +72,7 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
     mainIcon = (ImageView) itemView.findViewById(R.id.main_icon);
     mainName = (TextView) itemView.findViewById(R.id.main_name);
     description = (TextView) itemView.findViewById(R.id.description);
-    subscribeButton = (Button) itemView.findViewById(R.id.follow_btn);
+    followStoreButton = (Button) itemView.findViewById(R.id.follow_btn);
     editStoreButton = (Button) itemView.findViewById(R.id.edit_store_btn);
     followersCountTv = (TextView) itemView.findViewById(R.id.number_of_followers);
     followingCountTv = (TextView) itemView.findViewById(R.id.number_of_following);
@@ -86,11 +84,11 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
   @Override public void bindView(GridStoreMetaDisplayable displayable) {
 
     accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
-    final AptoideClientUUID aptoideClientUUID =
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), getContext());
-    storeUtilsProxy = new StoreUtilsProxy(accountManager,
-        new BaseBodyInterceptor(aptoideClientUUID, accountManager),
-        new StoreCredentialsProviderImpl(), AccessorFactory.getAccessorFor(Store.class));
+    final BodyInterceptor<BaseBody> bodyInterceptor =
+        ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
+    storeUtilsProxy =
+        new StoreUtilsProxy(accountManager, bodyInterceptor, new StoreCredentialsProviderImpl(),
+            AccessorFactory.getAccessorFor(Store.class));
     final GetHomeMeta getHomeMeta = displayable.getPojo();
     final cm.aptoide.pt.model.v7.store.Store store = getHomeMeta.getData().getStore();
     HomeUser user = getHomeMeta.getData().getUser();
@@ -109,8 +107,8 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
           R.drawable.ic_avatar_apps, R.drawable.ic_store);
 
       updateSubscribeButtonText(isStoreSubscribed);
-      subscribeButton.setVisibility(View.VISIBLE);
-      compositeSubscription.add(RxView.clicks(subscribeButton)
+      followStoreButton.setVisibility(View.VISIBLE);
+      compositeSubscription.add(RxView.clicks(followStoreButton)
           .subscribe(
               handleSubscriptionLogic(new StoreWrapper(store, isStoreSubscribed), displayable),
               err -> {
@@ -144,8 +142,8 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
 
       //check if the user is the store's owner
       if (accountManager.isLoggedIn()
-          && accountManager.getAccount().getStore() != null
-          && accountManager.getAccount().getStore().equals(store.getName())) {
+          && accountManager.getAccount().getStoreName() != null
+          && accountManager.getAccount().getStoreName().equals(store.getName())) {
         description.setVisibility(View.VISIBLE);
         backgroundView.setVisibility(View.VISIBLE);
         if (TextUtils.isEmpty(store.getAppearance().getDescription())) {
@@ -166,7 +164,7 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
         setSecondaryInfoVisibility(false);
       }
     } else {
-      subscribeButton.setVisibility(View.INVISIBLE);
+      followStoreButton.setVisibility(View.INVISIBLE);
       setupMainInfo(user.getName(), StoreThemeEnum.get("default"), getContext(),
           getHomeMeta.getData().getStats().getFollowers(),
           getHomeMeta.getData().getStats().getFollowing(), user.getAvatar(),
@@ -211,22 +209,19 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
     drawable.setBounds(0, 0, drawable.getMinimumWidth(), drawable.getMinimumHeight());
     mainName.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
     if (appsVisibility) {
-      appsCountTv.setText(AptoideUtils.StringU.getFormattedString(R.string.store_meta_apps,
-          NumberFormat.getNumberInstance(Locale.getDefault()).format(appsCount)));
+      appsCountTv.setText(NumberFormat.getNumberInstance(Locale.getDefault()).format(appsCount));
       appsCountTv.setVisibility(View.VISIBLE);
     } else {
       appsCountTv.setVisibility(View.INVISIBLE);
     }
-    followersCountTv.setText(AptoideUtils.StringU.getFormattedString(R.string.store_meta_followers,
-        AptoideUtils.StringU.withSuffix(followersCount)));
-    followingCountTv.setText(AptoideUtils.StringU.getFormattedString(R.string.store_meta_following,
-        AptoideUtils.StringU.withSuffix(followingCount)));
+    followersCountTv.setText(AptoideUtils.StringU.withSuffix(followersCount));
+    followingCountTv.setText(AptoideUtils.StringU.withSuffix(followingCount));
 
     showMainIcon(getContext(), mainIconUrl, defaultMainIcon);
   }
 
   private void updateSubscribeButtonText(boolean isStoreSubscribed) {
-    subscribeButton.setText(isStoreSubscribed ? itemView.getContext().getString(R.string.followed)
+    followStoreButton.setText(isStoreSubscribed ? itemView.getContext().getString(R.string.followed)
         : itemView.getContext().getString(R.string.follow));
   }
 
@@ -297,7 +292,7 @@ public class GridStoreMetaWidget extends MetaStoresBaseWidget<GridStoreMetaDispl
       d.setColorFilter(color, PorterDuff.Mode.SRC_IN);
       containerLayout.setBackgroundDrawable(d);
     }
-    subscribeButton.setTextColor(color);
+    followStoreButton.setTextColor(color);
     editStoreButton.setTextColor(color);
   }
 

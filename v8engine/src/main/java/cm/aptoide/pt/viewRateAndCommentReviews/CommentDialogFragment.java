@@ -2,6 +2,7 @@ package cm.aptoide.pt.viewRateAndCommentReviews;
 
 import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
+import android.support.v7.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -10,24 +11,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
+import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.util.CommentType;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.PostCommentForReview;
 import cm.aptoide.pt.dataprovider.ws.v7.PostCommentForTimelineArticle;
 import cm.aptoide.pt.dataprovider.ws.v7.store.PostCommentForStore;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.BaseV7Response;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
+import cm.aptoide.pt.preferences.secure.SecureCoderDecoder;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
-import cm.aptoide.pt.v8engine.fragment.implementations.CommentListFragment;
+import cm.aptoide.pt.v8engine.interfaces.CommentBeforeSubmissionCallback;
+import cm.aptoide.pt.v8engine.interfaces.CommentDialogCallbackContract;
+import cm.aptoide.pt.v8engine.preferences.Preferences;
+import cm.aptoide.pt.v8engine.preferences.SecurePreferences;
 import com.jakewharton.rxbinding.view.RxView;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import rx.Observable;
@@ -43,7 +45,6 @@ public class CommentDialogFragment
   private static final String RESOURCE_ID_AS_STRING = "resource_id_as_string";
   private static final String COMMENT_TYPE = "comment_type";
   private static final String PREVIOUS_COMMENT_ID = "previous_comment_id";
-  private AptoideClientUUID aptoideClientUUID;
   private String onEmptyTextError;
   private String appOrStoreName;
   private long idAsLong;
@@ -53,9 +54,9 @@ public class CommentDialogFragment
   private TextInputLayout textInputLayout;
   private Button commentButton;
   private boolean reply;
-  private CommentListFragment commentDialogCallbackContract;
-  private AptoideAccountManager accountManager;
-  private BodyInterceptor bodyInterceptor;
+  private CommentDialogCallbackContract commentDialogCallbackContract;
+  private CommentBeforeSubmissionCallback commentBeforeSubmissionCallback;
+  private BodyInterceptor<BaseBody> baseBodyBodyInterceptor;
 
   public static CommentDialogFragment newInstanceStoreCommentReply(long storeId,
       long previousCommentId, String storeName) {
@@ -125,11 +126,9 @@ public class CommentDialogFragment
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
+    baseBodyBodyInterceptor =
+        ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
     onEmptyTextError = AptoideUtils.StringU.getResString(R.string.error_MARG_107);
-    aptoideClientUUID =
-        new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(), getContext());
-    bodyInterceptor = new BaseBodyInterceptor(aptoideClientUUID, accountManager);
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -201,29 +200,34 @@ public class CommentDialogFragment
       }
     });
 
-    RxView.clicks(commentButton)
-        .flatMap(a -> Observable.just(getText()))
-        .filter(inputText -> {
-          if (TextUtils.isEmpty(inputText)) {
-            enableError(onEmptyTextError);
-            return false;
-          }
-          disableError();
-          return true;
-        })
-        .flatMap(inputText -> submitComment(inputText, idAsLong, previousCommentId,
-            idAsString).observeOn(AndroidSchedulers.mainThread()).doOnError(e -> {
-          CrashReport.getInstance().log(e);
-          ShowMessage.asSnack(this, R.string.error_occured);
-        }).retry().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW)))
-        .subscribe(resp -> {
-          if (resp.isOk()) {
-            this.dismiss();
-            commentDialogCallbackContract.okSelected(resp, idAsLong, previousCommentId, idAsString);
-          } else {
-            ShowMessage.asSnack(this, R.string.error_occured);
-          }
-        }, throwable -> CrashReport.getInstance().log(throwable));
+    RxView.clicks(commentButton).flatMap(a -> Observable.just(getText())).filter(inputText -> {
+      if (TextUtils.isEmpty(inputText)) {
+        enableError(onEmptyTextError);
+        return false;
+      }
+      disableError();
+      return true;
+    }).flatMap(inputText -> {
+      if (commentBeforeSubmissionCallback != null) {
+        commentBeforeSubmissionCallback.onCommentBeforeSubmission(inputText);
+        this.dismiss();
+        return Observable.empty();
+      }
+      return submitComment(inputText, idAsLong, previousCommentId, idAsString).observeOn(
+          AndroidSchedulers.mainThread()).doOnError(e -> {
+        CrashReport.getInstance().log(e);
+        ShowMessage.asSnack(this, R.string.error_occured);
+      }).retry().compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW));
+    }).subscribe(resp -> {
+      if (resp.isOk()) {
+        this.dismiss();
+        if (commentDialogCallbackContract != null) {
+          commentDialogCallbackContract.okSelected(resp, idAsLong, previousCommentId, idAsString);
+        }
+      } else {
+        ShowMessage.asSnack(this, R.string.error_occured);
+      }
+    }, throwable -> CrashReport.getInstance().log(throwable));
   }
 
   private void disableError() {
@@ -246,31 +250,38 @@ public class CommentDialogFragment
     switch (commentType) {
       case REVIEW:
         // new comment on a review
-        return PostCommentForReview.of(idAsLong, inputText, bodyInterceptor).observe();
+        return PostCommentForReview.of(idAsLong, inputText, baseBodyBodyInterceptor).observe();
 
       case STORE:
         // check if this is a new comment on a store or a reply to a previous one
         if (previousCommentId == null) {
-          return PostCommentForStore.of(idAsLong, inputText, bodyInterceptor).observe();
+          return PostCommentForStore.of(idAsLong, inputText, baseBodyBodyInterceptor).observe();
         }
 
-        return PostCommentForStore.of(idAsLong, previousCommentId, inputText, bodyInterceptor).observe();
+        return PostCommentForStore.of(idAsLong, previousCommentId, inputText,
+            baseBodyBodyInterceptor).observe();
 
       case TIMELINE:
         // check if this is a new comment on a article or a reply to a previous one
         if (previousCommentId == null) {
-          return PostCommentForTimelineArticle.of(idAsString, inputText, bodyInterceptor).observe();
+          return PostCommentForTimelineArticle.of(idAsString, inputText, baseBodyBodyInterceptor)
+              .observe();
         }
 
         return PostCommentForTimelineArticle.of(idAsString, previousCommentId, inputText,
-            bodyInterceptor).observe();
+            baseBodyBodyInterceptor).observe();
     }
     // default case
     Logger.e(this.getTag(), "Unable to create reply due to missing comment type");
     return Observable.empty();
   }
 
-  public void setCommentDialogCallbackContract(CommentListFragment commentDialogCallbackContract) {
+  public void setCommentDialogCallbackContract(
+      CommentDialogCallbackContract commentDialogCallbackContract) {
     this.commentDialogCallbackContract = commentDialogCallbackContract;
+  }
+
+  public void setCommentBeforeSubmissionCallbackContract(CommentBeforeSubmissionCallback callback) {
+    this.commentBeforeSubmissionCallback = callback;
   }
 }

@@ -15,6 +15,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,20 +23,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.annotation.Partners;
-import cm.aptoide.pt.dataprovider.DataProvider;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
-import cm.aptoide.pt.dataprovider.repository.IdsRepositoryImpl;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.dataprovider.ws.v7.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetHomeRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
-import cm.aptoide.pt.interfaces.AptoideClientUUID;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v7.BaseV7Response;
 import cm.aptoide.pt.model.v7.Event;
-import cm.aptoide.pt.model.v7.store.GetHome;
-import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
+import cm.aptoide.pt.model.v7.store.GetStoreTabs;
+import cm.aptoide.pt.model.v7.store.HomeUser;
+import cm.aptoide.pt.model.v7.store.Store;
 import cm.aptoide.pt.utils.GenericDialogs;
-import cm.aptoide.pt.v8engine.BaseBodyInterceptor;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.StorePagerAdapter;
 import cm.aptoide.pt.v8engine.V8Engine;
@@ -50,6 +50,7 @@ import cm.aptoide.pt.v8engine.util.StoreUtils;
 import cm.aptoide.pt.v8engine.util.ThemeUtils;
 import com.astuetz.PagerSlidingTabStrip;
 import com.trello.rxlifecycle.android.FragmentEvent;
+import java.util.List;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -62,17 +63,18 @@ public class StoreFragment extends BasePagerToolbarFragment {
 
   private final int PRIVATE_STORE_REQUEST_CODE = 20;
   protected PagerSlidingTabStrip pagerSlidingTabStrip;
-  private AptoideClientUUID aptoideClientUUID;
   private AptoideAccountManager accountManager;
   private String storeName;
+  private String title;
   private StoreContext storeContext;
-  private GetHome getHome;
   private String storeTheme;
   private StoreCredentialsProvider storeCredentialsProvider;
   private Event.Name defaultTab;
   @Nullable private Long userId;
   private OpenType openType;
-  private BaseBodyInterceptor bodyInterceptor;
+  private BodyInterceptor<BaseBody> bodyInterceptor;
+  private List<GetStoreTabs.Tab> tabs;
+  private Long storeId;
 
   public static StoreFragment newInstance(long userId, String storeTheme, OpenType openType) {
     return newInstance(userId, storeTheme, null, openType);
@@ -117,11 +119,8 @@ public class StoreFragment extends BasePagerToolbarFragment {
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     storeCredentialsProvider = new StoreCredentialsProviderImpl();
-    aptoideClientUUID = new IdsRepositoryImpl(SecurePreferencesImplementation.getInstance(),
-        DataProvider.getContext());
     accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
-    bodyInterceptor =
-        new BaseBodyInterceptor(aptoideClientUUID, accountManager);
+    bodyInterceptor = ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptor();
   }
 
   @Override public void onDestroy() {
@@ -156,53 +155,27 @@ public class StoreFragment extends BasePagerToolbarFragment {
     return super.onCreateView(inflater, container, savedInstanceState);
   }
 
+  @Override protected int[] getViewsToShowAfterLoadingId() {
+    return new int[] { R.id.pager, R.id.tabs };
+  }
+
   @Override protected int getViewToShowAfterLoadingId() {
-    return R.id.app_bar_layout;
+    return -1;
   }
 
   @Override public void load(boolean create, boolean refresh, Bundle savedInstanceState) {
-    if (create || getHome == null) {
-      getRequest(refresh, openType).observeOn(AndroidSchedulers.mainThread())
+    if (create || tabs == null) {
+      loadData(refresh, openType).observeOn(AndroidSchedulers.mainThread())
           .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-          .subscribe((getHome) -> {
-            this.getHome = getHome;
+          .subscribe(title -> {
+            this.title = title;
             if (storeContext != StoreContext.home) {
-              storeName =
-                  storeName == null ? getHome.getNodes().getMeta().getData().getUser().getName()
-                      : storeName;
               setupToolbarDetails(getToolbar());
             }
             setupViewPager();
           }, (throwable) -> handleError(throwable));
     } else {
       setupViewPager();
-    }
-  }
-
-  private void handleError(Throwable throwable) {
-    if (throwable instanceof AptoideWsV7Exception) {
-      BaseV7Response baseResponse = ((AptoideWsV7Exception) throwable).getBaseResponse();
-
-      switch (StoreUtils.getErrorType(baseResponse.getError().getCode())) {
-        case PRIVATE_STORE_ERROR:
-        case PRIVATE_STORE_WRONG_CREDENTIALS:
-          DialogFragment dialogFragment =
-              (DialogFragment) getFragmentManager().findFragmentByTag(
-                  PrivateStoreDialog.TAG);
-          if (dialogFragment == null) {
-            dialogFragment =
-                PrivateStoreDialog.newInstance(this, PRIVATE_STORE_REQUEST_CODE, storeName,
-                    true);
-            dialogFragment.show(getFragmentManager(), PrivateStoreDialog.TAG);
-          }
-          break;
-        case STORE_SUSPENDED:
-          showStoreSuspendedPopup(storeName);
-        default:
-          finishLoading(throwable);
-      }
-    } else {
-      finishLoading(throwable);
     }
   }
 
@@ -255,7 +228,8 @@ public class StoreFragment extends BasePagerToolbarFragment {
   }
 
   @Override protected PagerAdapter createPagerAdapter() {
-    return new StorePagerAdapter(getChildFragmentManager(), getHome, storeContext);
+    return new StorePagerAdapter(getChildFragmentManager(), tabs, storeContext, storeId,
+        storeTheme);
   }
 
   @Override public int getContentViewId() {
@@ -274,21 +248,74 @@ public class StoreFragment extends BasePagerToolbarFragment {
     }
   }
 
-  private Observable<GetHome> getRequest(boolean refresh, OpenType openType) {
+  /**
+   * @return an observable with the title that should be displayed
+   */
+  private Observable<String> loadData(boolean refresh, OpenType openType) {
     switch (openType) {
       case GetHome:
         return GetHomeRequest.of(
             StoreUtils.getStoreCredentials(storeName, storeCredentialsProvider), userId,
-            storeContext, bodyInterceptor).observe(refresh);
+            storeContext, bodyInterceptor).observe(refresh).map(getHome -> {
+          Store store = getHome.getNodes().getMeta().getData().getStore();
+          String storeName = store != null ? store.getName() : null;
+          Long storeId = store != null ? store.getId() : null;
+          setupVariables(getHome.getNodes().getTabs().getList(), storeId, storeName);
+          HomeUser user = getHome.getNodes().getMeta().getData().getUser();
+          return TextUtils.isEmpty(storeName) ? user.getName() : storeName;
+        });
       case GetStore:
       default:
         return GetStoreRequest.of(
             StoreUtils.getStoreCredentials(storeName, storeCredentialsProvider), storeContext,
             bodyInterceptor).observe(refresh).map(getStore -> {
-          GetHome getHome = new GetHome();
-          getHome.setNodes(getStore.getNodes());
-          return getHome;
+          setupVariables(getStore.getNodes().getTabs().getList(),
+              getStore.getNodes().getMeta().getData().getId(),
+              getStore.getNodes().getMeta().getData().getName());
+          return getStore.getNodes().getMeta().getData().getName();
         });
+    }
+  }
+
+  private void handleError(Throwable throwable) {
+    if (throwable instanceof AptoideWsV7Exception) {
+      BaseV7Response baseResponse = ((AptoideWsV7Exception) throwable).getBaseResponse();
+
+      switch (StoreUtils.getErrorType(baseResponse.getError().getCode())) {
+        case PRIVATE_STORE_ERROR:
+        case PRIVATE_STORE_WRONG_CREDENTIALS:
+          DialogFragment dialogFragment =
+              (DialogFragment) getFragmentManager().findFragmentByTag(PrivateStoreDialog.TAG);
+          if (dialogFragment == null) {
+            dialogFragment =
+                PrivateStoreDialog.newInstance(this, PRIVATE_STORE_REQUEST_CODE, storeName, true);
+            dialogFragment.show(getFragmentManager(), PrivateStoreDialog.TAG);
+          }
+          break;
+        case STORE_SUSPENDED:
+          showStoreSuspendedPopup(storeName);
+        default:
+          finishLoading(throwable);
+      }
+    } else {
+      finishLoading(throwable);
+    }
+  }
+
+  private void setupVariables(List<GetStoreTabs.Tab> tabs, Long storeId, String storeName) {
+    this.tabs = tabs;
+    this.storeId = storeId;
+    this.storeName = storeName;
+  }
+
+  protected void changeToTab(Event.Name tabToChange) {
+    if (tabToChange != null) {
+      StorePagerAdapter storePagerAdapter = viewPager.getAdapter() instanceof StorePagerAdapter
+          ? ((StorePagerAdapter) viewPager.getAdapter()) : null;
+      if (storePagerAdapter != null) {
+        viewPager.setCurrentItem(
+            ((StorePagerAdapter) viewPager.getAdapter()).getEventNamePosition(tabToChange));
+      }
     }
   }
 
@@ -304,17 +331,6 @@ public class StoreFragment extends BasePagerToolbarFragment {
           break;
       }
     });
-  }
-
-  protected void changeToTab(Event.Name tabToChange) {
-    if (tabToChange != null) {
-      StorePagerAdapter storePagerAdapter = viewPager.getAdapter() instanceof StorePagerAdapter
-          ? ((StorePagerAdapter) viewPager.getAdapter()) : null;
-      if (storePagerAdapter != null) {
-        viewPager.setCurrentItem(
-            ((StorePagerAdapter) viewPager.getAdapter()).getEventNamePosition(tabToChange));
-      }
-    }
   }
 
   @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -338,7 +354,7 @@ public class StoreFragment extends BasePagerToolbarFragment {
   }
 
   @Override protected void setupToolbarDetails(Toolbar toolbar) {
-    toolbar.setTitle(storeName);
+    toolbar.setTitle(title);
     if (userId != null) {
       toolbar.setLogo(R.drawable.ic_user_icon);
     } else {

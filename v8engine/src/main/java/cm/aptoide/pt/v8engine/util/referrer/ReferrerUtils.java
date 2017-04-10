@@ -236,7 +236,6 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 		DataProvider.getContext().sendBroadcast(i);
 		Logger.d(TAG, "Sent broadcast to " + packageName + " with referrer " + referrer);
 		
-		
 		// AdMonitor- referrer broadcasted.
 		AdMonitor.sendDataToAdMonitor(adId, "referrerBroadcasted");
 	}
