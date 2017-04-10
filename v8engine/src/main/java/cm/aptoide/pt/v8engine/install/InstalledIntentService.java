@@ -30,6 +30,7 @@ import cm.aptoide.pt.v8engine.repository.RollbackRepository;
 import cm.aptoide.pt.v8engine.repository.UpdateRepository;
 import cm.aptoide.pt.v8engine.util.referrer.ReferrerUtils;
 import rx.Completable;
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action0;
@@ -150,6 +151,7 @@ public class InstalledIntentService extends IntentService {
             ReferrerUtils.broadcastReferrer(packageName, storeMinimalAd.getAdId(), storeMinimalAd.getReferrer());
             DataproviderUtils.AdNetworksUtils.knockCpi(storeMinimalAd);
             storeMinimalAdAccessor.remove(storeMinimalAd);
+            return Observable.empty().toCompletable();
           } else {
             return extractReferrer(packageName);
           }
@@ -231,7 +233,8 @@ public class InstalledIntentService extends IntentService {
   private Completable knockCpi(String packageName, StoreMinimalAdAccessor storeMinimalAdAccessor,
       StoredMinimalAd storeMinimalAd) {
     return Completable.fromCallable(() -> {
-      ReferrerUtils.broadcastReferrer(packageName, storeMinimalAd.getReferrer());
+      ReferrerUtils.broadcastReferrer(packageName, storeMinimalAd.getAdId(),
+          storeMinimalAd.getReferrer());
       DataproviderUtils.AdNetworksUtils.knockCpi(storeMinimalAd);
       storeMinimalAdAccessor.remove(storeMinimalAd);
       return null;
