@@ -60,7 +60,8 @@ public class SocialArticleWidget extends SocialCardWidget<SocialArticleDisplayab
     final FragmentActivity context = getContext();
     if (displayable.getStore() != null) {
       title.setVisibility(View.VISIBLE);
-      title.setText(displayable.getStore().getName());
+      //title.setText(displayable.getStore().getName());
+      title.setText(displayable.getStyledTitle(context, displayable.getStore().getName()));
       storeAvatar.setVisibility(View.VISIBLE);
       ImageLoader.with(context)
           .loadWithShadowCircleTransform(displayable.getStore().getAvatar(), storeAvatar);
@@ -79,7 +80,8 @@ public class SocialArticleWidget extends SocialCardWidget<SocialArticleDisplayab
       userAvatar.setVisibility(View.GONE);
       if (displayable.getUser() != null) {
         title.setVisibility(View.VISIBLE);
-        title.setText(displayable.getUser().getName());
+        //title.setText(displayable.getUser().getName());
+        title.setText(displayable.getStyledTitle(context, displayable.getUser().getName()));
         storeAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
             .loadWithShadowCircleTransform(displayable.getUser().getAvatar(), storeAvatar);
@@ -95,6 +97,7 @@ public class SocialArticleWidget extends SocialCardWidget<SocialArticleDisplayab
     setCardViewMargin(displayable, cardView);
 
     ImageLoader.with(context).load(displayable.getThumbnailUrl(), thumbnail);
+    thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
     url.setOnClickListener(v -> {
       knockWithSixpackCredentials(displayable.getAbUrl());
@@ -114,11 +117,13 @@ public class SocialArticleWidget extends SocialCardWidget<SocialArticleDisplayab
             setAppNameToFirstLinkedApp(displayable);
           }
           if (appName != null) {
+            relatedTo.setTextSize(11);
             relatedTo.setText(displayable.getAppRelatedToText(context, appName));
           }
         }, throwable -> {
           setAppNameToFirstLinkedApp(displayable);
           if (appName != null) {
+            relatedTo.setTextSize(11);
             relatedTo.setText(displayable.getAppRelatedToText(context, appName));
           }
           throwable.printStackTrace();
