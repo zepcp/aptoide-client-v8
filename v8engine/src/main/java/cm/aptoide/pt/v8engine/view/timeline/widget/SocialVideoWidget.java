@@ -61,7 +61,7 @@ public class SocialVideoWidget extends SocialCardWidget<SocialVideoDisplayable> 
         Typeface.createFromAsset(context.getAssets(), "fonts/DroidSerif-Regular.ttf");
     if (displayable.getStore() != null) {
       title.setVisibility(View.VISIBLE);
-      title.setText(displayable.getStore().getName());
+      title.setText(displayable.getStyledTitle(context, displayable.getStore().getName()));
       storeAvatar.setVisibility(View.VISIBLE);
       ImageLoader.with(context)
           .loadWithShadowCircleTransform(displayable.getStore().getAvatar(), storeAvatar);
@@ -80,7 +80,7 @@ public class SocialVideoWidget extends SocialCardWidget<SocialVideoDisplayable> 
       userAvatar.setVisibility(View.GONE);
       if (displayable.getUser() != null) {
         title.setVisibility(View.VISIBLE);
-        title.setText(displayable.getUser().getName());
+        title.setText(displayable.getStyledTitle(context, displayable.getUser().getName()));
         storeAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
             .loadWithShadowCircleTransform(displayable.getUser().getAvatar(), storeAvatar);
