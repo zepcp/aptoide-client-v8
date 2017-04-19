@@ -86,6 +86,10 @@
     <item name="android:textColor">@color/grey</item>
   </style>
 
+  <style name="Aptoide.TextView.Regular.XS.BlackAlpha" parent="Aptoide.TextView.Regular.XS">
+    <item name="android:textColor">@color/black87alpha</item>
+  </style>
+
   <style name="Aptoide.TextView.Medium.L.Black" parent="Aptoide.TextView.Medium.L">
     <item name="android:textColor">@color/black</item>
   </style>
