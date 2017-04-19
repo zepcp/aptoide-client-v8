@@ -3,6 +3,7 @@
 
   <style name="Aptoide" />
 
+  <!-- Sizes -->
   <style name="Aptoide.TextView">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
@@ -68,8 +69,25 @@
     <item name="android:lineSpacingMultiplier">1.2</item>
   </style>
 
+  <!-- Colors-->
+  <style name="Aptoide.TextView.Regular.L.Grey" parent="Aptoide.TextView.Regular.L">
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
   <style name="Aptoide.TextView.Regular.M.Grey" parent="Aptoide.TextView.Regular.M">
-    <item name="android:textColor">@color/appstimeline_grey</item>
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.S.Grey" parent="Aptoide.TextView.Regular.S">
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.XS.Grey" parent="Aptoide.TextView.Regular.XS">
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.L.Black" parent="Aptoide.TextView.Medium.L">
+    <item name="android:textColor">@color/black</item>
   </style>
 
 </resources>
