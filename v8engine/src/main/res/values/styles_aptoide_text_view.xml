@@ -70,6 +70,14 @@
   </style>
 
   <!-- Colors-->
+  <style name="Aptoide.TextView.Regular.XS.GreyFog" parent="Aptoide.TextView.Regular.XS">
+    <item name="android:textColor">@color/greydarkfog</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.XXS.GreyFog" parent="Aptoide.TextView.Regular.XXS">
+    <item name="android:textColor">@color/greydarkfog</item>
+  </style>
+
   <style name="Aptoide.TextView.Regular.L.Grey" parent="Aptoide.TextView.Regular.L">
     <item name="android:textColor">@color/grey</item>
   </style>
@@ -92,6 +100,11 @@
 
   <style name="Aptoide.TextView.Medium.L.Black" parent="Aptoide.TextView.Medium.L">
     <item name="android:textColor">@color/black</item>
+  </style>
+
+  <!-- Text Style -->
+  <style name="Aptoide.TextView.Regular.XXS.GreyFog.AllCaps" parent="Aptoide.TextView.Regular.XXS.GreyFog">
+    <item name="android:textAllCaps">true</item>
   </style>
 
 </resources>
