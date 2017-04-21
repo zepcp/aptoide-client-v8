@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-  <style name="Aptoide" />
+  <style name="Aptoide"/>
 
   <!-- Sizes -->
   <style name="Aptoide.TextView">
@@ -100,6 +100,10 @@
 
   <style name="Aptoide.TextView.Medium.L.Black" parent="Aptoide.TextView.Medium.L">
     <item name="android:textColor">@color/black</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.S.Red700" parent="Aptoide.TextView.Regular.S">
+    <item name="android:textColor">@color/red_700</item>
   </style>
 
   <!-- Text Style -->
