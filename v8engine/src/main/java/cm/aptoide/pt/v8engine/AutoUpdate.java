@@ -38,8 +38,8 @@ public class AutoUpdate extends AsyncTask<Void, Void, AutoUpdate.AutoUpdateInfo>
   private PermissionManager permissionManager;
   private InstallManager installManager;
 
-  public AutoUpdate(BaseActivity activity, DownloadFactory downloadFactory, PermissionManager permissionManager,
-      InstallManager installManager) {
+  public AutoUpdate(BaseActivity activity, DownloadFactory downloadFactory,
+      PermissionManager permissionManager, InstallManager installManager) {
     this.activity = activity;
     this.permissionManager = permissionManager;
     this.downloadFactory = downloadFactory;

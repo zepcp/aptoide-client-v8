@@ -80,7 +80,7 @@ public class DataproviderUtils {
       // TODO: 28-07-2016 Baikova clicked on download button.
       knock(minimalAd.getCpdUrl());
     }
-  
+
     public static void knockCpi(MinimalAdInterface minimalAd) {
       // TODO: 28-07-2016 Baikova ad installed.
       knock(minimalAd.getCpiUrl());

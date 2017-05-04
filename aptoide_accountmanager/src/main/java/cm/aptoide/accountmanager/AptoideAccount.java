@@ -5,7 +5,6 @@
 
 package cm.aptoide.accountmanager;
 
-
 import java.util.List;
 import rx.Completable;
 

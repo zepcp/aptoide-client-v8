@@ -268,8 +268,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
     try {
       for (int i = download.getFilesToDownload().size() - 1; i >= 0; i--) {
         FileToDownload fileToDownload = download.getFilesToDownload().get(i);
-        fileDownloader
-            .getStatus(fileToDownload.getDownloadId(), fileToDownload.getPath());
+        fileDownloader.getStatus(fileToDownload.getDownloadId(), fileToDownload.getPath());
         int taskId = fileDownloader.replaceListener(fileToDownload.getDownloadId(), null);
         if (taskId != 0) {
           fileDownloader.pause(taskId);
@@ -296,9 +295,8 @@ class DownloadTask extends FileDownloadLargeFileListener {
         if (TextUtils.isEmpty(fileToDownload.getLink())) {
           throw new IllegalArgumentException("A link to download must be provided");
         }
-        BaseDownloadTask baseDownloadTask = fileDownloader
-            .create(fileToDownload.getLink())
-            .setAutoRetryTimes(RETRY_TIMES);
+        BaseDownloadTask baseDownloadTask =
+            fileDownloader.create(fileToDownload.getLink()).setAutoRetryTimes(RETRY_TIMES);
         /*
          * Aptoide - events 2 : download
          * Get X-Mirror and add to the event
@@ -340,15 +338,13 @@ class DownloadTask extends FileDownloadLargeFileListener {
       for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
         fileToDownload.setFileName(fileToDownload.getFileName().replace(".temp", ""));
         if (!TextUtils.isEmpty(fileToDownload.getMd5())) {
-          if (!TextUtils.equals(AptoideUtils.AlgorithmU.computeMd5(new File(
-                  genericPath + fileToDownload.getFileName())),
-              fileToDownload.getMd5())) {
+          if (!TextUtils.equals(AptoideUtils.AlgorithmU.computeMd5(
+              new File(genericPath + fileToDownload.getFileName())), fileToDownload.getMd5())) {
             return false;
           }
         }
         String newFilePath = getFilePathFromFileType(fileToDownload);
-        fileUtils.copyFile(genericPath, newFilePath,
-            fileToDownload.getFileName());
+        fileUtils.copyFile(genericPath, newFilePath, fileToDownload.getFileName());
         fileToDownload.setPath(newFilePath);
       }
       return true;

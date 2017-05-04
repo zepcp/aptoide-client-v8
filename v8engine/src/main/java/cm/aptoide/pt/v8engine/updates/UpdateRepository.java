@@ -67,8 +67,8 @@ public class UpdateRepository {
 
   private Observable<List<App>> getNetworkUpdates(List<Long> storeIds, boolean bypassCache) {
     Logger.d(TAG, String.format("getNetworkUpdates() -> using %d stores", storeIds.size()));
-    return ListAppsUpdatesRequest.of(storeIds, idsRepository.getUniqueIdentifier(),
-        bodyInterceptor, httpClient, converterFactory).observe(bypassCache).map(result -> {
+    return ListAppsUpdatesRequest.of(storeIds, idsRepository.getUniqueIdentifier(), bodyInterceptor,
+        httpClient, converterFactory).observe(bypassCache).map(result -> {
       if (result != null && result.isOk()) {
         return result.getList();
       }

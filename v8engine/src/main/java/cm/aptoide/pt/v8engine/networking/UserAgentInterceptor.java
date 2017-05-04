@@ -20,8 +20,8 @@ public class UserAgentInterceptor implements Interceptor {
   private final String versionName;
 
   public UserAgentInterceptor(AndroidAccountProvider androidAccountProvider,
-      IdsRepository idsRepository, String oemid, DisplayMetrics displayMetrics,
-      String terminalInfo, String versionName) {
+      IdsRepository idsRepository, String oemid, DisplayMetrics displayMetrics, String terminalInfo,
+      String versionName) {
     this.androidAccountProvider = androidAccountProvider;
     this.idsRepository = idsRepository;
     this.oemid = oemid;

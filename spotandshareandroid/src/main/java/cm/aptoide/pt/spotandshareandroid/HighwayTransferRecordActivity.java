@@ -89,7 +89,6 @@ public class HighwayTransferRecordActivity extends ActivityView
               nickname);
     }
 
-
     applicationSender = ApplicationSender.getInstance(getApplicationContext(), isHotspot);
     transferRecordManager = new TransferRecordManager(applicationsManager);
 

@@ -91,7 +91,7 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
   }
 
   private Observable<Void> googleLoginClick() {
-    return view.googleLoginClick().doOnNext(selected -> view.showLoading()).<Void>flatMap(
+    return view.googleLoginClick().doOnNext(selected -> view.showLoading()).<Void> flatMap(
         credentials -> accountManager.login(Account.Type.GOOGLE, credentials.getEmail(),
             credentials.getToken(), credentials.getDisplayName())
             .observeOn(AndroidSchedulers.mainThread())
@@ -102,7 +102,8 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
                   Analytics.Account.LoginStatusDetail.SUCCESS);
               navigateToMainView();
             })
-            .doOnTerminate(() -> view.hideLoading()).doOnError(throwable -> {
+            .doOnTerminate(() -> view.hideLoading())
+            .doOnError(throwable -> {
               view.showError(throwable);
               Analytics.Account.loginStatus(Analytics.Account.LoginMethod.GOOGLE,
                   Analytics.Account.SignUpLoginStatus.FAILED,
@@ -112,7 +113,7 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
   }
 
   private Observable<Void> facebookLoginClick() {
-    return view.facebookLoginClick().doOnNext(selected -> view.showLoading()).<Void>flatMap(
+    return view.facebookLoginClick().doOnNext(selected -> view.showLoading()).<Void> flatMap(
         credentials -> {
           if (declinedRequiredPermissions(credentials.getDeniedPermissions())) {
             view.hideLoading();
@@ -140,7 +141,7 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
   }
 
   private Observable<Void> aptoideLoginClick() {
-    return view.aptoideLoginClick().<Void>flatMap(credentials -> {
+    return view.aptoideLoginClick().<Void> flatMap(credentials -> {
       view.hideKeyboard();
       view.showLoading();
       return accountManager.login(Account.Type.APTOIDE, credentials.getUsername(),
@@ -153,7 +154,8 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
                 Analytics.Account.LoginStatusDetail.SUCCESS);
             navigateToMainView();
           })
-          .doOnTerminate(() -> view.hideLoading()).doOnError(throwable -> {
+          .doOnTerminate(() -> view.hideLoading())
+          .doOnError(throwable -> {
             view.showError(throwable);
             Analytics.Account.loginStatus(Analytics.Account.LoginMethod.APTOIDE,
                 Analytics.Account.SignUpLoginStatus.FAILED,
@@ -164,7 +166,7 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
   }
 
   private Observable<Void> aptoideSignUpClick() {
-    return view.aptoideSignUpClick().<Void>flatMap(credentials -> {
+    return view.aptoideSignUpClick().<Void> flatMap(credentials -> {
       view.hideKeyboard();
       view.showLoading();
       return accountManager.signUp(credentials.getUsername(), credentials.getPassword())
@@ -173,7 +175,9 @@ public class LoginSignUpCredentialsPresenter implements Presenter {
             Logger.d(TAG, "aptoide sign up successful");
             Analytics.Account.signInSuccessAptoide(Analytics.Account.SignUpLoginStatus.SUCCESS);
             view.navigateToCreateProfile();
-          }).doOnTerminate(() -> view.hideLoading()).doOnError(throwable -> {
+          })
+          .doOnTerminate(() -> view.hideLoading())
+          .doOnError(throwable -> {
             Analytics.Account.signInSuccessAptoide(Analytics.Account.SignUpLoginStatus.FAILED);
             view.showError(throwable);
           })

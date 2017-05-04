@@ -29,7 +29,7 @@ public class DownloadInstallationProvider implements InstallationProvider {
   private final AptoideDownloadManager downloadManager;
   private final DownloadAccessor downloadAccessor;
   private StoredMinimalAdAccessor storedMinimalAdAccessor;
-  
+
   public DownloadInstallationProvider(AptoideDownloadManager downloadManager,
       DownloadAccessor downloadAccessor) {
     this.downloadManager = downloadManager;

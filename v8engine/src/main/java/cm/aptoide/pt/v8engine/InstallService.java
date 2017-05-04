@@ -71,8 +71,8 @@ public class InstallService extends Service {
     downloadManager = ((V8Engine) getApplicationContext()).getDownloadManager();
     defaultInstaller = new InstallerFactory().create(this, InstallerFactory.DEFAULT);
     rollbackInstaller = new InstallerFactory().create(this, InstallerFactory.ROLLBACK);
-    installManager = ((V8Engine) getApplicationContext()).getInstallManager(
-        InstallerFactory.ROLLBACK);
+    installManager =
+        ((V8Engine) getApplicationContext()).getInstallManager(InstallerFactory.ROLLBACK);
     subscriptions = new CompositeSubscription();
     setupNotification();
     installerTypeMap = new HashMap();

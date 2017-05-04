@@ -64,8 +64,6 @@ public class Utils {
         .replace("\n", "");
   }
 
-
-
   public static String generateRandomAlphanumericString(int lengthWanted) {
     char[] array = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     StringBuilder sb = new StringBuilder();

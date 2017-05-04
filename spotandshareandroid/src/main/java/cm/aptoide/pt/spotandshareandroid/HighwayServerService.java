@@ -53,8 +53,8 @@ public class HighwayServerService extends Service {
     Intent i = new Intent();
     i.setAction("SERVER_DISCONNECT");
     sendBroadcast(i);
-
   };
+
   @Override public void onCreate() {
     super.onCreate();
     if (mNotifyManager == null) {

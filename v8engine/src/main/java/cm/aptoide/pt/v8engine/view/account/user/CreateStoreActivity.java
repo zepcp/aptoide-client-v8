@@ -133,8 +133,7 @@ public class CreateStoreActivity extends AccountPermissionsBaseActivity {
     setContentView(getLayoutId());
     accountManager = ((V8Engine) getApplicationContext()).getAccountManager();
     httpClient = ((V8Engine) getApplicationContext()).getDefaultClient();
-    longTimeoutHttpClient =
-        ((V8Engine) getApplicationContext()).getLongTimeoutClient();
+    longTimeoutHttpClient = ((V8Engine) getApplicationContext()).getLongTimeoutClient();
     converterFactory = WebService.getDefaultConverter();
     bodyInterceptorV7 = ((V8Engine) getApplicationContext()).getBaseBodyInterceptorV7();
     bodyInterceptorV3 = ((V8Engine) getApplicationContext()).getBaseBodyInterceptorV3();

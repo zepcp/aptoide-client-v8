@@ -96,16 +96,16 @@ public class CreateUserActivity extends AccountPermissionsBaseActivity {
 
   @Override public void showIconPropertiesError(String errors) {
     subscriptions.add(GenericDialogs.createGenericOkMessage(this,
-        getString(R.string.image_requirements_error_popup_title), errors)
-        .subscribe());
+        getString(R.string.image_requirements_error_popup_title), errors).subscribe());
   }
 
   private void setupListeners() {
     subscriptions.add(RxView.clicks(userAvatar).subscribe(click -> chooseAvatarSource()));
-    subscriptions.add(RxView.clicks(createUserButton).doOnNext(click -> {
-      hideKeyboardAndShowProgressDialog();
-      Analytics.Account.createdUserProfile(!TextUtils.isEmpty(avatarPath));
-    })
+    subscriptions.add(RxView.clicks(createUserButton)
+        .doOnNext(click -> {
+          hideKeyboardAndShowProgressDialog();
+          Analytics.Account.createdUserProfile(!TextUtils.isEmpty(avatarPath));
+        })
         .flatMap(click -> accountManager.updateAccount(nameEditText.getText().toString().trim(),
             avatarPath)
             .toObservable()
@@ -152,8 +152,7 @@ public class CreateUserActivity extends AccountPermissionsBaseActivity {
     if (Application.getConfiguration().isCreateStoreAndSetUserPrivacyAvailable()) {
       startActivity(new Intent(this, ProfileStepOneActivity.class));
     } else {
-      Toast.makeText(this, R.string.create_profile_pub_pri_suc_login,
-          Toast.LENGTH_LONG).show();
+      Toast.makeText(this, R.string.create_profile_pub_pri_suc_login, Toast.LENGTH_LONG).show();
     }
     finish();
   }

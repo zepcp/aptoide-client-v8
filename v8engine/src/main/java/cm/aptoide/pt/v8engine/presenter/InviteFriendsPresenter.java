@@ -43,7 +43,8 @@ public class InviteFriendsPresenter implements InviteFriendsContract.UserActions
 
     String url = context.getString(R.string.store_url, accountManager.getAccount().getStoreName());
     String shareText =
-        context.getString(R.string.follow_my_store, V8Engine.getConfiguration().getMarketName(), url);
+        context.getString(R.string.follow_my_store, V8Engine.getConfiguration().getMarketName(),
+            url);
 
     Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
     sharingIntent.setType("text/plain");

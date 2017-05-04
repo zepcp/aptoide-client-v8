@@ -154,7 +154,6 @@ public class LoginSignUpCredentialsFragment extends GoogleLoginFragment
     ShowMessage.asToast(getContext(), errorMapper.map(throwable));
   }
 
-
   @Override public void showFacebookLogin() {
     FacebookSdk.sdkInitialize(getActivity().getApplicationContext());
     facebookLoginButton.setVisibility(View.VISIBLE);
@@ -361,10 +360,9 @@ public class LoginSignUpCredentialsFragment extends GoogleLoginFragment
 
     facebookEmailRequiredDialog = new AlertDialog.Builder(context).setMessage(
         R.string.facebook_email_permission_regected_message)
-        .setPositiveButton(R.string.facebook_grant_permission_button,
-            (dialog, which) -> {
-              facebookLoginManager.logInWithReadPermissions(this, Arrays.asList("email"));
-            })
+        .setPositiveButton(R.string.facebook_grant_permission_button, (dialog, which) -> {
+          facebookLoginManager.logInWithReadPermissions(this, Arrays.asList("email"));
+        })
         .setNegativeButton(android.R.string.cancel, null)
         .create();
 

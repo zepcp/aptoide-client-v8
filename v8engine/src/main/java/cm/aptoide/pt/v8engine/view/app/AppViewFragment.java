@@ -184,7 +184,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private PaymentAnalytics paymentAnalytics;
   private SpotAndShareAnalytics spotAndShareAnalytics;
 
-
   public static AppViewFragment newInstanceUname(String uname) {
     Bundle bundle = new Bundle();
     bundle.putString(BundleKeys.UNAME.name(), uname);
@@ -403,9 +402,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   public void buyApp(GetAppMeta.App app) {
     final ParcelableProduct product = (ParcelableProduct) productFactory.create(app);
     paymentAnalytics.sendPaidAppBuyButtonPressedEvent(product);
-    startActivityForResult(
-        PaymentActivity.getIntent(getActivity(), product),
-        PAY_APP_REQUEST_CODE);
+    startActivityForResult(PaymentActivity.getIntent(getActivity(), product), PAY_APP_REQUEST_CODE);
   }
 
   @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {

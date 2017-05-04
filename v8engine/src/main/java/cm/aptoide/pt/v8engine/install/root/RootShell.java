@@ -42,8 +42,8 @@ public class RootShell {
   // --------------------
 
   public static final String version = "RootShell v1.4";
-  public static boolean debugMode = false;
   private static final String TAG = RootShell.class.getSimpleName();
+  public static boolean debugMode = false;
   /**
    * Setting this to false will disable the handler that is used
    * by default for the 3 callback methods for Command.
@@ -185,7 +185,8 @@ public class RootShell {
 
   /**
    * @param binaryName <code>String</code> that represent the binary to find.
-   * @param searchPaths <code>List<String></code> which contains the paths to search for this binary
+   * @param searchPaths <code>List<String></code> which contains the paths to search for this
+   * binary
    * in.
    * @param singlePath boolean that represents whether to return a single path or multiple.
    *
@@ -276,7 +277,8 @@ public class RootShell {
    *
    * @param shellPath a <code>String</code> to Indicate the path to the shell that you want to
    * open.
-   * @param timeout an <code>int</code> to Indicate the length of time before giving up on opening a
+   * @param timeout an <code>int</code> to Indicate the length of time before giving up on opening
+   * a
    * shell.
    *
    * @throws TimeoutException

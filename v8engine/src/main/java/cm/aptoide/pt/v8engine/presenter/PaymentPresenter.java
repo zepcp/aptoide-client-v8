@@ -120,10 +120,11 @@ public class PaymentPresenter implements Presenter {
   }
 
   private Observable<Void> cancellationSelection() {
-    return Observable.merge(view.cancellationSelection().flatMap(cancelled ->
-        sendCancellationAnalytics().andThen(Observable.just(cancelled))), view
-        .tapOutsideSelection().flatMap(tappedOutside -> sendTapOutsideAnalytics().andThen
-            (Observable.just(tappedOutside))))
+    return Observable.merge(view.cancellationSelection()
+        .flatMap(cancelled -> sendCancellationAnalytics().andThen(Observable.just(cancelled))), view
+        .tapOutsideSelection()
+        .flatMap(
+            tappedOutside -> sendTapOutsideAnalytics().andThen(Observable.just(tappedOutside))))
         .doOnNext(cancelled -> view.dismiss());
   }
 

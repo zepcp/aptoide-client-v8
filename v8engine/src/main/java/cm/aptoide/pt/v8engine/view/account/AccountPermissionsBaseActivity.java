@@ -231,24 +231,19 @@ public abstract class AccountPermissionsBaseActivity extends AccountBaseActivity
     for (AptoideUtils.IconSizeU.ImageErrors imageSizeError : imageErrors) {
       switch (imageSizeError) {
         case MIN_HEIGHT:
-          message.append(
-              getString(R.string.image_requirements_error_min_height));
+          message.append(getString(R.string.image_requirements_error_min_height));
           break;
         case MAX_HEIGHT:
-          message.append(
-              getString(R.string.image_requirements_error_max_height));
+          message.append(getString(R.string.image_requirements_error_max_height));
           break;
         case MIN_WIDTH:
-          message.append(
-              getString(R.string.image_requirements_error_min_width));
+          message.append(getString(R.string.image_requirements_error_min_width));
           break;
         case MAX_WIDTH:
-          message.append(
-              getString(R.string.image_requirements_error_max_width));
+          message.append(getString(R.string.image_requirements_error_max_width));
           break;
         case MAX_IMAGE_SIZE:
-          message.append(
-              getString(R.string.image_requirements_error_max_file_size));
+          message.append(getString(R.string.image_requirements_error_max_file_size));
           break;
         case ERROR_DECODING:
           message.append(getString(R.string.image_requirements_error_open_image));

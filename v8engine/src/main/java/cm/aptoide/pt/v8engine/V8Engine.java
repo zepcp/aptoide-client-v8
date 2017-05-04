@@ -41,7 +41,6 @@ import cm.aptoide.pt.networkclient.WebService;
 import cm.aptoide.pt.networkclient.okhttp.cache.L2Cache;
 import cm.aptoide.pt.networkclient.okhttp.cache.POSTCacheInterceptor;
 import cm.aptoide.pt.networkclient.okhttp.cache.POSTCacheKeyAlgorithm;
-import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.PRNGFixes;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.preferences.secure.SecureCoderDecoder;
@@ -450,8 +449,9 @@ public abstract class V8Engine extends SpotAndShareApplication {
 
   public PaymentAnalytics getPaymentAnalytics() {
     if (paymentAnalytics == null) {
-      paymentAnalytics = new PaymentAnalytics(Analytics.getInstance(), AppEventsLogger.newLogger(this),
-          getAptoidePackage());
+      paymentAnalytics =
+          new PaymentAnalytics(Analytics.getInstance(), AppEventsLogger.newLogger(this),
+              getAptoidePackage());
     }
     return paymentAnalytics;
   }

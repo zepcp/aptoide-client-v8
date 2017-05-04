@@ -139,8 +139,7 @@ public abstract class V3<U> extends WebService<V3.Interfaces, U> {
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("addApkFlag") @FormUrlEncoded Observable<GenericResponseV2> addApkFlag(
-        @FieldMap BaseBody arg,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+        @FieldMap BaseBody arg, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("getApkInfo") @FormUrlEncoded Observable<PaidApp> getApkInfo(@FieldMap BaseBody args,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
@@ -170,28 +169,24 @@ public abstract class V3<U> extends WebService<V3.Interfaces, U> {
     Observable<BaseV3Response> createPaymentAuthorization(@FieldMap BaseBody args);
 
     @POST("oauth2Authentication") @FormUrlEncoded Observable<OAuth> oauth2Authentication(
-        @FieldMap BaseBody args,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+        @FieldMap BaseBody args, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("getUserInfo") @FormUrlEncoded Observable<CheckUserCredentialsJson> getUserInfo(
-        @FieldMap BaseBody args,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+        @FieldMap BaseBody args, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("checkUserCredentials") @FormUrlEncoded
     Observable<CheckUserCredentialsJson> checkUserCredentials(@FieldMap BaseBody args,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("createUser") @FormUrlEncoded Observable<BaseV3Response> createUser(
-        @FieldMap BaseBody args,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+        @FieldMap BaseBody args, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("createUser") @Multipart Observable<BaseV3Response> createUserWithFile(
         @Part MultipartBody.Part user_avatar, @PartMap() HashMapNotNull<String, RequestBody> args,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("changeUserSettings") @FormUrlEncoded Observable<BaseV3Response> changeUserSettings(
-        @FieldMap BaseBody args,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+        @FieldMap BaseBody args, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("changeUserRepoSubscription") @FormUrlEncoded
     Observable<BaseV3Response> changeUserRepoSubscription(@FieldMap BaseBody args);

@@ -55,11 +55,11 @@ public class AdsRepository {
   }
 
   public Observable<MinimalAd> getAdsFromAppView(String packageName, String storeName) {
-    return mapToMinimalAd(GetAdsRequest.ofAppviewOrganic(packageName, storeName,
-        idsRepository.getUniqueIdentifier(),
-        googlePlayServicesAvailabilityChecker.isAvailable(V8Engine.getContext()),
-        partnerIdProvider.getPartnerId(), accountManager.isAccountMature(), httpClient,
-        converterFactory).observe());
+    return mapToMinimalAd(
+        GetAdsRequest.ofAppviewOrganic(packageName, storeName, idsRepository.getUniqueIdentifier(),
+            googlePlayServicesAvailabilityChecker.isAvailable(V8Engine.getContext()),
+            partnerIdProvider.getPartnerId(), accountManager.isAccountMature(), httpClient,
+            converterFactory).observe());
   }
 
   private Observable<MinimalAd> mapToMinimalAd(

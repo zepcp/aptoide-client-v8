@@ -19,9 +19,8 @@ public class BaseBodyInterceptorV7 implements BodyInterceptor<BaseBody> {
   private final String aptoideMd5sum;
   private final String aptoidePackage;
 
-  public BaseBodyInterceptorV7(IdsRepository idsRepository,
-      AptoideAccountManager accountManager, AdultContent adultContent, String aptoideMd5sum,
-      String aptoidePackage) {
+  public BaseBodyInterceptorV7(IdsRepository idsRepository, AptoideAccountManager accountManager,
+      AdultContent adultContent, String aptoideMd5sum, String aptoidePackage) {
     this.idsRepository = idsRepository;
     this.accountManager = accountManager;
     this.adultContent = adultContent;

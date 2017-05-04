@@ -74,15 +74,12 @@ public class PaymentAuthorizationSync extends RepositorySync {
   private Single<List<PaymentAuthorizationsResponse.PaymentAuthorizationResponse>> getServerAuthorizations(
       String accessToken) {
     return GetPaymentAuthorizationsRequest.of(accessToken, bodyInterceptorV3, httpClient,
-        converterFactory)
-        .observe()
-        .toSingle()
-        .flatMap(response -> {
-          if (response != null && response.isOk()) {
-            return Single.just(response.getAuthorizations());
-          }
-          return Single.error(new RepositoryItemNotFoundException(V3.getErrorMessage(response)));
-        });
+        converterFactory).observe().toSingle().flatMap(response -> {
+      if (response != null && response.isOk()) {
+        return Single.just(response.getAuthorizations());
+      }
+      return Single.error(new RepositoryItemNotFoundException(V3.getErrorMessage(response)));
+    });
   }
 
   private void saveAndReschedulePendingAuthorization(

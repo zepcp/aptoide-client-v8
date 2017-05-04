@@ -93,8 +93,7 @@ public class MyStoresSubscribedFragment extends GetStoreEndlessFragment<ListStor
               new RecommendedStoreDisplayable(list.get(i), storeRepository, accountManager,
                   new StoreUtilsProxy(accountManager, bodyInterceptor, storeCredentialsProvider,
                       AccessorFactory.getAccessorFor(cm.aptoide.pt.database.realm.Store.class),
-                      httpClient, WebService.getDefaultConverter()),
-                  storeCredentialsProvider));
+                      httpClient, WebService.getDefaultConverter()), storeCredentialsProvider));
         } else {
           storesDisplayables.add(new GridStoreDisplayable(list.get(i)));
         }

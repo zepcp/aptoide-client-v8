@@ -23,15 +23,13 @@ import cm.aptoide.pt.utils.BroadcastRegisterOnSubscribe;
 import cm.aptoide.pt.utils.FileUtils;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
-import cm.aptoide.pt.v8engine.download.InstallEvent;
 import cm.aptoide.pt.v8engine.crashreports.CrashReport;
+import cm.aptoide.pt.v8engine.download.InstallEvent;
 import cm.aptoide.pt.v8engine.install.Installer;
 import cm.aptoide.pt.v8engine.install.exception.InstallationException;
 import cm.aptoide.pt.v8engine.install.root.RootShell;
-import eu.chainfire.libsuperuser.Shell;
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import rx.Observable;
@@ -75,9 +73,8 @@ public class DefaultInstaller implements Installer {
           if (isInstalled(installation.getPackageName(), installation.getVersionCode())) {
             return Observable.just(null);
           } else {
-            return systemInstall(context, installation.getFile())
-                .onErrorResumeNext(
-                    defaultInstall(context, installation.getFile(), installation.getPackageName()));
+            return systemInstall(context, installation.getFile()).onErrorResumeNext(
+                defaultInstall(context, installation.getFile(), installation.getPackageName()));
           }
         })
         .doOnError((throwable) -> {

@@ -64,7 +64,7 @@
     <activity android:name=".payment.providers.paypal.PayPalPaymentActivity"/>
     <activity android:name=".view.payment.PaymentAuthorizationActivity"/>
     <activity android:name=".view.account.LoginActivity"/>
-    <activity android:name=".spotandshare.SpotSharePreviewActivity" />
+    <activity android:name=".spotandshare.SpotSharePreviewActivity"/>
 
     <activity android:name="cm.aptoide.pt.spotandshareandroid.HighwayActivity"/>
 
@@ -191,7 +191,6 @@
       </intent-filter>
 
 
-
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>
 
@@ -227,7 +226,7 @@
       </intent-filter>
     </receiver>
 
-    <service android:name=".pull.PullingContentService" />
+    <service android:name=".pull.PullingContentService"/>
 
     <receiver android:name=".pull.PullingContentReceiver">
       <intent-filter>

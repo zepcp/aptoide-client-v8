@@ -82,8 +82,6 @@ public class HighwayActivity extends ActivityView implements HighwayView, Permis
     }
 
     attachPresenter(presenter);
-
-
   }
 
   private void bindViews() {

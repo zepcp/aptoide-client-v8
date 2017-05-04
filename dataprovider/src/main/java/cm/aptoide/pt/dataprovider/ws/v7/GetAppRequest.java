@@ -58,7 +58,8 @@ import rx.Observable;
   public static GetAppRequest ofUname(String uname, BodyInterceptor<BaseBody> bodyInterceptor,
       OkHttpClient httpClient, Converter.Factory converterFactory) {
 
-    return new GetAppRequest(BASE_HOST, new Body(uname), bodyInterceptor, httpClient, converterFactory);
+    return new GetAppRequest(BASE_HOST, new Body(uname), bodyInterceptor, httpClient,
+        converterFactory);
   }
 
   public static GetAppRequest of(long appId, String storeName,
