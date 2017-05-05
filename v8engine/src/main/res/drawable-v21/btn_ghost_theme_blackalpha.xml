@@ -10,11 +10,10 @@
     <shape
         android:shape="rectangle">
 
-      <solid android:color="@color/orange_700"/>
+      <solid android:color="@color/black87alpha"/>
       <corners
           android:radius="4dp"/>
     </shape>
   </item>
-  <item android:drawable="@drawable/btn_ghost_theme_normal"/>
+  <item android:drawable="@drawable/btn_ghost_theme_normal_blackalpha"/>
 </ripple>
-
