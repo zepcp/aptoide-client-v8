@@ -155,16 +155,10 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
     }
     if (uri.startsWith("aptoiderepo")) {
 
-      ArrayList<String> repo = new ArrayList<>();
-      repo.add(uri.substring(14));
-      startWithRepo(StoreUtils.split(repo));
+      performAptoideRepoSchema(uri);
     } else if (uri.startsWith("aptoidexml")) {
 
-      String repo = uri.substring(13);
-      parseXmlString(repo);
-      Intent i = new Intent(DeepLinkIntentReceiver.this, startClass);
-      i.putExtra(DeepLinksTargets.NEW_REPO, StoreUtils.split(repo));
-      startActivity(i);
+      performAptoideXmlSchema(uri);
     } else if (uri.startsWith("aptoidesearch://")) {
       startFromPackageName(uri.split("aptoidesearch://")[1]);
     } else if (uri.startsWith("aptoidevoicesearch://")) {
@@ -179,74 +173,99 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
         packageName = packageName.substring(4);
       }
       startFromPackageName(packageName);
-    } else if (uri.startsWith("http://market.android.com/details?id=")) {
-      String param = uri.split("=")[1];
-      startFromPackageName(param);
-    } else if (uri.startsWith("https://market.android.com/details?id=")) {
-      String param = uri.split("=")[1];
-      startFromPackageName(param);
+    } else if (uri.startsWith("http://market.android.com/details?id=") || uri.startsWith(
+        "https://market.android.com/details?id=")) {
+      performMArketUrl(uri.split("=")[1]);
     } else if (uri.startsWith("https://play.google.com/store/apps/details?id=") || uri.startsWith(
         "http://play.google.com/store/apps/details?id=")) {
-      String params = uri.split("&")[0];
-      String param = params.split("=")[1];
-      if (param.contains("pname:")) {
-        param = param.substring(6);
-      } else if (param.contains("pub:")) {
-        param = param.substring(4);
-      } else {
-        try {
-          param = Uri.parse(uri).getQueryParameter("id");
-        } catch (NullPointerException e) {
-          CrashReport.getInstance().log(e);
-        }
-      }
-      startFromPackageName(param);
+      performGooglePlayUrl(uri);
     } else if (uri.contains("aptword://")) {
 
-      // TODO: 12-08-2016 neuro aptword Seems discontinued???
-      String param = uri.substring("aptword://".length());
-
-      if (!TextUtils.isEmpty(param)) {
-
-        param = param.replaceAll("\\*", "_").replaceAll("\\+", "/");
-
-        String json = new String(Base64.decode(param.getBytes(), 0));
-
-        Logger.d("AptoideAptWord", json);
-
-        GetAdsResponse.Ad ad = null;
-        try {
-          ad = new ObjectMapper().readValue(json, GetAdsResponse.Ad.class);
-        } catch (IOException e) {
-          CrashReport.getInstance().log(e);
-        }
-
-        if (ad != null) {
-          Intent i = new Intent(this, startClass);
-          i.putExtra(DeepLinksTargets.FROM_AD, MinimalAd.from(ad));
-          startActivity(i);
-        } else {
-          finish();
-        }
-      }
+      aptword(uri);
     } else if (uri.startsWith("file://")) {
 
       downloadMyApp();
     } else if (uri.startsWith("aptoideinstall://")) {
       parseAptoideInstallUri(uri.substring("aptoideinstall://".length()));
     } else if (uri.startsWith("aptoide://")) {
-      Uri parse = Uri.parse(uri);
-      switch (sURIMatcher.match(parse)) {
-        case DEEPLINK_ID:
-          startGenericDeepLink(parse);
-          break;
-        case SCHEDULE_DOWNLOADS_ID:
-          startScheduleDownloads(parse);
-          break;
-      }
-      finish();
+      performAptoideSchema(uri);
+    }
+    finish();
+  }
+
+  private void performAptoideRepoSchema(String uri) {
+    ArrayList<String> repo = new ArrayList<>();
+    repo.add(uri.substring(14));
+    startWithRepo(StoreUtils.split(repo));
+  }
+
+  private void performAptoideXmlSchema(String uri) {
+    String repo = uri.substring(13);
+    parseXmlString(repo);
+    Intent i = new Intent(DeepLinkIntentReceiver.this, startClass);
+    i.putExtra(DeepLinksTargets.NEW_REPO, StoreUtils.split(repo));
+    startActivity(i);
+  }
+
+  private void performMArketUrl(String s) {
+    String param = s;
+    startFromPackageName(param);
+  }
+
+  private void performGooglePlayUrl(String uri) {
+    String params = uri.split("&")[0];
+    String param = params.split("=")[1];
+    if (param.contains("pname:")) {
+      param = param.substring(6);
+    } else if (param.contains("pub:")) {
+      param = param.substring(4);
     } else {
-      finish();
+      try {
+        param = Uri.parse(uri).getQueryParameter("id");
+      } catch (NullPointerException e) {
+        CrashReport.getInstance().log(e);
+      }
+    }
+    startFromPackageName(param);
+  }
+
+  private void aptword(String uri) {
+    String param = uri.substring("aptword://".length());
+
+    if (!TextUtils.isEmpty(param)) {
+
+      param = param.replaceAll("\\*", "_").replaceAll("\\+", "/");
+
+      String json = new String(Base64.decode(param.getBytes(), 0));
+
+      Logger.d("AptoideAptWord", json);
+
+      GetAdsResponse.Ad ad = null;
+      try {
+        ad = new ObjectMapper().readValue(json, GetAdsResponse.Ad.class);
+      } catch (IOException e) {
+        CrashReport.getInstance().log(e);
+      }
+
+      if (ad != null) {
+        Intent i = new Intent(this, startClass);
+        i.putExtra(DeepLinksTargets.FROM_AD, MinimalAd.from(ad));
+        startActivity(i);
+      } else {
+        finish();
+      }
+    }
+  }
+
+  private void performAptoideSchema(String uri) {
+    Uri parse = Uri.parse(uri);
+    switch (sURIMatcher.match(parse)) {
+      case DEEPLINK_ID:
+        startGenericDeepLink(parse);
+        break;
+      case SCHEDULE_DOWNLOADS_ID:
+        startScheduleDownloads(parse);
+        break;
     }
   }
 
