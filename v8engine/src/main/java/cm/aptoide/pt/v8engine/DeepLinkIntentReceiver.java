@@ -22,7 +22,6 @@ import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.MinimalAd;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.model.v2.GetAdsResponse;
-import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.crashreports.CrashReport;
@@ -34,13 +33,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -76,169 +72,152 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
     super.onCreate(savedInstanceState);
 
     TMP_MYAPP_FILE = getCacheDir() + "/myapp.myapp";
-    String uri = getIntent().getDataString();
-    Analytics.ApplicationLaunch.website(uri);
+    String uriString = getIntent().getDataString();
+    Analytics.ApplicationLaunch.website(uriString);
 
-    Logger.v(TAG, "uri: " + uri);
+    Logger.v(TAG, "uriString: " + uriString);
 
-    Uri u = null;
+    Uri uri = null;
     try {
-      u = Uri.parse(uri);
+      uri = Uri.parse(uriString);
     } catch (Exception e) {
     }
     //Loogin for url from the new site
-    if (u != null && u.getHost() != null) {
+    if (uri != null && uri.getHost() != null) {
 
-      if (u.getHost().contains("webservices.aptoide.com")) {
+      if (uri.getHost().contains("webservices.aptoide.com")) {
 
-        /** refactored to remove org.apache libs */
-        Map<String, String> params = null;
+        performWebservicesAptoideHost(uri);
+      } else if (uri.getHost().contains("imgs.aptoide.com")) {
 
-        try {
-          params = AptoideUtils.StringU.splitQuery(URI.create(uri));
-        } catch (UnsupportedEncodingException e) {
-          CrashReport.getInstance().log(e);
-        }
+        performImgsAptoideHost(uriString);
+      } else if (uri.getHost().contains("aptoide.com")) {
+        performAptoideHost(uri);
+      } else if (uri.getHost().contains("market.android.com")
+          && uri.getPath() != null
+          && uri.getPath().contains("details")) {
+        performGoogleUrl(uri);
+      } else if (uri.getHost().contains("play.google.com") && uri.getPath() != null && uri.getPath()
+          .contains("store/apps/details")) {
 
-        if (params != null) {
-          String uid = null;
-          for (Map.Entry<String, String> entry : params.entrySet()) {
-            if (entry.getKey().equals("uid")) {
-              uid = entry.getValue();
-            }
-          }
-
-          if (uid != null) {
-            try {
-              long id = Long.parseLong(uid);
-              startFromAppView(id, null, true);
-            } catch (NumberFormatException e) {
-              CrashReport.getInstance().log(e);
-              CrashReport.getInstance().log(e);
-              ShowMessage.asToast(getApplicationContext(), R.string.simple_error_occured + uid);
-            }
-          }
-        }
-
-        finish();
-      } else if (u.getHost().contains("imgs.aptoide.com")) {
-
-        String[] strings = uri.split("-");
-        long id = Long.parseLong(strings[strings.length - 1].split("\\.myapp")[0]);
-
-        startFromAppView(id, null, false);
-      } else if (u.getHost().contains("aptoide.com")) {
-        /**
-         * This could be a store or a app from the new web site
-         */
-        if (u.getPath() != null && u.getPath().contains("store")) {
-
-          /**
-           * store
-           */
-          Logger.v(TAG, "store: " + u.getLastPathSegment());
-          ArrayList<String> list = new ArrayList<String>();
-          list.add(u.getLastPathSegment());
-          startWithRepo(list);
-        } else {
-          String[] appName = u.getHost().split("\\.");
-          if (appName != null && appName.length == 4) {
-
-            /**
-             * App view
-             */
-            Logger.v(TAG, "app: " + appName[0]);
-            startAppView(appName[0]);
-          }
-        }
+        performGoogleUrl(uri);
       }
     }
-    if (uri.startsWith("aptoiderepo")) {
+    if (uri != null && uri.getScheme() != null) {
 
-      performAptoideRepoSchema(uri);
-    } else if (uri.startsWith("aptoidexml")) {
+      if (uri.getScheme().contains("aptoiderepo")) {
 
-      performAptoideXmlSchema(uri);
-    } else if (uri.startsWith("aptoidesearch://")) {
-      startFromPackageName(uri.split("aptoidesearch://")[1]);
-    } else if (uri.startsWith("aptoidevoicesearch://")) {
-      aptoidevoiceSearch(uri.split("aptoidevoicesearch://")[1]);
-    } else if (uri.startsWith("market")) {
-      String params = uri.split("&")[0];
-      String[] param = params.split("=");
-      String packageName = (param != null && param.length > 1) ? params.split("=")[1] : "";
+        performAptoideRepoSchema(uriString.replace("aptoiderepo://", ""));
+      } else if (uri.getScheme().contains("aptoidexml")) {
+
+        performAptoideXmlSchema(uriString.replace("aptoidexml://", ""));
+      } else if (uri.getScheme().contains("aptoidesearch")) {
+
+        startFromPackageName(uriString.replace("aptoidesearch://", ""));
+      } else if (uri.getScheme().contains("market")) {
+
+        performGoogleUrl(uri);
+      } else if (uri.getScheme().contains("aptword")) {
+
+        aptword(uriString.replace("aptword://", ""));
+      } else if (uri.getScheme().contains("file")) {
+
+        downloadMyApp(uriString);
+      } else if (uri.getScheme().contains("aptoideinstall")) {
+        parseAptoideInstallUri(uriString.replace("aptoideinstall://", ""));
+      } else if (uri.getScheme().contains("aptoide")) {
+        performAptoideSchema(uriString);
+      }
+    }
+
+    finish();
+  }
+
+  private void performGoogleUrl(Uri uri) {
+
+    String packageName = uri.getQueryParameter("id");
+
+    if (packageName != null) {
       if (packageName.contains("pname:")) {
-        packageName = packageName.substring(6);
+        packageName = packageName.replace("pname:", "");
       } else if (packageName.contains("pub:")) {
-        packageName = packageName.substring(4);
+        packageName = packageName.replace("pub:", "");
       }
       startFromPackageName(packageName);
-    } else if (uri.startsWith("http://market.android.com/details?id=") || uri.startsWith(
-        "https://market.android.com/details?id=")) {
-      performMArketUrl(uri.split("=")[1]);
-    } else if (uri.startsWith("https://play.google.com/store/apps/details?id=") || uri.startsWith(
-        "http://play.google.com/store/apps/details?id=")) {
-      performGooglePlayUrl(uri);
-    } else if (uri.contains("aptword://")) {
-
-      aptword(uri);
-    } else if (uri.startsWith("file://")) {
-
-      downloadMyApp();
-    } else if (uri.startsWith("aptoideinstall://")) {
-      parseAptoideInstallUri(uri.substring("aptoideinstall://".length()));
-    } else if (uri.startsWith("aptoide://")) {
-      performAptoideSchema(uri);
     }
-    finish();
+  }
+
+  private void performAptoideHost(Uri u) {
+    /**
+     * This could be a store or a app from the new web site
+     */
+    if (u.getPath() != null && u.getPath().contains("store")) {
+
+      /**
+       * store
+       */
+      Logger.v(TAG, "store: " + u.getLastPathSegment());
+      ArrayList<String> list = new ArrayList<String>();
+      list.add(u.getLastPathSegment());
+      startWithRepo(list);
+    } else {
+      String[] appName = u.getHost().split("\\.");
+      if (appName != null && appName.length == 4) {
+
+        /**
+         * App view
+         */
+        Logger.v(TAG, "app: " + appName[0]);
+        startAppView(appName[0]);
+      }
+    }
+  }
+
+  private void performImgsAptoideHost(String uri) {
+
+    String[] strings = uri.split("-");
+    long id = Long.parseLong(strings[strings.length - 1].split("\\.myapp")[0]);
+
+    startFromAppView(id, null, false);
+  }
+
+  private void performWebservicesAptoideHost(Uri uri) {
+
+    String uid = uri.getQueryParameter("uid");
+
+    if (uid != null) {
+      try {
+        long id = Long.parseLong(uid);
+        startFromAppView(id, null, true);
+      } catch (NumberFormatException e) {
+        CrashReport.getInstance().log(e);
+        ShowMessage.asToast(getApplicationContext(), R.string.simple_error_occured + uid);
+      }
+    }
   }
 
   private void performAptoideRepoSchema(String uri) {
     ArrayList<String> repo = new ArrayList<>();
-    repo.add(uri.substring(14));
+    repo.add(uri);
     startWithRepo(StoreUtils.split(repo));
   }
 
-  private void performAptoideXmlSchema(String uri) {
-    String repo = uri.substring(13);
+  private void performAptoideXmlSchema(String repo) {
     parseXmlString(repo);
     Intent i = new Intent(DeepLinkIntentReceiver.this, startClass);
     i.putExtra(DeepLinksTargets.NEW_REPO, StoreUtils.split(repo));
     startActivity(i);
   }
 
-  private void performMArketUrl(String s) {
-    String param = s;
-    startFromPackageName(param);
-  }
+  private void aptword(String jsonAd) {
 
-  private void performGooglePlayUrl(String uri) {
-    String params = uri.split("&")[0];
-    String param = params.split("=")[1];
-    if (param.contains("pname:")) {
-      param = param.substring(6);
-    } else if (param.contains("pub:")) {
-      param = param.substring(4);
-    } else {
-      try {
-        param = Uri.parse(uri).getQueryParameter("id");
-      } catch (NullPointerException e) {
-        CrashReport.getInstance().log(e);
-      }
-    }
-    startFromPackageName(param);
-  }
+    if (!TextUtils.isEmpty(jsonAd)) {
 
-  private void aptword(String uri) {
-    String param = uri.substring("aptword://".length());
+      jsonAd = jsonAd.replaceAll("\\*", "_").replaceAll("\\+", "/");
 
-    if (!TextUtils.isEmpty(param)) {
+      String json = new String(Base64.decode(jsonAd.getBytes(), 0));
 
-      param = param.replaceAll("\\*", "_").replaceAll("\\+", "/");
-
-      String json = new String(Base64.decode(param.getBytes(), 0));
-
-      Logger.d("AptoideAptWord", json);
+      Logger.d(TAG, "AptoideAptWord" + json);
 
       GetAdsResponse.Ad ad = null;
       try {
@@ -315,26 +294,6 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
     });
   }
 
-  public void aptoidevoiceSearch(String param) {
-    // TODO: voiceSearch was used by a foreign app, dunno if still used.
-    //        Cursor c = new AptoideDatabase(Aptoide.getDb()).getSearchResults(param, StoreActivity.Sort.DOWNLOADS);
-    //
-    //        ArrayList<String> namelist = new ArrayList<String>();
-    //        ArrayList<Long> idlist = new ArrayList<Long>();
-    //
-    //        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-    //            namelist.add(c.getString(c.getColumnIndex("name")));
-    //            idlist.add(c.getLong(c.getColumnIndex("_id")));
-    //        }
-    //
-    //        Intent i = new Intent();
-    //        i.putStringArrayListExtra("namelist", namelist);
-    //        i.putExtra("idlist", AptoideUtils.longListToLongArray(idlist));
-    //
-    //        setResult(UNKONWN_FLAG, i);
-    finish();
-  }
-
   public void startAppView(String uname) {
     Intent i = new Intent(this, startClass);
 
@@ -356,8 +315,8 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
     startActivity(i);
   }
 
-  private void downloadMyApp() {
-    asyncTask = new MyAppDownloader().execute(getIntent().getDataString());
+  private void downloadMyApp(String uriString) {
+    asyncTask = new MyAppDownloader().execute(uriString);
   }
 
   private void parseAptoideInstallUri(String substring) {
@@ -558,33 +517,6 @@ public class DeepLinkIntentReceiver extends AppCompatActivity {
       }
 
       if (app != null && !app.isEmpty()) {
-
-        /** never worked... */
-        //                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(IntentReceiver.this);
-        //                final AlertDialog installAppDialog = dialogBuilder.create();
-        ////                installAppDialog.setTitle(ApplicationAptoide.MARKETNAME);
-        //                installAppDialog.setIcon(android.R.drawable.ic_menu_more);
-        //                installAppDialog.setCancelable(false);
-        //
-        //
-        //                installAppDialog.setMessage(getString(R.string.installapp_alrt) + app.get("name") + "?");
-        //
-        //                installAppDialog.setButton(Dialog.BUTTON_POSITIVE, getString(android.R.string.yes), new Dialog.OnClickListener() {
-        //                    @Override
-        //                    public void onClick(DialogInterface arg0, int arg1) {
-        ////                        Download download = new Download();
-        ////                        Logger.d("Aptoide-IntentReceiver", "getapk id: " + id);
-        ////                        download.setId(id);
-        ////                        ((Start)getApplicationContext()).installApp(0);
-        //
-        //                        Toast toast = ShowMessage.asToast();(IntentReceiver.this, getString(R.strings;
-        //                        toast.show();
-        //                    }
-        //                });
-        //
-        //                installAppDialog.setButton(Dialog.BUTTON_NEGATIVE, getString(android.R.string.no), neutralListener);
-        //                installAppDialog.setOnDismissListener(IntentReceiver.this);
-        //                installAppDialog.show();
 
       } else {
         proceed();
