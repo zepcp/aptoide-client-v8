@@ -746,11 +746,12 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
               SharePreviewDialog.SharePreviewOpenMode.SHARE);
           AlertDialog.Builder alertDialog =
               sharePreviewDialog.getCustomRecommendationPreviewDialogBuilder(getContext(), appName,
-                  app.getIcon());
+                  app.getIcon(), app.getStats().getRating().getAvg());
           SocialRepository socialRepository =
               new SocialRepository(accountManager, bodyInterceptor, converterFactory, httpClient);
 
-          sharePreviewDialog.showShareCardPreviewDialog(packageName, "app", getContext(),
+          sharePreviewDialog.showShareCardPreviewDialog(packageName, app.getStore().getId(), "app",
+              getContext(),
               sharePreviewDialog, alertDialog, socialRepository);
         }
       } else if (GenericDialogs.EResponse.SHARE_SPOT_AND_SHARE == eResponse) {
