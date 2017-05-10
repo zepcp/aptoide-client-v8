@@ -20,7 +20,7 @@ import rx.Observable;
  * Created by neuro on 27-04-2016.
  */
 @Data @EqualsAndHashCode(callSuper = true) public class ListAppsRequest
-    extends V7<ListApps, ListAppsRequest.Body> {
+    extends BaseRequestWithStore<ListApps, ListAppsRequest.Body> {
 
   private static final int LINES_PER_REQUEST = 6;
   private String url;
@@ -29,6 +29,11 @@ import rx.Observable;
       OkHttpClient httpClient, Converter.Factory converterFactory) {
     super(body, BASE_HOST, httpClient, converterFactory, bodyInterceptor);
     this.url = url;
+  }
+
+  private ListAppsRequest(Body body, OkHttpClient httpClient, Converter.Factory converterFactory,
+      BodyInterceptor<BaseBody> bodyInterceptor) {
+    super(body, BASE_HOST, httpClient, converterFactory, bodyInterceptor);
   }
 
   public static ListAppsRequest ofAction(String url,
@@ -46,39 +51,68 @@ import rx.Observable;
     }
   }
 
+  public static ListAppsRequest of(String groupName, OkHttpClient httpClient,
+      Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptor) {
+    return new ListAppsRequest(new Body(groupName), httpClient, converterFactory, bodyInterceptor);
+  }
+
+  public static ListAppsRequest of(String storeName, String groupName, OkHttpClient httpClient,
+      Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptor) {
+    return new ListAppsRequest(new Body(storeName, groupName), httpClient, converterFactory,
+        bodyInterceptor);
+  }
+
+  public static ListAppsRequest of(String storeName, String groupName, Section section,
+      OkHttpClient httpClient, Converter.Factory converterFactory,
+      BodyInterceptor<BaseBody> bodyInterceptor) {
+    return new ListAppsRequest(new Body(storeName, groupName, section), httpClient,
+        converterFactory, bodyInterceptor);
+  }
+
   @Override
   protected Observable<ListApps> loadDataFromNetwork(Interfaces interfaces, boolean bypassCache) {
     return interfaces.listApps(url != null ? url : "", body, bypassCache);
   }
 
-  @EqualsAndHashCode(callSuper = true) public static class Body extends BaseBody
+  public enum Section {
+    high, main,
+  }
+
+  @EqualsAndHashCode(callSuper = true) public static class Body extends BaseBodyWithStore
       implements Endless {
 
-    @Getter private String storeUser;
-    @Getter private String storePassSha1;
     @Getter private Integer limit;
     @Getter @Setter private int offset;
-    @Getter @Setter private Integer groupId;
+    @Getter @Setter private String groupName;
+    @Getter private Section section;
     @Getter private String notApkTags;
 
     public Body(BaseRequestWithStore.StoreCredentials storeCredentials) {
-      super();
-
-      this.storeUser = storeCredentials.getUsername();
-      this.storePassSha1 = storeCredentials.getPasswordSha1();
+      super(storeCredentials);
       setNotApkTags();
     }
 
     public Body(BaseRequestWithStore.StoreCredentials storeCredentials, int limit) {
-      super();
-      this.storeUser = storeCredentials.getUsername();
-      this.storePassSha1 = storeCredentials.getPasswordSha1();
+      super(storeCredentials);
       this.limit = limit;
       setNotApkTags();
     }
 
-    public Body(int groupId) {
-      this.groupId = groupId;
+    public Body(String groupName) {
+      this.groupName = groupName;
+      setNotApkTags();
+    }
+
+    public Body(String storeName, String groupName) {
+      this(new StoreCredentials(storeName));
+      this.groupName = groupName;
+      setNotApkTags();
+    }
+
+    public Body(String storeName, String groupName, Section section) {
+      this(new StoreCredentials(storeName));
+      this.groupName = groupName;
+      this.section = section;
       setNotApkTags();
     }
 

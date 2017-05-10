@@ -14,6 +14,11 @@ import retrofit2.Converter;
  */
 public abstract class BaseRequestWithStore<U, B extends BaseBodyWithStore> extends V7<U, B> {
 
+  public BaseRequestWithStore(B body, String baseHost, OkHttpClient httpClient,
+      Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptor) {
+    super(body, baseHost, httpClient, converterFactory, bodyInterceptor);
+  }
+
   public BaseRequestWithStore(B body, OkHttpClient httpClient, Converter.Factory converterFactory,
       BodyInterceptor<BaseBody> bodyInterceptor) {
     super(body, BASE_HOST, httpClient, converterFactory, bodyInterceptor);
@@ -30,6 +35,10 @@ public abstract class BaseRequestWithStore<U, B extends BaseBodyWithStore> exten
       this.id = null;
       this.username = null;
       this.passwordSha1 = null;
+    }
+
+    public StoreCredentials(String storeName) {
+      this(storeName, null, null);
     }
 
     public StoreCredentials(long id, String username, String passwordSha1) {
