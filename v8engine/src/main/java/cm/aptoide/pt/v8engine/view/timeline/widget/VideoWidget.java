@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.v8engine.view.timeline.widget;
 
-import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.CardView;
@@ -68,16 +67,19 @@ public class VideoWidget extends CardWidget<VideoDisplayable> {
     subtitle.setText(displayable.getTimeSinceLastUpdate(context));
     videoTitle.setText(displayable.getVideoTitle());
     setCardViewMargin(displayable, cardView);
-    ImageLoader.with(context).loadWithShadowCircleTransform(displayable.getAvatarUrl(), image);
-    ImageLoader.with(context).load(displayable.getThumbnailUrl(), thumbnail);
+    ImageLoader.with(context)
+        .loadWithShadowCircleTransform(displayable.getAvatarUrl(), image);
+    ImageLoader.with(context)
+        .load(displayable.getThumbnailUrl(), thumbnail);
     thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
     play_button.setVisibility(View.VISIBLE);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      media_layout.setForeground(
-          context.getResources().getDrawable(R.color.overlay_black, context.getTheme()));
+      media_layout.setForeground(context.getResources()
+          .getDrawable(R.color.overlay_black, context.getTheme()));
     } else {
-      media_layout.setForeground(context.getResources().getDrawable(R.color.overlay_black));
+      media_layout.setForeground(context.getResources()
+          .getDrawable(R.color.overlay_black));
     }
 
     media_layout.setOnClickListener(v -> {
@@ -85,7 +87,8 @@ public class VideoWidget extends CardWidget<VideoDisplayable> {
       Analytics.AppsTimeline.clickOnCard(VideoDisplayable.CARD_TYPE_NAME,
           Analytics.AppsTimeline.BLANK, displayable.getVideoTitle(), displayable.getTitle(),
           Analytics.AppsTimeline.OPEN_VIDEO);
-      displayable.getLink().launch(context);
+      displayable.getLink()
+          .launch(context);
       displayable.sendOpenVideoEvent(packageName);
     });
 
@@ -93,8 +96,10 @@ public class VideoWidget extends CardWidget<VideoDisplayable> {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(installeds -> {
           if (installeds != null && !installeds.isEmpty()) {
-            appName = installeds.get(0).getName();
-            packageName = installeds.get(0).getPackageName();
+            appName = installeds.get(0)
+                .getName();
+            packageName = installeds.get(0)
+                .getPackageName();
           } else {
             setAppNameToFirstLinkedApp(displayable);
           }
@@ -109,14 +114,16 @@ public class VideoWidget extends CardWidget<VideoDisplayable> {
           throwable.printStackTrace();
         }));
 
-    compositeSubscription.add(RxView.clicks(videoHeader).subscribe(click -> {
-      knockWithSixpackCredentials(displayable.getAbUrl());
-      displayable.getBaseLink().launch(context);
-      Analytics.AppsTimeline.clickOnCard(VideoDisplayable.CARD_TYPE_NAME,
-          Analytics.AppsTimeline.BLANK, displayable.getVideoTitle(), displayable.getTitle(),
-          Analytics.AppsTimeline.OPEN_VIDEO_HEADER);
-      displayable.sendOpenChannelEvent(packageName);
-    }));
+    compositeSubscription.add(RxView.clicks(videoHeader)
+        .subscribe(click -> {
+          knockWithSixpackCredentials(displayable.getAbUrl());
+          displayable.getBaseLink()
+              .launch(context);
+          Analytics.AppsTimeline.clickOnCard(VideoDisplayable.CARD_TYPE_NAME,
+              Analytics.AppsTimeline.BLANK, displayable.getVideoTitle(), displayable.getTitle(),
+              Analytics.AppsTimeline.OPEN_VIDEO_HEADER);
+          displayable.sendOpenChannelEvent(packageName);
+        }));
   }
 
   @Override String getCardTypeName() {
@@ -124,8 +131,11 @@ public class VideoWidget extends CardWidget<VideoDisplayable> {
   }
 
   private void setAppNameToFirstLinkedApp(VideoDisplayable displayable) {
-    if (!displayable.getRelatedToAppsList().isEmpty()) {
-      appName = displayable.getRelatedToAppsList().get(0).getName();
+    if (!displayable.getRelatedToAppsList()
+        .isEmpty()) {
+      appName = displayable.getRelatedToAppsList()
+          .get(0)
+          .getName();
     }
   }
 }

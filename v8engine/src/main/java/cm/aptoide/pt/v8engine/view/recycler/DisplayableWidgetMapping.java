@@ -101,6 +101,7 @@ import cm.aptoide.pt.v8engine.view.store.recommended.RecommendedStoreWidget;
 import cm.aptoide.pt.v8engine.view.store.subscribed.SubscribedStoreDisplayable;
 import cm.aptoide.pt.v8engine.view.store.subscribed.SubscribedStoreWidget;
 import cm.aptoide.pt.v8engine.view.timeline.FeatureDisplayable;
+import cm.aptoide.pt.v8engine.view.timeline.displayable.AggregatedSocialInstallDisplayable;
 import cm.aptoide.pt.v8engine.view.timeline.displayable.AppUpdateDisplayable;
 import cm.aptoide.pt.v8engine.view.timeline.displayable.ArticleDisplayable;
 import cm.aptoide.pt.v8engine.view.timeline.displayable.FollowStoreDisplayable;
@@ -120,6 +121,7 @@ import cm.aptoide.pt.v8engine.view.timeline.follow.FollowStoreWidget;
 import cm.aptoide.pt.v8engine.view.timeline.follow.FollowUserWidget;
 import cm.aptoide.pt.v8engine.view.timeline.login.TimelineLoginDisplayable;
 import cm.aptoide.pt.v8engine.view.timeline.login.TimelineLoginWidget;
+import cm.aptoide.pt.v8engine.view.timeline.widget.AggregatedSocialInstallWidget;
 import cm.aptoide.pt.v8engine.view.timeline.widget.AppUpdateWidget;
 import cm.aptoide.pt.v8engine.view.timeline.widget.ArticleWidget;
 import cm.aptoide.pt.v8engine.view.timeline.widget.FeatureWidget;
@@ -177,8 +179,8 @@ public class DisplayableWidgetMapping {
 
   @Partners protected void parseMappings(@NonNull List<DisplayableWidgetMapping> mapping) {
     for (DisplayableWidgetMapping displayableWidgetMapping : mapping) {
-      viewTypeMapping.put(displayableWidgetMapping.newDisplayable().getViewLayout(),
-          displayableWidgetMapping);
+      viewTypeMapping.put(displayableWidgetMapping.newDisplayable()
+          .getViewLayout(), displayableWidgetMapping);
     }
   }
 
@@ -257,6 +259,8 @@ public class DisplayableWidgetMapping {
         SocialRecommendationDisplayable.class));
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(PopularAppWidget.class, PopularAppDisplayable.class));
+    displayableWidgetMappings.add(new DisplayableWidgetMapping(AggregatedSocialInstallWidget.class,
+        AggregatedSocialInstallDisplayable.class));
 
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(RollbackWidget.class, RollbackDisplayable.class));
@@ -376,7 +380,8 @@ public class DisplayableWidgetMapping {
     try {
       return displayableClass.newInstance();
     } catch (Exception e) {
-      CrashReport.getInstance().log(e);
+      CrashReport.getInstance()
+          .log(e);
       String errMsg =
           String.format("Error instantiating displayable '%s'", displayableClass.getName());
       Logger.e(TAG, errMsg, e);
@@ -398,9 +403,11 @@ public class DisplayableWidgetMapping {
     Class[] cArg = new Class[1];
     cArg[0] = View.class;
     try {
-      return widgetClass.getDeclaredConstructor(cArg).newInstance(view);
+      return widgetClass.getDeclaredConstructor(cArg)
+          .newInstance(view);
     } catch (Exception e) {
-      CrashReport.getInstance().log(e);
+      CrashReport.getInstance()
+          .log(e);
       String errMsg = String.format("Error instantiating widget '%s'", widgetClass.getName());
       Logger.e(TAG, errMsg, e);
       throw new RuntimeException(errMsg);

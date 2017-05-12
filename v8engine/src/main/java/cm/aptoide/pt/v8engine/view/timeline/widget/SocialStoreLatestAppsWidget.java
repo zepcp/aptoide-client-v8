@@ -98,7 +98,8 @@ public class SocialStoreLatestAppsWidget
             AccessorFactory.getAccessorFor(Store.class), httpClient,
             WebService.getDefaultConverter());
     storeName.setText(displayable.getStoreName());
-    userName.setText(displayable.getUser().getName());
+    userName.setText(displayable.getUser()
+        .getName());
     setCardViewMargin(displayable, cardView);
     final FragmentActivity context = getContext();
     if (displayable.getStore() != null) {
@@ -106,13 +107,16 @@ public class SocialStoreLatestAppsWidget
       storeName.setText(displayable.getStyledTitle(context, displayable.getStoreName()));
       storeAvatar.setVisibility(View.VISIBLE);
       ImageLoader.with(context)
-          .loadWithShadowCircleTransform(displayable.getStore().getAvatar(), storeAvatar);
+          .loadWithShadowCircleTransform(displayable.getStore()
+              .getAvatar(), storeAvatar);
       if (displayable.getUser() != null) {
         userName.setVisibility(View.VISIBLE);
-        userName.setText(displayable.getUser().getName());
+        userName.setText(displayable.getUser()
+            .getName());
         userAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(displayable.getUser().getAvatar(), userAvatar);
+            .loadWithShadowCircleTransform(displayable.getUser()
+                .getAvatar(), userAvatar);
       } else {
         userName.setVisibility(View.GONE);
         userAvatar.setVisibility(View.GONE);
@@ -122,22 +126,29 @@ public class SocialStoreLatestAppsWidget
       userAvatar.setVisibility(View.GONE);
       if (displayable.getUser() != null) {
         storeName.setVisibility(View.VISIBLE);
-        storeName.setText(displayable.getStyledTitle(context, displayable.getUser().getName()));
+        storeName.setText(displayable.getStyledTitle(context, displayable.getUser()
+            .getName()));
         storeAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(displayable.getUser().getAvatar(), storeAvatar);
+            .loadWithShadowCircleTransform(displayable.getUser()
+                .getAvatar(), storeAvatar);
       }
     }
 
-    sharedStoreNameBodyTitle.setText(displayable.getSharedStore().getName());
+    sharedStoreNameBodyTitle.setText(displayable.getSharedStore()
+        .getName());
 
     ImageLoader.with(getContext())
-        .loadWithShadowCircleTransform(displayable.getSharedStore().getAvatar(), sharedStoreAvatar);
-    sharedStoreName.setText(displayable.getSharedStore().getName());
-    sharedStoreSubscribersNumber.setText(
-        String.valueOf(displayable.getSharedStore().getStats().getSubscribers()));
-    sharedStoreAppsNumber.setText(
-        String.valueOf(displayable.getSharedStore().getStats().getApps()));
+        .loadWithShadowCircleTransform(displayable.getSharedStore()
+            .getAvatar(), sharedStoreAvatar);
+    sharedStoreName.setText(displayable.getSharedStore()
+        .getName());
+    sharedStoreSubscribersNumber.setText(String.valueOf(displayable.getSharedStore()
+        .getStats()
+        .getSubscribers()));
+    sharedStoreAppsNumber.setText(String.valueOf(displayable.getSharedStore()
+        .getStats()
+        .getApps()));
 
     appsContainer.removeAllViews();
     apps.clear();
@@ -148,7 +159,8 @@ public class SocialStoreLatestAppsWidget
       latestAppView = inflater.inflate(R.layout.social_timeline_latest_app, appsContainer, false);
       latestAppIcon = (ImageView) latestAppView.findViewById(R.id.social_timeline_latest_app_icon);
       latestAppName = (TextView) latestAppView.findViewById(R.id.social_timeline_latest_app_name);
-      ImageLoader.with(context).load(latestApp.getIconUrl(), latestAppIcon);
+      ImageLoader.with(context)
+          .load(latestApp.getIconUrl(), latestAppIcon);
       latestAppName.setText(latestApp.getAppName());
       appsContainer.addView(latestAppView);
       apps.put(latestAppView, latestApp.getAppId());
@@ -156,39 +168,45 @@ public class SocialStoreLatestAppsWidget
     }
 
     for (View app : apps.keySet()) {
-      compositeSubscription.add(RxView.clicks(app).subscribe(click -> {
-        knockWithSixpackCredentials(displayable.getAbTestingUrl());
-        String packageName = appsPackages.get(apps.get(app));
-        Analytics.AppsTimeline.clickOnCard(getCardTypeName(), packageName,
-            Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
-            Analytics.AppsTimeline.OPEN_APP_VIEW);
-        displayable.sendStoreOpenAppEvent(packageName);
-        getFragmentNavigator().navigateTo(
-            V8Engine.getFragmentProvider().newAppViewFragment(apps.get(app), packageName));
-      }));
+      compositeSubscription.add(RxView.clicks(app)
+          .subscribe(click -> {
+            knockWithSixpackCredentials(displayable.getAbTestingUrl());
+            String packageName = appsPackages.get(apps.get(app));
+            Analytics.AppsTimeline.clickOnCard(getCardTypeName(), packageName,
+                Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+                Analytics.AppsTimeline.OPEN_APP_VIEW);
+            displayable.sendStoreOpenAppEvent(packageName);
+            getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
+                .newAppViewFragment(apps.get(app), packageName));
+          }));
     }
 
-    compositeSubscription.add(RxView.clicks(store).subscribe(click -> {
-      knockWithSixpackCredentials(displayable.getAbTestingUrl());
-      Analytics.AppsTimeline.clickOnCard(getCardTypeName(), Analytics.AppsTimeline.BLANK,
-          Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
-          Analytics.AppsTimeline.OPEN_STORE);
-      displayable.sendOpenStoreEvent();
-      getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
-          .newStoreFragment(displayable.getStoreName(),
-              displayable.getSharedStore().getAppearance().getTheme()));
-    }));
+    compositeSubscription.add(RxView.clicks(store)
+        .subscribe(click -> {
+          knockWithSixpackCredentials(displayable.getAbTestingUrl());
+          Analytics.AppsTimeline.clickOnCard(getCardTypeName(), Analytics.AppsTimeline.BLANK,
+              Analytics.AppsTimeline.BLANK, displayable.getStoreName(),
+              Analytics.AppsTimeline.OPEN_STORE);
+          displayable.sendOpenStoreEvent();
+          getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
+              .newStoreFragment(displayable.getStoreName(), displayable.getSharedStore()
+                  .getAppearance()
+                  .getTheme()));
+        }));
 
-    compositeSubscription.add(RxView.clicks(sharedStoreAvatar).subscribe(click -> {
-      knockWithSixpackCredentials(displayable.getAbTestingUrl());
-      Analytics.AppsTimeline.clickOnCard(getCardTypeName(), Analytics.AppsTimeline.BLANK,
-          Analytics.AppsTimeline.BLANK, displayable.getSharedStore().getName(),
-          Analytics.AppsTimeline.OPEN_STORE);
-      displayable.sendOpenSharedStoreEvent();
-      getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
-          .newStoreFragment(displayable.getSharedStore().getName(),
-              displayable.getSharedStore().getAppearance().getTheme()));
-    }));
+    compositeSubscription.add(RxView.clicks(sharedStoreAvatar)
+        .subscribe(click -> {
+          knockWithSixpackCredentials(displayable.getAbTestingUrl());
+          Analytics.AppsTimeline.clickOnCard(getCardTypeName(), Analytics.AppsTimeline.BLANK,
+              Analytics.AppsTimeline.BLANK, displayable.getSharedStore()
+                  .getName(), Analytics.AppsTimeline.OPEN_STORE);
+          displayable.sendOpenSharedStoreEvent();
+          getFragmentNavigator().navigateTo(V8Engine.getFragmentProvider()
+              .newStoreFragment(displayable.getSharedStore()
+                  .getName(), displayable.getSharedStore()
+                  .getAppearance()
+                  .getTheme()));
+        }));
 
     StoreThemeEnum storeThemeEnum = StoreThemeEnum.get(displayable.getSharedStore());
 
@@ -198,34 +216,41 @@ public class SocialStoreLatestAppsWidget
     }
     followStore.setTextColor(storeThemeEnum.getStoreHeaderInt());
 
-    final String storeName = displayable.getSharedStore().getName();
-    final String storeTheme = displayable.getSharedStore().getName();
+    final String storeName = displayable.getSharedStore()
+        .getName();
+    final String storeTheme = displayable.getSharedStore()
+        .getName();
 
-    compositeSubscription.add(storeRepository.isSubscribed(displayable.getSharedStore().getId())
+    compositeSubscription.add(storeRepository.isSubscribed(displayable.getSharedStore()
+        .getId())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(isSubscribed -> {
           if (isSubscribed) {
             followStore.setText(R.string.followed);
-            compositeSubscription.add(RxView.clicks(followStore).subscribe(__ -> {
-              storeUtilsProxy.unSubscribeStore(storeName,
-                  displayable.getStoreCredentialsProvider());
-              ShowMessage.asSnack(itemView,
-                  AptoideUtils.StringU.getFormattedString(R.string.unfollowing_store_message,
-                      storeName));
-            }, err -> {
-              CrashReport.getInstance().log(err);
-            }));
+            compositeSubscription.add(RxView.clicks(followStore)
+                .subscribe(__ -> {
+                  storeUtilsProxy.unSubscribeStore(storeName,
+                      displayable.getStoreCredentialsProvider());
+                  ShowMessage.asSnack(itemView,
+                      AptoideUtils.StringU.getFormattedString(R.string.unfollowing_store_message,
+                          storeName));
+                }, err -> {
+                  CrashReport.getInstance()
+                      .log(err);
+                }));
           } else {
             //int plusMarkDrawable = storeThemeEnum.getPlusmarkDrawable();
             //followButton.setCompoundDrawablesWithIntrinsicBounds(plusMarkDrawable, 0, 0, 0);
             followStore.setText(R.string.follow);
-            compositeSubscription.add(RxView.clicks(followStore).subscribe(__ -> {
-              storeUtilsProxy.subscribeStore(storeName);
-              ShowMessage.asSnack(itemView,
-                  AptoideUtils.StringU.getFormattedString(R.string.store_followed, storeName));
-            }, err -> {
-              CrashReport.getInstance().log(err);
-            }));
+            compositeSubscription.add(RxView.clicks(followStore)
+                .subscribe(__ -> {
+                  storeUtilsProxy.subscribeStore(storeName);
+                  ShowMessage.asSnack(itemView,
+                      AptoideUtils.StringU.getFormattedString(R.string.store_followed, storeName));
+                }, err -> {
+                  CrashReport.getInstance()
+                      .log(err);
+                }));
           }
         }, (throwable) -> throwable.printStackTrace()));
   }

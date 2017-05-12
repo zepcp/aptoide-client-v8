@@ -48,8 +48,9 @@ public class SocialInstallDisplayable extends SocialCardDisplayable {
       TimelineAnalytics timelineAnalytics, SpannableFactory spannableFactory,
       SocialRepository socialRepository, DateCalculator dateCalculator) {
     super(socialInstall, likes, comments, store, socialInstall.getUser(),
-        socialInstall.getUserSharer(), socialInstall.getMy().isLiked(), socialInstall.getLikes(),
-        socialInstall.getComments(), date, spannableFactory, dateCalculator, abTestingURL);
+        socialInstall.getUserSharer(), socialInstall.getMy()
+            .isLiked(), socialInstall.getLikes(), socialInstall.getComments(), date,
+        spannableFactory, dateCalculator, abTestingURL);
     this.avatarResource = icon;
     this.titleResource = titleResource;
     this.user = user;
@@ -58,11 +59,15 @@ public class SocialInstallDisplayable extends SocialCardDisplayable {
     this.appName = appName;
     this.appIcon = appIcon;
     this.abUrl = abTestingURL;
-    this.rating = socialInstall.getApp().getStats().getRating().getAvg();
+    this.rating = socialInstall.getApp()
+        .getStats()
+        .getRating()
+        .getAvg();
     this.timelineAnalytics = timelineAnalytics;
     this.spannableFactory = spannableFactory;
     this.socialRepository = socialRepository;
-    this.appStoreId = socialInstall.getStore().getId();
+    this.appStoreId = socialInstall.getStore()
+        .getId();
   }
 
   public static Displayable from(SocialInstall socialInstall, TimelineAnalytics timelineAnalytics,
@@ -72,24 +77,32 @@ public class SocialInstallDisplayable extends SocialCardDisplayable {
     String abTestingURL = null;
 
     if (socialInstall.getAb() != null
-        && socialInstall.getAb().getConversion() != null
-        && socialInstall.getAb().getConversion().getUrl() != null) {
-      abTestingURL = socialInstall.getAb().getConversion().getUrl();
+        && socialInstall.getAb()
+        .getConversion() != null
+        && socialInstall.getAb()
+        .getConversion()
+        .getUrl() != null) {
+      abTestingURL = socialInstall.getAb()
+          .getConversion()
+          .getUrl();
     }
 
-    return new SocialInstallDisplayable(socialInstall, Application.getConfiguration().getIcon(),
-        socialInstall.getStore(),
+    return new SocialInstallDisplayable(socialInstall, Application.getConfiguration()
+        .getIcon(), socialInstall.getStore(),
         R.string.displayable_social_timeline_recommendation_atptoide_team_recommends,
-        socialInstall.getUser(), socialInstall.getApp().getId(),
-        socialInstall.getApp().getPackageName(), socialInstall.getApp().getName(),
-        socialInstall.getApp().getIcon(), abTestingURL, socialInstall.getStats().getLikes(),
-        socialInstall.getStats().getComments(), socialInstall.getDate(), timelineAnalytics,
-        spannableFactory, socialRepository, dateCalculator);
+        socialInstall.getUser(), socialInstall.getApp()
+        .getId(), socialInstall.getApp()
+        .getPackageName(), socialInstall.getApp()
+        .getName(), socialInstall.getApp()
+        .getIcon(), abTestingURL, socialInstall.getStats()
+        .getLikes(), socialInstall.getStats()
+        .getComments(), socialInstall.getDate(), timelineAnalytics, spannableFactory,
+        socialRepository, dateCalculator);
   }
 
   public String getTitle() {
-    return AptoideUtils.StringU.getFormattedString(titleResource,
-        Application.getConfiguration().getMarketName());
+    return AptoideUtils.StringU.getFormattedString(titleResource, Application.getConfiguration()
+        .getMarketName());
   }
 
   public Spannable getAppText(Context context) {

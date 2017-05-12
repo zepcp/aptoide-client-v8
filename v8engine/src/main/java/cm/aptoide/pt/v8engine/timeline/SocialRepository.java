@@ -43,7 +43,8 @@ public class SocialRepository {
         .flatMapCompletable(response -> {
           if (response.isOk()) {
             if (shareCardCallback != null) {
-              shareCardCallback.onCardShared(response.getData().getCardUid());
+              shareCardCallback.onCardShared(response.getData()
+                  .getCardUid());
             }
             return accountManager.updateAccount(getAccountAccess(privacy));
           }
@@ -61,7 +62,8 @@ public class SocialRepository {
         .flatMapCompletable(response -> {
           if (response.isOk()) {
             if (shareCardCallback != null) {
-              shareCardCallback.onCardShared(response.getData().getCardUid());
+              shareCardCallback.onCardShared(response.getData()
+                  .getCardUid());
             }
             return Completable.complete();
           }
@@ -80,7 +82,8 @@ public class SocialRepository {
         .flatMapCompletable(response -> {
           if (response.isOk()) {
             if (shareCardCallback != null) {
-              shareCardCallback.onCardShared(response.getData().getCardUid());
+              shareCardCallback.onCardShared(response.getData()
+                  .getCardUid());
             }
             return accountManager.updateAccount(getAccountAccess(privacy));
           }
@@ -98,7 +101,8 @@ public class SocialRepository {
         .flatMapCompletable(response -> {
           if (response.isOk()) {
             if (shareCardCallback != null) {
-              shareCardCallback.onCardShared(response.getData().getCardUid());
+              shareCardCallback.onCardShared(response.getData()
+                  .getCardUid());
             }
             return Completable.complete();
           }
@@ -114,33 +118,40 @@ public class SocialRepository {
         converterFactory)
         .observe()
         .observeOn(Schedulers.io())
-        .subscribe(
-            baseV7Response -> Logger.d(this.getClass().getSimpleName(), baseV7Response.toString()),
-            throwable -> throwable.printStackTrace());
+        .subscribe(baseV7Response -> Logger.d(this.getClass()
+            .getSimpleName(), baseV7Response.toString()), throwable -> throwable.printStackTrace());
   }
 
   public void share(String packageName, Long storeId, String shareType, boolean privacy) {
     ShareInstallCardRequest.of(packageName, storeId, shareType, bodyInterceptor, httpClient,
-        converterFactory).observe().toSingle().flatMapCompletable(response -> {
-      if (response.isOk()) {
-        return accountManager.updateAccount(getAccountAccess(privacy));
-      }
-      return Completable.error(
-          new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
-    }).subscribe(() -> {
-    }, throwable -> throwable.printStackTrace());
+        converterFactory)
+        .observe()
+        .toSingle()
+        .flatMapCompletable(response -> {
+          if (response.isOk()) {
+            return accountManager.updateAccount(getAccountAccess(privacy));
+          }
+          return Completable.error(
+              new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
+        })
+        .subscribe(() -> {
+        }, throwable -> throwable.printStackTrace());
   }
 
   public void share(String packageName, Long storeId, String shareType) {
     ShareInstallCardRequest.of(packageName, storeId, shareType, bodyInterceptor, httpClient,
-        converterFactory).observe().toSingle().flatMapCompletable(response -> {
-      if (response.isOk()) {
-        return Completable.complete();
-      }
-      return Completable.error(
-          new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
-    }).subscribe(() -> {
-    }, throwable -> throwable.printStackTrace());
+        converterFactory)
+        .observe()
+        .toSingle()
+        .flatMapCompletable(response -> {
+          if (response.isOk()) {
+            return Completable.complete();
+          }
+          return Completable.error(
+              new RepositoryIllegalArgumentException(V7.getErrorMessage(response)));
+        })
+        .subscribe(() -> {
+        }, throwable -> throwable.printStackTrace());
   }
 
   private AptoideAccount.Access getAccountAccess(boolean privateAccess) {

@@ -110,7 +110,8 @@ public class SharePreviewDialog {
       articleTitle.setText(((VideoDisplayable) displayable).getVideoTitle());
 
       relatedTo.setVisibility(View.GONE);
-      ImageLoader.with(context).load(((VideoDisplayable) displayable).getThumbnailUrl(), thumbnail);
+      ImageLoader.with(context)
+          .load(((VideoDisplayable) displayable).getThumbnailUrl(), thumbnail);
     } else if (displayable instanceof StoreLatestAppsDisplayable) {
       view = factory.inflate(R.layout.displayable_social_timeline_social_store_latest_apps_preview,
           null);
@@ -134,14 +135,14 @@ public class SharePreviewDialog {
       View latestAppView;
       ImageView latestAppIcon;
       TextView latestAppName;
-      for (StoreLatestAppsDisplayable.LatestApp latestApp : ((StoreLatestAppsDisplayable) displayable)
-          .getLatestApps()) {
+      for (StoreLatestAppsDisplayable.LatestApp latestApp : ((StoreLatestAppsDisplayable) displayable).getLatestApps()) {
         latestAppView =
             factory.inflate(R.layout.social_timeline_latest_app, latestAppsContainer, false);
         latestAppIcon =
             (ImageView) latestAppView.findViewById(R.id.social_timeline_latest_app_icon);
         latestAppName = (TextView) latestAppView.findViewById(R.id.social_timeline_latest_app_name);
-        ImageLoader.with(context).load(latestApp.getIconUrl(), latestAppIcon);
+        ImageLoader.with(context)
+            .load(latestApp.getIconUrl(), latestAppIcon);
         latestAppName.setMaxLines(1);
         latestAppName.setText(latestApp.getName());
         latestAppsContainer.addView(latestAppView);
@@ -179,7 +180,8 @@ public class SharePreviewDialog {
           R.id.displayable_social_timeline_recommendation_get_app_button);
       RatingBar ratingBar = (RatingBar) view.findViewById(R.id.rating_bar);
 
-      ImageLoader.with(context).load(((AppUpdateDisplayable) displayable).getAppIconUrl(), appIcon);
+      ImageLoader.with(context)
+          .load(((AppUpdateDisplayable) displayable).getAppIconUrl(), appIcon);
       appName.setText(((AppUpdateDisplayable) displayable).getAppName());
       ratingBar.setRating(((AppUpdateDisplayable) displayable).getAppRating());
 
@@ -277,23 +279,23 @@ public class SharePreviewDialog {
       Map<View, Long> apps = new HashMap<>();
       Map<Long, String> appsPackages = new HashMap<>();
 
-      sharedStoreTitleName.setText(
-          ((SocialStoreLatestAppsDisplayable) displayable).getSharedStore().getName());
-      sharedStoreName.setText(
-          ((SocialStoreLatestAppsDisplayable) displayable).getSharedStore().getName());
+      sharedStoreTitleName.setText(((SocialStoreLatestAppsDisplayable) displayable).getSharedStore()
+          .getName());
+      sharedStoreName.setText(((SocialStoreLatestAppsDisplayable) displayable).getSharedStore()
+          .getName());
       ImageLoader.with(context)
           .loadWithShadowCircleTransform(
-              ((SocialStoreLatestAppsDisplayable) displayable).getSharedStore().getAvatar(),
-              sharedStoreAvatar);
+              ((SocialStoreLatestAppsDisplayable) displayable).getSharedStore()
+                  .getAvatar(), sharedStoreAvatar);
       View latestAppView;
       ImageView latestAppIcon;
-      for (SocialStoreLatestAppsDisplayable.LatestApp latestApp : ((SocialStoreLatestAppsDisplayable) displayable)
-          .getLatestApps()) {
+      for (SocialStoreLatestAppsDisplayable.LatestApp latestApp : ((SocialStoreLatestAppsDisplayable) displayable).getLatestApps()) {
         latestAppView =
             factory.inflate(R.layout.social_timeline_latest_app, latestAppsContainer, false);
         latestAppIcon =
             (ImageView) latestAppView.findViewById(R.id.social_timeline_latest_app_icon);
-        ImageLoader.with(context).load(latestApp.getIconUrl(), latestAppIcon);
+        ImageLoader.with(context)
+            .load(latestApp.getIconUrl(), latestAppIcon);
         latestAppsContainer.addView(latestAppView);
         apps.put(latestAppView, latestApp.getAppId());
         appsPackages.put(latestApp.getAppId(), latestApp.getPackageName());
@@ -328,7 +330,8 @@ public class SharePreviewDialog {
           R.id.displayable_social_timeline_recommendation_get_app_button);
       RatingBar ratingBar = (RatingBar) view.findViewById(R.id.rating_bar);
 
-      ImageLoader.with(context).load(((PopularAppDisplayable) displayable).getAppIcon(), appIcon);
+      ImageLoader.with(context)
+          .load(((PopularAppDisplayable) displayable).getAppIcon(), appIcon);
       appName.setText(((PopularAppDisplayable) displayable).getAppName());
       ratingBar.setRating(((PopularAppDisplayable) displayable).getAppAverageRating());
 
@@ -380,10 +383,12 @@ public class SharePreviewDialog {
       socialInfoBar.setVisibility(View.GONE);
       socialCommentBar.setVisibility(View.GONE);
 
-      alertadd.setView(view).setCancelable(false);
+      alertadd.setView(view)
+          .setCancelable(false);
 
       if (!(displayable instanceof SocialCardDisplayable)) {
-        storeName.setText(accountManager.getAccount().getStoreName());
+        storeName.setText(accountManager.getAccount()
+            .getStoreName());
         setCardHeader(context, storeName, userName, storeAvatar, userAvatar);
       } else {
         sharedBy = (TextView) view.findViewById(R.id.social_shared_by);
@@ -403,37 +408,46 @@ public class SharePreviewDialog {
 
   private void setCardHeader(Context context, TextView storeName, TextView userName,
       ImageView storeAvatar, ImageView userAvatar) {
-    if (accountManager.getAccount().getStoreName() != null) {
+    if (accountManager.getAccount()
+        .getStoreName() != null) {
       storeName.setTextColor(ContextCompat.getColor(context, R.color.black87alpha));
       if (Account.Access.PUBLIC.equals(accountManager.getAccountAccess())) {
         storeAvatar.setVisibility(View.VISIBLE);
         userAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(accountManager.getAccount().getStoreAvatar(),
-                storeAvatar);
+            .loadWithShadowCircleTransform(accountManager.getAccount()
+                .getStoreAvatar(), storeAvatar);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(accountManager.getAccount().getAvatar(), userAvatar);
-        storeName.setText(accountManager.getAccount().getStoreName());
-        userName.setText(accountManager.getAccount().getNickname());
+            .loadWithShadowCircleTransform(accountManager.getAccount()
+                .getAvatar(), userAvatar);
+        storeName.setText(accountManager.getAccount()
+            .getStoreName());
+        userName.setText(accountManager.getAccount()
+            .getNickname());
       } else {
         storeAvatar.setVisibility(View.VISIBLE);
         userAvatar.setVisibility(View.INVISIBLE);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(accountManager.getAccount().getStoreAvatar(),
-                storeAvatar);
+            .loadWithShadowCircleTransform(accountManager.getAccount()
+                .getStoreAvatar(), storeAvatar);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(accountManager.getAccount().getAvatar(), userAvatar);
-        storeName.setText(accountManager.getAccount().getStoreName());
-        userName.setText(accountManager.getAccount().getNickname());
+            .loadWithShadowCircleTransform(accountManager.getAccount()
+                .getAvatar(), userAvatar);
+        storeName.setText(accountManager.getAccount()
+            .getStoreName());
+        userName.setText(accountManager.getAccount()
+            .getNickname());
         userName.setVisibility(View.GONE);
       }
     } else {
       if ((Account.Access.PUBLIC).equals(accountManager.getAccountAccess())) {
         storeAvatar.setVisibility(View.VISIBLE);
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(accountManager.getAccount().getAvatar(), storeAvatar);
+            .loadWithShadowCircleTransform(accountManager.getAccount()
+                .getAvatar(), storeAvatar);
         userAvatar.setVisibility(View.INVISIBLE);
-        storeName.setText(accountManager.getAccount().getNickname());
+        storeName.setText(accountManager.getAccount()
+            .getNickname());
         userName.setVisibility(View.GONE);
       }
     }
@@ -444,10 +458,12 @@ public class SharePreviewDialog {
 
     if (Account.Access.PUBLIC.equals(accountManager.getAccountAccess())) {
       sharedBy.setText(String.format(context.getString(R.string.social_timeline_shared_by),
-          accountManager.getAccount().getNickname()));
+          accountManager.getAccount()
+              .getNickname()));
     } else {
       sharedBy.setText(String.format(context.getString(R.string.social_timeline_shared_by),
-          accountManager.getAccount().getStoreName()));
+          accountManager.getAccount()
+              .getStoreName()));
     }
   }
 
@@ -457,26 +473,32 @@ public class SharePreviewDialog {
       storeName.setTextColor(ContextCompat.getColor(context, R.color.black87alpha));
       storeName.setVisibility(View.VISIBLE);
       storeAvatar.setVisibility(View.VISIBLE);
-      if (((SocialCardDisplayable) displayable).getStore().getName() != null) {
-        storeName.setText(((SocialCardDisplayable) displayable).getStore().getName());
+      if (((SocialCardDisplayable) displayable).getStore()
+          .getName() != null) {
+        storeName.setText(((SocialCardDisplayable) displayable).getStore()
+            .getName());
       }
-      if (((SocialCardDisplayable) displayable).getStore().getAvatar() != null) {
+      if (((SocialCardDisplayable) displayable).getStore()
+          .getAvatar() != null) {
         ImageLoader.with(context)
-            .loadWithShadowCircleTransform(
-                ((SocialCardDisplayable) displayable).getStore().getAvatar(), storeAvatar);
+            .loadWithShadowCircleTransform(((SocialCardDisplayable) displayable).getStore()
+                .getAvatar(), storeAvatar);
       }
 
       if (((SocialCardDisplayable) displayable).getUser() != null) {
         userName.setVisibility(View.VISIBLE);
         userAvatar.setVisibility(View.VISIBLE);
-        if (((SocialCardDisplayable) displayable).getUser().getName() != null) {
-          userName.setText(((SocialCardDisplayable) displayable).getUser().getName());
+        if (((SocialCardDisplayable) displayable).getUser()
+            .getName() != null) {
+          userName.setText(((SocialCardDisplayable) displayable).getUser()
+              .getName());
         }
 
-        if (((SocialCardDisplayable) displayable).getUser().getAvatar() != null) {
+        if (((SocialCardDisplayable) displayable).getUser()
+            .getAvatar() != null) {
           ImageLoader.with(context)
-              .loadWithShadowCircleTransform(
-                  ((SocialCardDisplayable) displayable).getUser().getAvatar(), userAvatar);
+              .loadWithShadowCircleTransform(((SocialCardDisplayable) displayable).getUser()
+                  .getAvatar(), userAvatar);
         }
       } else {
         userName.setVisibility(View.GONE);
@@ -489,14 +511,17 @@ public class SharePreviewDialog {
       if (((SocialCardDisplayable) displayable).getUser() != null) {
         storeName.setVisibility(View.VISIBLE);
         storeAvatar.setVisibility(View.VISIBLE);
-        if (((SocialCardDisplayable) displayable).getUser().getName() != null) {
-          storeName.setText(((SocialCardDisplayable) displayable).getUser().getName());
+        if (((SocialCardDisplayable) displayable).getUser()
+            .getName() != null) {
+          storeName.setText(((SocialCardDisplayable) displayable).getUser()
+              .getName());
         }
 
-        if (((SocialCardDisplayable) displayable).getUser().getAvatar() != null) {
+        if (((SocialCardDisplayable) displayable).getUser()
+            .getAvatar() != null) {
           ImageLoader.with(context)
-              .loadWithShadowCircleTransform(
-                  ((SocialCardDisplayable) displayable).getUser().getAvatar(), storeAvatar);
+              .loadWithShadowCircleTransform(((SocialCardDisplayable) displayable).getUser()
+                  .getAvatar(), storeAvatar);
         }
       } else {
         storeName.setVisibility(View.GONE);
@@ -537,7 +562,8 @@ public class SharePreviewDialog {
         R.id.displayable_social_timeline_recommendation_get_app_button);
     RatingBar ratingBar = (RatingBar) view.findViewById(R.id.rating_bar);
 
-    ImageLoader.with(context).load(appIconUrl, appIcon);
+    ImageLoader.with(context)
+        .load(appIconUrl, appIcon);
     appNameT.setText(appName);
     ratingBar.setRating(rating);
     SpannableFactory spannableFactory = new SpannableFactory();
@@ -578,10 +604,12 @@ public class SharePreviewDialog {
     likeButtonView.setVisibility(View.VISIBLE);
     comments.setVisibility(View.VISIBLE);
 
-    alertadd.setView(view).setCancelable(false);
+    alertadd.setView(view)
+        .setCancelable(false);
     alertadd.setTitle(R.string.social_timeline_you_will_share);
 
-    storeName.setText(accountManager.getAccount().getStoreName());
+    storeName.setText(accountManager.getAccount()
+        .getStoreName());
     setCardHeader(context, storeName, userName, storeAvatar, userAvatar);
 
     if (!accountManager.isAccountAccessConfirmed()) {
@@ -605,19 +633,21 @@ public class SharePreviewDialog {
               sharePreviewDialog.getPrivacyResult());
           subscriber.onNext(GenericDialogs.EResponse.YES);
           subscriber.onCompleted();
-        }).setNegativeButton(android.R.string.cancel, (dialogInterface, i) -> {
-          subscriber.onNext(GenericDialogs.EResponse.NO);
-          subscriber.onCompleted();
-        });
+        })
+            .setNegativeButton(android.R.string.cancel, (dialogInterface, i) -> {
+              subscriber.onNext(GenericDialogs.EResponse.NO);
+              subscriber.onCompleted();
+            });
       } else {
         alertDialog.setPositiveButton(R.string.continue_option, (dialogInterface, i) -> {
           socialRepository.share(packageName, storeId, shareType);
           subscriber.onNext(GenericDialogs.EResponse.YES);
           subscriber.onCompleted();
-        }).setNegativeButton(android.R.string.cancel, (dialogInterface, i) -> {
-          subscriber.onNext(GenericDialogs.EResponse.NO);
-          subscriber.onCompleted();
-        });
+        })
+            .setNegativeButton(android.R.string.cancel, (dialogInterface, i) -> {
+              subscriber.onNext(GenericDialogs.EResponse.NO);
+              subscriber.onCompleted();
+            });
         if (dontShowMeAgainOption) {
           alertDialog.setNeutralButton(R.string.dont_show_this_again, (dialogInterface, i) -> {
             subscriber.onNext(GenericDialogs.EResponse.CANCEL);
@@ -628,17 +658,19 @@ public class SharePreviewDialog {
       }
 
       alertDialog.show();
-    }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(eResponse -> {
-      switch (eResponse) {
-        case YES:
-          ShowMessage.asSnack((Activity) context, R.string.social_timeline_share_dialog_title);
-          break;
-        case NO:
-          break;
-        case CANCEL:
-          break;
-      }
-    });
+    })
+        .subscribeOn(AndroidSchedulers.mainThread())
+        .subscribe(eResponse -> {
+          switch (eResponse) {
+            case YES:
+              ShowMessage.asSnack((Activity) context, R.string.social_timeline_share_dialog_title);
+              break;
+            case NO:
+              break;
+            case CANCEL:
+              break;
+          }
+        });
   }
 
   public boolean getPrivacyResult() {
