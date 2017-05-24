@@ -56,7 +56,7 @@ public class HighwayAppSelectionCustomAdapter extends BaseAdapter {
 
       LayoutInflater layoutInflater =
           (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-      view = layoutInflater.inflate(R.layout.highwayappselectionitem, parent, false);
+      view = layoutInflater.inflate(R.layout.activity_app_selection_item, parent, false);
 
       viewHolder.appImageIcon = (ImageView) view.findViewById(R.id.highwayGridViewItemIcon);
       viewHolder.appNameLabel = (TextView) view.findViewById(R.id.highwayGridViewItemName);

@@ -48,7 +48,7 @@ public class HighwayTransferRecordActivity extends ActivityView
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.highway_transfer_record_activity);
+    setContentView(R.layout.activity_transfer_record);
 
     welcomeText = (TextView) findViewById(R.id.Transf_rec_firstRow);
     receivedAppListView = (ListView) findViewById(R.id.transferRecordListView);

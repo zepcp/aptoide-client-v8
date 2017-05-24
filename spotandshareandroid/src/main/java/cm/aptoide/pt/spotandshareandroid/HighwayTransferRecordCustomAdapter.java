@@ -58,7 +58,8 @@ public class HighwayTransferRecordCustomAdapter extends BaseAdapter {
 
       if (type == 0) {
         convertView =
-            layoutInflater.inflate(R.layout.highway_transf_record_recv_row, parent, false);
+            layoutInflater.inflate(R.layout.activity_transfer_record_received_app_row, parent,
+                false);
         viewHolder.transfRecRecvRowIcons =
             (RelativeLayout) convertView.findViewById(R.id.transfRecRecvRowIcons);
         viewHolder.transfRecRecvRowDeletedMessage =
@@ -67,7 +68,7 @@ public class HighwayTransferRecordCustomAdapter extends BaseAdapter {
         viewHolder.installButton = (Button) convertView.findViewById(R.id.transfRecRowInstall);
       } else {//type=1 - enviado
         convertView =
-            layoutInflater.inflate(R.layout.highway_transf_record_sent_row, parent, false);
+            layoutInflater.inflate(R.layout.activity_transfer_record_sent_app_row, parent, false);
 
         viewHolder.reSendButton = (Button) convertView.findViewById(R.id.transfRecReSendButton);
       }

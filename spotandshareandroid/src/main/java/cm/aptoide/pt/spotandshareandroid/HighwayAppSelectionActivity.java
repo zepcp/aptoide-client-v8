@@ -26,7 +26,7 @@ public class HighwayAppSelectionActivity extends ActivityView implements Highway
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.highway_appselection_activity);
+    setContentView(R.layout.activity_app_selection);
     gridView = (GridView) findViewById(R.id.HighwayGridView);
     progressBar = (ProgressBar) findViewById(R.id.appSelectionProgressBar);
     mToolbar = (Toolbar) findViewById(R.id.shareAppsToolbar);

@@ -72,7 +72,7 @@ public class HighwayActivity extends ActivityView implements HighwayView, Permis
     analytics = ShareApps.getAnalytics();
     groupManager = new GroupManager(connectionManager);
 
-    setContentView(R.layout.highway_activity);
+    setContentView(R.layout.activity_radar);
 
     bindViews();
     setupViews();
