@@ -35,6 +35,8 @@ android {
     buildConfigField "String", "TWITTER_KEY", "\"" + project.TWITTER_KEY + "\""
     buildConfigField "String", "TWITTER_SECRET", "\"" + project.TWITTER_SECRET + "\""
 
+    resValue "string", "TEST_FAIRY_TOKEN", "\"" + project.TEST_FAIRY_TOKEN + "\""
+
     multiDexEnabled true
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
   }
@@ -233,6 +235,8 @@ dependencies {
   compile "com.google.android.gms:play-services-auth:${PLAY_SERVICES_VERSION}"
 
   compile "com.facebook.android:facebook-android-sdk:${FACEBOOK_ANDROID_SDK_VERSION}"
+
+  compile 'testfairy:testfairy-android-sdk:1.+@aar'
 
 
   leakCompile "com.squareup.leakcanary:leakcanary-android:${LEAK_CANARY_VERSION}"

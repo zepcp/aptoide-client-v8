@@ -55,6 +55,7 @@ import cm.aptoide.pt.v8engine.view.navigator.TabNavigatorActivity;
 import cm.aptoide.pt.v8engine.view.store.StoreTabFragmentChooser;
 import cm.aptoide.pt.v8engine.view.store.home.HomeFragment;
 import cm.aptoide.pt.v8engine.view.wizard.WizardFragment;
+import com.testfairy.TestFairy;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -79,6 +80,10 @@ public class MainActivity extends TabNavigatorActivity implements MainView {
   @Partners @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.frame_layout);
+
+    TestFairy.begin(this, getString(R.string.TEST_FAIRY_TOKEN));
+    TestFairy.setUserId(((V8Engine) getApplicationContext()).getIdsRepository()
+        .getUniqueIdentifier());
 
     final AptoideAccountManager accountManager =
         ((V8Engine) getApplicationContext()).getAccountManager();
