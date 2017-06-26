@@ -191,6 +191,12 @@
 
     </activity>
 
+    <receiver android:name="com.appsflyer.SingleInstallBroadcastReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="com.android.vending.INSTALL_REFERRER" />
+      </intent-filter>
+    </receiver>
+
     <receiver android:name=".install.InstalledBroadcastReceiver">
       <intent-filter android:priority="999">
         <action android:name="android.intent.action.PACKAGE_ADDED"/>
@@ -227,6 +233,9 @@
     <service android:name=".InstallService"/>
 
     <service android:name=".install.InstalledIntentService"/>
+
+    <meta-data android:name="com.google.android.gms.version"
+        android:value="@integer/google_play_services_version" />
 
   </application>
 

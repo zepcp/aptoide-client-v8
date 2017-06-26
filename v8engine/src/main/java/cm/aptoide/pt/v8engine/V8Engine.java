@@ -107,6 +107,7 @@ import cm.aptoide.pt.v8engine.view.entry.EntryActivity;
 import cm.aptoide.pt.v8engine.view.entry.EntryPointChooser;
 import cm.aptoide.pt.v8engine.view.recycler.DisplayableWidgetMapping;
 import cn.dreamtobe.filedownloader.OkHttp3Connection;
+import com.appsflyer.AppsFlyerLib;
 import com.facebook.appevents.AppEventsLogger;
 import com.flurry.android.FlurryAgent;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -292,6 +293,12 @@ public abstract class V8Engine extends SpotAndShareApplication {
 
     long totalExecutionTime = System.currentTimeMillis() - initialTimestamp;
     Logger.v(TAG, String.format("onCreate took %d millis.", totalExecutionTime));
+
+    AppsFlyerLib.getInstance()
+        .startTracking(this, getString(R.string.APPS_FLYER_DEV_KEY));
+
+    Logger.v(TAG, "AppsFlyerLib: " + AppsFlyerLib.getInstance()
+        .getAppsFlyerUID(this));
   }
 
   @Override protected TokenInvalidator getTokenInvalidator() {
