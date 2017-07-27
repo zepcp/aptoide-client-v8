@@ -196,7 +196,7 @@ public class AptoideDownloadManager {
     startNextDownload();
   }
 
-  synchronized void startNextDownload() {
+  private synchronized void startNextDownload() {
     if (!isDownloading && !isPausing) {
       isDownloading = true;
       getNextDownload().first()
@@ -213,10 +213,8 @@ public class AptoideDownloadManager {
               cacheHelper.cleanCache()
                   .subscribe(cleanedSize -> Logger.d(TAG,
                       "cleaned size: " + AptoideUtils.StringU.formatBytes(cleanedSize, false)),
-                      throwable -> {
-                        CrashReport.getInstance()
-                            .log(throwable);
-                      });
+                      throwable -> CrashReport.getInstance()
+                          .log(throwable));
             }
           }, throwable -> throwable.printStackTrace());
     }

@@ -170,15 +170,10 @@ public class Download extends RealmObject {
     this.versionName = versionName;
   }
 
-  @IntDef({
+  @Retention(RetentionPolicy.SOURCE) @IntDef({
       INVALID_STATUS, COMPLETED, BLOCK_COMPLETE, CONNECTED, PENDING, PROGRESS, PAUSED, WARN,
       STARTED, ERROR, FILE_MISSING, RETRY, NOT_DOWNLOADED, IN_QUEUE
-  })
-
-  @Retention(RetentionPolicy.SOURCE)
-
-  public @interface DownloadState {
-
+  }) public @interface DownloadState {
   }
 
   @Retention(RetentionPolicy.SOURCE)
