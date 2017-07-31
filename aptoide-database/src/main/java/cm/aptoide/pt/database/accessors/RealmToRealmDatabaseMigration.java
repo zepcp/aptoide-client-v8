@@ -299,5 +299,13 @@ class RealmToRealmDatabaseMigration implements RealmMigration {
 
       oldVersion++;
     }
+
+    if (oldVersion == 8086) {
+      schema.get("StoredMinimalAd")
+          .addField("downloads", Integer.class)
+          .addField("stars", Integer.class);
+
+      oldVersion++;
+    }
   }
 }
