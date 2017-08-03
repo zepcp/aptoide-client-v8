@@ -3,6 +3,7 @@ package cm.aptoide.pt.v8engine.social.data.share;
 import android.content.Context;
 import android.support.annotation.CallSuper;
 import android.support.annotation.LayoutRes;
+import android.support.annotation.StringRes;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
@@ -72,6 +73,11 @@ abstract class BaseShareDialog<T extends Post> implements ShareDialogInterface<T
     private final Account account;
     private final int layoutId;
     private final LayoutInflater layoutInflater;
+    private int titleStringRes = Integer.MAX_VALUE;
+    private int descriptionStringRes = Integer.MAX_VALUE;
+    private int positiveStringRes = Integer.MAX_VALUE;
+    private int negativeStringRes = Integer.MAX_VALUE;
+    ;
 
     public Builder(Context context, SharePostViewSetup sharePostViewSetup, Account account,
         @LayoutRes int layoutId) {
@@ -83,13 +89,49 @@ abstract class BaseShareDialog<T extends Post> implements ShareDialogInterface<T
       this.layoutId = layoutId;
     }
 
+    public void setTitleMessage(@StringRes int message) {
+      this.titleStringRes = message;
+    }
+
+    public void setDescriptionMessage(@StringRes int message) {
+      this.descriptionStringRes = message;
+    }
+
     public RxAlertDialog buildRxAlertDialog() {
       View view = getView();
       sharePostViewSetup.setup(view, context, account);
       builder.setView(view);
-      builder.setPositiveButton(R.string.share);
-      builder.setNegativeButton(R.string.cancel);
+      builder.setPositiveButton(getPositiveMessage());
+      builder.setNegativeButton(getNegativeMessage());
+      builder.setTitle(getDialogTitle());
+      builder.setMessage(getDialogDescription());
       return builder.build();
+    }
+
+    @StringRes private int getDialogTitle() {
+      return titleStringRes != Integer.MAX_VALUE ? titleStringRes
+          : R.string.timeline_title_shared_card_preview;
+    }
+
+    @StringRes private int getDialogDescription() {
+      return descriptionStringRes != Integer.MAX_VALUE ? descriptionStringRes
+          : R.string.social_timeline_you_will_share;
+    }
+
+    @StringRes private int getPositiveMessage() {
+      return positiveStringRes != Integer.MAX_VALUE ? positiveStringRes : R.string.share;
+    }
+
+    public void setPositiveMessage(@StringRes int message) {
+      this.positiveStringRes = message;
+    }
+
+    @StringRes private int getNegativeMessage() {
+      return negativeStringRes != Integer.MAX_VALUE ? negativeStringRes : R.string.cancel;
+    }
+
+    public void setNegativeMessage(@StringRes int message) {
+      this.negativeStringRes = message;
     }
 
     private View getView() {
