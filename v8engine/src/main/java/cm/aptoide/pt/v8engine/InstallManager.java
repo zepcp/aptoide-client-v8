@@ -402,7 +402,10 @@ public class InstallManager {
         .flatMap(observables -> Observable.merge(observables))
         .toList()
         .map(installs -> true)
-        .onErrorReturn(throwable -> false);
+        .onErrorReturn(throwable -> {
+          CrashReport.getInstance().log(throwable);
+          return false;
+        });
   }
 
   public Completable onAppInstalled(Installed installed) {

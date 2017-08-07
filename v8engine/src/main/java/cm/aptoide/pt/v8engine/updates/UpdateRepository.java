@@ -3,6 +3,7 @@ package cm.aptoide.pt.v8engine.updates;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.database.accessors.UpdateAccessor;
 import cm.aptoide.pt.database.realm.Update;
@@ -197,7 +198,13 @@ public class UpdateRepository {
   }
 
   public Completable remove(Update update) {
-    return Completable.fromAction(() -> updateAccessor.remove(update.getPackageName()));
+    return Single.just(update.getPackageName())
+        .flatMapCompletable(updateName -> {
+          if (!TextUtils.isEmpty(updateName)) {
+            return Completable.fromAction(() -> updateAccessor.remove(updateName));
+          }
+          return Completable.complete();
+        });
   }
 
   public void remove(String packageName) {

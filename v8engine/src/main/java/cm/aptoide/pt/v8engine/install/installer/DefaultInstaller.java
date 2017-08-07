@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
+import android.text.TextUtils;
 import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
@@ -293,6 +294,7 @@ public class DefaultInstaller implements Installer {
   }
 
   private boolean isInstalled(String packageName, int versionCode) {
+    if (TextUtils.isEmpty(packageName)) return false;
     final PackageInfo info;
     try {
       info = packageManager.getPackageInfo(packageName, 0);
