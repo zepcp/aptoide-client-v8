@@ -292,14 +292,21 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
     }
 
     if (oldVersion == 8085) {
-      realm.delete("PaymentConfirmation");
-      schema.get("PaymentConfirmation")
-          .addField("clientToken", String.class);
+      schema.get("MinimalAd")
+          .addField("downloads", Integer.class)
+          .addField("stars", Integer.class)
+          .addField("modified", Long.class);
 
       oldVersion++;
     }
 
     if (oldVersion == 8086) {
+      realm.delete("PaymentConfirmation");
+      schema.get("PaymentConfirmation")
+          .addField("clientToken", String.class)
+          .addField("successUrl", String.class)
+          .addField("confirmationUrl", String.class);
+
       realm.delete("PaymentAuthorization");
 
       oldVersion++;
