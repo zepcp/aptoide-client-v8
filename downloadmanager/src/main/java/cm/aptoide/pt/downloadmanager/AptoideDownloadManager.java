@@ -14,10 +14,6 @@ import rx.Observable;
  * Created by trinkes on 5/13/16.
  */
 public class AptoideDownloadManager {
-
-  public static final String FILE_MD5_EXTRA = "APTOIDE_APPID_EXTRA";
-
-  static public final int PROGRESS_MAX_VALUE = 100;
   private static final String TAG = AptoideDownloadManager.class.getSimpleName();
 
   private final String downloadsStoragePath;

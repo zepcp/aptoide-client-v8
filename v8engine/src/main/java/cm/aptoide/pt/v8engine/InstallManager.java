@@ -10,10 +10,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.downloadmanager.DownloadNotFoundException;
+import cm.aptoide.pt.downloadmanager.DownloadRepository;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.preferences.secure.SecurePreferences;
 import cm.aptoide.pt.root.RootAvailabilityManager;
@@ -24,7 +26,6 @@ import cm.aptoide.pt.v8engine.install.Installer;
 import cm.aptoide.pt.v8engine.install.installer.DefaultInstaller;
 import cm.aptoide.pt.v8engine.install.installer.InstallationState;
 import cm.aptoide.pt.v8engine.install.installer.RollbackInstaller;
-import cm.aptoide.pt.v8engine.repository.DownloadRepository;
 import java.util.Collections;
 import java.util.List;
 import rx.Completable;
@@ -149,8 +150,8 @@ public class InstallManager {
         .map(storedDownload -> updateDownloadAction(download, storedDownload))
         .retryWhen(errors -> createDownloadAndRetry(errors, download))
         .doOnNext(downloadProgress -> {
-          if (downloadProgress.getOverallDownloadStatus() == Download.ERROR) {
-            downloadProgress.setOverallDownloadStatus(Download.INVALID_STATUS);
+          if (downloadProgress.getOverallDownloadStatus() == DownloadStatus.ERROR) {
+            downloadProgress.setOverallDownloadStatus(DownloadStatus.INVALID_STATUS);
             downloadRepository.save(downloadProgress);
           }
         })
@@ -220,7 +221,7 @@ public class InstallManager {
 
     if (installationState.getStatus() == Installed.STATUS_WAITING
         && download != null
-        && download.getOverallDownloadStatus() == Download.COMPLETED) {
+        && download.getOverallDownloadStatus() == DownloadStatus.COMPLETED) {
       return Install.InstallationStatus.INSTALLING;
     }
 
@@ -243,22 +244,22 @@ public class InstallManager {
     boolean isIndeterminate = false;
     if (download != null) {
       switch (download.getOverallDownloadStatus()) {
-        case Download.IN_QUEUE:
+        case IN_QUEUE:
           isIndeterminate = true;
           break;
-        case Download.BLOCK_COMPLETE:
-        case Download.COMPLETED:
-        case Download.CONNECTED:
-        case Download.ERROR:
-        case Download.FILE_MISSING:
-        case Download.INVALID_STATUS:
-        case Download.NOT_DOWNLOADED:
-        case Download.PAUSED:
-        case Download.PENDING:
-        case Download.PROGRESS:
-        case Download.RETRY:
-        case Download.STARTED:
-        case Download.WARN:
+        case BLOCK_COMPLETE:
+        case COMPLETED:
+        case CONNECTED:
+        case ERROR:
+        case FILE_MISSING:
+        case INVALID_STATUS:
+        case NOT_DOWNLOADED:
+        case PAUSED:
+        case PENDING:
+        case PROGRESS:
+        case RETRY:
+        case STARTED:
+        case WARNING:
           isIndeterminate = false;
           break;
         default:
@@ -272,35 +273,35 @@ public class InstallManager {
     Install.InstallationStatus status = Install.InstallationStatus.UNINSTALLED;
     if (download != null) {
       switch (download.getOverallDownloadStatus()) {
-        case Download.FILE_MISSING:
-        case Download.INVALID_STATUS:
-        case Download.NOT_DOWNLOADED:
-        case Download.COMPLETED:
+        case FILE_MISSING:
+        case INVALID_STATUS:
+        case NOT_DOWNLOADED:
+        case COMPLETED:
           status = Install.InstallationStatus.UNINSTALLED;
           break;
-        case Download.PAUSED:
+        case PAUSED:
           status = Install.InstallationStatus.PAUSED;
           break;
-        case Download.ERROR:
+        case ERROR:
           switch (download.getDownloadError()) {
-            case Download.GENERIC_ERROR:
+            case GENERIC_ERROR:
               status = Install.InstallationStatus.GENERIC_ERROR;
               break;
-            case Download.NOT_ENOUGH_SPACE_ERROR:
+            case NOT_ENOUGH_SPACE_ERROR:
               status = Install.InstallationStatus.NOT_ENOUGH_SPACE_ERROR;
               break;
           }
           break;
-        case Download.RETRY:
-        case Download.STARTED:
-        case Download.WARN:
-        case Download.CONNECTED:
-        case Download.BLOCK_COMPLETE:
-        case Download.PROGRESS:
-        case Download.PENDING:
+        case RETRY:
+        case STARTED:
+        case WARNING:
+        case CONNECTED:
+        case BLOCK_COMPLETE:
+        case PROGRESS:
+        case PENDING:
           status = Install.InstallationStatus.INSTALLING;
           break;
-        case Download.IN_QUEUE:
+        case IN_QUEUE:
           status = Install.InstallationStatus.IN_QUEUE;
           break;
       }
@@ -321,7 +322,7 @@ public class InstallManager {
         break;
       case Installed.STATUS_WAITING:
         isIndeterminate =
-            download != null && download.getOverallDownloadStatus() == Download.COMPLETED;
+            download != null && download.getOverallDownloadStatus() == DownloadStatus.COMPLETED;
     }
     return isIndeterminate;
   }
@@ -403,7 +404,8 @@ public class InstallManager {
         .toList()
         .map(installs -> true)
         .onErrorReturn(throwable -> {
-          CrashReport.getInstance().log(throwable);
+          CrashReport.getInstance()
+              .log(throwable);
           return false;
         });
   }

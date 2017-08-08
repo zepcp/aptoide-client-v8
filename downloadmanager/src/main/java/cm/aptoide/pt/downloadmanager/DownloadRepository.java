@@ -3,7 +3,7 @@ package cm.aptoide.pt.downloadmanager;
 import java.util.List;
 import rx.Observable;
 
-interface DownloadRepository {
+public interface DownloadRepository {
   Observable<List<Download>> getAll();
 
   Observable<Download> get(long downloadId);

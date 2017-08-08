@@ -1,6 +1,6 @@
 package cm.aptoide.pt.downloadmanager;
 
-interface DownloadFile {
+public interface DownloadFile {
   String getAltLink();
 
   void setAltLink(String altLink);

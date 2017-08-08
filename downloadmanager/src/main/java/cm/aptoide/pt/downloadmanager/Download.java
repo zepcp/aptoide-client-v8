@@ -2,9 +2,9 @@ package cm.aptoide.pt.downloadmanager;
 
 import java.util.List;
 
-interface Download {
+public interface Download {
 
-  int getDownloadError();
+  DownloadStatus getDownloadError();
 
   void setDownloadError(DownloadStatus downloadError);
 

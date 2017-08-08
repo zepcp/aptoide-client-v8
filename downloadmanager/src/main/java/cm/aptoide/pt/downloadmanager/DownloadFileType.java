@@ -1,5 +1,5 @@
 package cm.aptoide.pt.downloadmanager;
 
-enum DownloadFileType {
+public enum DownloadFileType {
   OBB, APK, GENERIC
 }
