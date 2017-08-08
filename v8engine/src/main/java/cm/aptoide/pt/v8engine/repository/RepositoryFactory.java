@@ -18,10 +18,10 @@ import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
-import cm.aptoide.pt.downloadmanager.DownloadRepository;
 import cm.aptoide.pt.v8engine.V8Engine;
 import cm.aptoide.pt.v8engine.app.AppRepository;
 import cm.aptoide.pt.v8engine.database.AccessorFactory;
+import cm.aptoide.pt.v8engine.download.DownloadRepository;
 import cm.aptoide.pt.v8engine.download.ScheduledDownloadRepository;
 import cm.aptoide.pt.v8engine.install.InstalledRepository;
 import cm.aptoide.pt.v8engine.install.rollback.RollbackRepository;
@@ -87,7 +87,7 @@ public final class RepositoryFactory {
 
   public static DownloadRepository getDownloadRepository(
       Context context) {
-    return new cm.aptoide.pt.v8engine.download.DownloadRepository(
+    return new DownloadRepository(
         AccessorFactory.getAccessorFor(((V8Engine) context.getApplicationContext()).getDatabase(),
             Download.class));
   }

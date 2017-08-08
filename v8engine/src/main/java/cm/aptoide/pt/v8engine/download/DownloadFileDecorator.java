@@ -5,95 +5,99 @@ import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadFileType;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 
-public class DownloadFileWrapper implements DownloadFile {
+public class DownloadFileDecorator implements DownloadFile {
 
   private final FileToDownload downloadFile;
 
-  public DownloadFileWrapper(FileToDownload downloadFile) {
+  public DownloadFileDecorator(FileToDownload downloadFile) {
     this.downloadFile = downloadFile;
   }
 
   @Override public String getAltLink() {
-    return null;
+    return downloadFile.getAltLink();
   }
 
   @Override public void setAltLink(String altLink) {
-
+    downloadFile.setAltLink(altLink);
   }
 
   @Override public DownloadStatus getStatus() {
-    return null;
+    return DownloadStatus.fromValue(downloadFile.getStatus());
   }
 
   @Override public void setStatus(DownloadStatus status) {
-
+    downloadFile.setStatus(status.getValue());
   }
 
   @Override public String getLink() {
-    return null;
+    return downloadFile.getLink();
   }
 
   @Override public void setLink(String link) {
-
+    downloadFile.setLink(link);
   }
 
   @Override public String getPackageName() {
-    return null;
+    return downloadFile.getPackageName();
   }
 
   @Override public void setPackageName(String packageName) {
-
+    downloadFile.setPackageName(packageName);
   }
 
   @Override public int getDownloadId() {
-    return 0;
+    return downloadFile.getDownloadId();
   }
 
   @Override public void setDownloadId(int downloadId) {
-
+    downloadFile.setDownloadId(downloadId);
   }
 
   @Override public DownloadFileType getFileType() {
-    return null;
+    return DownloadFileType.fromValue(downloadFile.getFileType());
   }
 
   @Override public void setFileType(DownloadFileType fileType) {
-
+    downloadFile.setFileType(fileType.getValue());
   }
 
   @Override public int getProgress() {
-    return 0;
+    return downloadFile.getProgress();
   }
 
   @Override public void setProgress(int progress) {
-
+    downloadFile.setProgress(progress);
   }
 
   @Override public String getFilePath() {
-    return null;
+    return downloadFile.getFilePath();
   }
 
   @Override public String getPath() {
-    return null;
+    return downloadFile.getPath();
   }
 
   @Override public void setPath(String path) {
-
+    downloadFile.setPath(path);
   }
 
   @Override public String getFileName() {
-    return null;
+    return downloadFile.getFileName();
   }
 
   @Override public void setFileName(String fileName) {
-
+    downloadFile.setFileName(fileName);
   }
 
   @Override public String getMd5() {
-    return null;
+    return downloadFile.getMd5();
   }
 
   @Override public void setMd5(String md5) {
+    downloadFile.setMd5(md5);
+  }
 
+  @Override public int getVersionCode() {
+    return downloadFile.getVersionCode();
   }
 }

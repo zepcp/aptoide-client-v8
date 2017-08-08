@@ -1,19 +1,15 @@
 package cm.aptoide.pt.v8engine.download;
 
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.Download;
-import cm.aptoide.pt.downloadmanager.DownloadAction;
-import cm.aptoide.pt.downloadmanager.DownloadError;
-import cm.aptoide.pt.downloadmanager.DownloadFile;
-import cm.aptoide.pt.downloadmanager.DownloadStatus;
+import cm.aptoide.pt.downloadmanager.*;
 import io.realm.RealmList;
 import java.util.LinkedList;
 import java.util.List;
 
-class DownloadWrapper implements Download {
+class DownloadDecorator implements Download {
   private final cm.aptoide.pt.database.realm.Download download;
 
-  DownloadWrapper(cm.aptoide.pt.database.realm.Download download) {
+  DownloadDecorator(cm.aptoide.pt.database.realm.Download download) {
     this.download = download;
   }
 
@@ -44,7 +40,7 @@ class DownloadWrapper implements Download {
   @Override public List<DownloadFile> getFilesToDownload() {
     List<DownloadFile> files = new LinkedList<>();
     for (FileToDownload file : download.getFilesToDownload()) {
-      files.add(new DownloadFileWrapper(file));
+      files.add(new DownloadFileDecorator(file));
     }
     return files;
   }
@@ -57,6 +53,10 @@ class DownloadWrapper implements Download {
     }
 
     download.setFilesToDownload(dbFiles);
+  }
+
+  public void save(cm.aptoide.pt.downloadmanager.DownloadRepository downloadRepository){
+    downloadRepository.save(this);
   }
 
   @Override public DownloadStatus getOverallDownloadStatus() {

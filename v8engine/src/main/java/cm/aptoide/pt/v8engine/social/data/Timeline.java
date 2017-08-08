@@ -1,6 +1,6 @@
 package cm.aptoide.pt.v8engine.social.data;
 
-import cm.aptoide.pt.database.realm.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.v8engine.BuildConfig;
@@ -62,7 +62,7 @@ public class Timeline {
     AppUpdate card = (AppUpdate) cardTouchEvent.getCard();
     return installManager.install(downloadFactory.create(
         (cm.aptoide.pt.v8engine.social.data.AppUpdate) cardTouchEvent.getCard(),
-        Download.ACTION_UPDATE))
+        DownloadAction.UPDATE))
         .andThen(installManager.getInstall(card.getFile()
             .getMd5sum(), card.getPackageName(), card.getFile()
             .getVercode()));

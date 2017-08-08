@@ -59,4 +59,6 @@ public interface Download {
   String getVersionName();
 
   void setVersionName(String versionName);
+
+  void save(DownloadRepository downloadRepository);
 }

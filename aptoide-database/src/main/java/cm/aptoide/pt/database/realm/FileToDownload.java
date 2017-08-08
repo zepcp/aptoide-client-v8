@@ -7,14 +7,12 @@ import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 
 /**
  * Created by trinkes on 5/16/16.
  */
 
-@EqualsAndHashCode(callSuper = false) public class FileToDownload extends RealmObject {
+public class FileToDownload extends RealmObject {
 
   public static final int APK = 0;
   public static final int OBB = 1;
@@ -31,8 +29,8 @@ import lombok.Getter;
   private int progress;
   private @Download.DownloadState int status;
   private String fileName;
-  @Getter private int versionCode;
-  @Getter private String versionName;
+  private int versionCode;
+  private String versionName;
 
   public static FileToDownload createFileToDownload(String link, String altLink, String md5,
       String fileName, @FileType int fileType, String packageName, int versionCode,
@@ -53,6 +51,14 @@ import lombok.Getter;
     }
     fileToDownload.setPackageName(packageName);
     return fileToDownload;
+  }
+
+  public int getVersionCode() {
+    return versionCode;
+  }
+
+  public String getVersionName() {
+    return versionName;
   }
 
   public String getAltLink() {

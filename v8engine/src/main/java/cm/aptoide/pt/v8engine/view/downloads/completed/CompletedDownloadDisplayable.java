@@ -3,7 +3,7 @@ package cm.aptoide.pt.v8engine.view.downloads.completed;
 import android.content.Context;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
-import cm.aptoide.pt.database.realm.Download;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.Install;
 import cm.aptoide.pt.v8engine.InstallManager;

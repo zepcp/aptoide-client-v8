@@ -68,7 +68,7 @@ public class DownloadFactory {
                 .getVercode(), appToDownload.getFile()
                 .getVername()));
 
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   private void validateApp(String md5, Obb appObb, String packageName, String appName,
@@ -180,7 +180,7 @@ public class DownloadFactory {
             updateDisplayable.getPatchObbPath(), updateDisplayable.getPatchObbMd5(),
             updateDisplayable.getVersionCode(), updateDisplayable.getUpdateVersionName(),
             updateDisplayable.getMainObbName(), updateDisplayable.getPatchObbName()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public Download create(App appToDownload, DownloadAction downloadAction) {
@@ -212,7 +212,7 @@ public class DownloadFactory {
         .getMd5sum(), appToDownload.getObb(), downloadPaths.altPath, appToDownload.getFile()
         .getVercode(), appToDownload.getFile()
         .getVername()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public Download create(AppUpdate app, DownloadAction downloadAction) {
@@ -241,7 +241,7 @@ public class DownloadFactory {
         .getMd5sum(), app.getObb(), downloadPaths.altPath, app.getFile()
         .getVercode(), app.getFile()
         .getVername()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public Download create(Update update) {
@@ -260,7 +260,7 @@ public class DownloadFactory {
         update.getMd5(), update.getMainObbPath(), update.getMainObbMd5(), update.getPatchObbPath(),
         update.getPatchObbMd5(), update.getVersionCode(), update.getUpdateVersionName(),
         update.getMainObbName(), update.getPatchObbName()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public Download create(Rollback rollback) {
@@ -301,7 +301,7 @@ public class DownloadFactory {
             rollback.getMd5(), rollback.getMainObbPath(), rollback.getMainObbMd5(),
             rollback.getPatchObbPath(), rollback.getPatchObbMd5(), rollback.getVersionCode(),
             rollback.getVersionName(), rollback.getMainObbName(), rollback.getPatchObbName()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public cm.aptoide.pt.downloadmanager.Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
@@ -316,7 +316,7 @@ public class DownloadFactory {
     download.setFilesToDownload(
         createFileList(autoUpdateInfo.md5, null, autoUpdateInfo.path, autoUpdateInfo.md5, null,
             null, autoUpdateInfo.vercode, null));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   public Download create(Scheduled scheduled) {
@@ -352,7 +352,7 @@ public class DownloadFactory {
         createFileList(scheduled.getMd5(), scheduled.getPackageName(), path, scheduled.getMd5(),
             extractObb(scheduled), alternativePath, scheduled.getVerCode(),
             scheduled.getVersionName()));
-    return new DownloadWrapper(download);
+    return new DownloadDecorator(download);
   }
 
   private Obb extractObb(Scheduled scheduled) {

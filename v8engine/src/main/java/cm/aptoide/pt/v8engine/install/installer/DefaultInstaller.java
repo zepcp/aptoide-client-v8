@@ -17,9 +17,10 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
-import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.DownloadFileType;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.root.RootAvailabilityManager;
@@ -207,10 +208,10 @@ public class DefaultInstaller implements Installer {
   }
 
   private void moveInstallationFiles(RollbackInstallation installation) {
-    List<FileToDownload> files = installation.getFiles();
+    List<DownloadFile> files = installation.getFiles();
     for (int i = 0; i < files.size(); i++) {
-      FileToDownload file = files.get(i);
-      if (file != null && file.getFileType() == FileToDownload.OBB) {
+      DownloadFile file = files.get(i);
+      if (file != null && file.getFileType() == DownloadFileType.OBB) {
         String newPath = OBB_FOLDER + installation.getPackageName() + "/";
         fileUtils.copyFile(file.getPath(), newPath, file.getFileName());
         FileUtils.removeFile(file.getPath());

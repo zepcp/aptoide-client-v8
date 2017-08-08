@@ -1,6 +1,6 @@
 package cm.aptoide.pt.v8engine.view.updates;
 
-import cm.aptoide.pt.database.realm.Download;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.v8engine.InstallManager;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.analytics.Analytics;

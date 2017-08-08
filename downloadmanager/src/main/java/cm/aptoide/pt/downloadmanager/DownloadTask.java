@@ -209,7 +209,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
             } else {
               Logger.e(TAG, "Download md5 is not correct");
               downloadManager.deleteDownloadedFiles(download);
-              download.setDownloadError(DownloadStatus.GENERIC_ERROR);
+              download.setDownloadError(DownloadError.GENERIC_ERROR);
               setDownloadStatus(DownloadStatus.ERROR, download, task);
             }
           });
@@ -247,9 +247,9 @@ class DownloadTask extends FileDownloadLargeFileListener {
       }
     }
     if (e instanceof FileDownloadOutOfSpaceException) {
-      download.setDownloadError(DownloadStatus.NOT_ENOUGH_SPACE_ERROR);
+      download.setDownloadError(DownloadError.NOT_ENOUGH_SPACE_ERROR);
     } else {
-      download.setDownloadError(DownloadStatus.GENERIC_ERROR);
+      download.setDownloadError(DownloadError.GENERIC_ERROR);
     }
     setDownloadStatus(DownloadStatus.ERROR, download, task);
     downloadManager.currentDownloadFinished();

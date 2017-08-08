@@ -6,7 +6,6 @@
 package cm.aptoide.pt.v8engine.download;
 
 import android.support.annotation.NonNull;
-import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
@@ -30,16 +29,16 @@ import rx.schedulers.Schedulers;
 public class DownloadInstallationProvider implements InstallationProvider {
 
   private final AptoideDownloadManager downloadManager;
-  private final DownloadAccessor downloadAccessor;
+  private final DownloadRepository downloadRepository;
   private final MinimalAdMapper adMapper;
   private final InstalledRepository installedRepository;
   private final StoredMinimalAdAccessor storedMinimalAdAccessor;
 
   public DownloadInstallationProvider(AptoideDownloadManager downloadManager,
-      DownloadAccessor downloadAccessor, InstalledRepository installedRepository,
+      DownloadRepository downloadRepository, InstalledRepository installedRepository,
       MinimalAdMapper adMapper, StoredMinimalAdAccessor storeMinimalAdAccessor) {
     this.downloadManager = downloadManager;
-    this.downloadAccessor = downloadAccessor;
+    this.downloadRepository = downloadRepository;
     this.adMapper = adMapper;
     this.storedMinimalAdAccessor = storeMinimalAdAccessor;
     this.installedRepository = installedRepository;
@@ -55,7 +54,7 @@ public class DownloadInstallationProvider implements InstallationProvider {
                   if (installed == null) {
                     installed = convertDownloadToInstalled(download);
                   }
-                  return new DownloadInstallationAdapter(download, downloadAccessor,
+                  return new DownloadInstallationAdapter(download, downloadRepository,
                       installedRepository, installed);
                 })
                 .doOnNext(downloadInstallationAdapter -> {

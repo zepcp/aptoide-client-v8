@@ -7,7 +7,7 @@ package cm.aptoide.pt.v8engine.install;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import cm.aptoide.pt.database.realm.Download;
+import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
@@ -18,6 +18,7 @@ import cm.aptoide.pt.v8engine.ads.MinimalAdMapper;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
 import cm.aptoide.pt.v8engine.database.AccessorFactory;
 import cm.aptoide.pt.v8engine.download.DownloadInstallationProvider;
+import cm.aptoide.pt.v8engine.download.DownloadRepository;
 import cm.aptoide.pt.v8engine.install.installer.DefaultInstaller;
 import cm.aptoide.pt.v8engine.install.installer.RollbackInstaller;
 import cm.aptoide.pt.v8engine.install.rollback.RollbackFactory;
@@ -73,10 +74,17 @@ public class InstallerFactory {
 
   @NonNull private DownloadInstallationProvider getInstallationProvider(
       AptoideDownloadManager downloadManager, Context context) {
+    final DownloadRepository downloadRepository =
+        RepositoryFactory.getDownloadRepository(context);
+
+    final InstalledRepository installedRepository =
+        RepositoryFactory.getInstalledRepository(context);
+
+    final StoredMinimalAdAccessor minimalAdAccessor = AccessorFactory.getAccessorFor(
+        ((V8Engine) context.getApplicationContext()
+            .getApplicationContext()).getDatabase(), StoredMinimalAd.class);
+
     return new DownloadInstallationProvider(downloadManager,
-        AccessorFactory.getAccessorFor(((V8Engine) context.getApplicationContext()).getDatabase(),
-            Download.class), RepositoryFactory.getInstalledRepository(context), adMapper,
-        AccessorFactory.getAccessorFor(((V8Engine) context.getApplicationContext()
-            .getApplicationContext()).getDatabase(), StoredMinimalAd.class));
+        downloadRepository, installedRepository, adMapper, minimalAdAccessor);
   }
 }

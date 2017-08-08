@@ -5,10 +5,10 @@
 
 package cm.aptoide.pt.v8engine.install.rollback;
 
-import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.v8engine.download.DownloadRepository;
 import cm.aptoide.pt.v8engine.install.InstalledRepository;
 import cm.aptoide.pt.v8engine.install.installer.RollbackInstallation;
 import java.io.File;
@@ -20,14 +20,14 @@ import java.util.List;
 public class DownloadInstallationAdapter implements RollbackInstallation {
 
   private final Download download;
-  private DownloadAccessor downloadAccessor;
+  private DownloadRepository downloadRepository;
   private InstalledRepository ongoingInstallProvider;
   private Installed installed;
 
-  public DownloadInstallationAdapter(Download download, DownloadAccessor downloadAccessor,
+  public DownloadInstallationAdapter(Download download, DownloadRepository downloadRepository,
       InstalledRepository installedRepository, Installed installed) {
     this.download = download;
-    this.downloadAccessor = downloadAccessor;
+    this.downloadRepository = downloadRepository;
     this.ongoingInstallProvider = installedRepository;
     this.installed = installed;
   }
@@ -91,6 +91,6 @@ public class DownloadInstallationAdapter implements RollbackInstallation {
   }
 
   @Override public void saveFileChanges() {
-    downloadAccessor.save(download);
+    download.save(downloadRepository);
   }
 }
