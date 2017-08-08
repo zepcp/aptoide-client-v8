@@ -143,36 +143,6 @@ import lombok.Getter;
     this.md5 = md5;
   }
 
-  //@Override protected FileToDownload clone() {
-  //  FileToDownload clone = new FileToDownload();
-  //  clone.setAppId(getAppId());
-  //  if (this.getLink() != null) {
-  //    clone.setLink(new String(this.getLink()));
-  //  }
-  //  clone.setStatus(this.getStatus());
-  //  if (this.getPath() != null) {
-  //    clone.setPath(new String(this.getPath()));
-  //  }
-  //  if (this.getPackageName() != null) {
-  //    clone.setPackageName(new String(this.getPackageName()));
-  //  }
-  //  clone.setDownloadId(this.getDownloadId());
-  //  clone.setFileType(this.getFileType());
-  //  clone.setProgress(this.getProgress());
-  //  clone.versionCode = versionCode;
-  //  if (this.getMd5() != null) {
-  //    clone.setMd5(new String(this.getMd5()));
-  //  }
-  //  if (this.getFileName() != null) {
-  //    clone.setFileName(new String(this.getFileName()));
-  //  }
-  //  if (!TextUtils.isEmpty(this.getAltLink())) {
-  //    clone.setAltLink(this.getAltLink());
-  //  }
-  //
-  //  return clone;
-  //}
-
   @IntDef({ APK, OBB, GENERIC }) @Retention(RetentionPolicy.SOURCE) public @interface FileType {
 
   }
