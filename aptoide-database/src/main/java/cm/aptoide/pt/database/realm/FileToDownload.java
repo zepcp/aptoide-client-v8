@@ -22,7 +22,6 @@ import lombok.Getter;
 
   @PrimaryKey private String md5;
   private int downloadId;
-  //private long appId;
 
   private String altLink;
   private String link;

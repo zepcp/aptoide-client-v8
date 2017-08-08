@@ -39,7 +39,7 @@ import lombok.EqualsAndHashCode;
   public static final int NO_ERROR = 0;
   public static final int GENERIC_ERROR = 1;
   public static final int NOT_ENOUGH_SPACE_ERROR = 2;
-  public static String TAG = Download.class.getSimpleName();
+
   RealmList<FileToDownload> filesToDownload;
   @DownloadState int overallDownloadStatus = 0;
   @IntRange(from = 0, to = 100) int overallProgress = 0;
