@@ -7,7 +7,6 @@ package cm.aptoide.pt.v8engine.download;
 
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.database.realm.Scheduled;
@@ -16,6 +15,8 @@ import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.dataprovider.model.v7.Obb;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.File;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.utils.IdUtils;
 import cm.aptoide.pt.v8engine.AutoUpdate;
@@ -33,7 +34,7 @@ public class DownloadFactory {
   private static final String INSTALL_ACTION = "?action=install";
   private static final String DOWNGRADE_ACTION = "?action=downgrade";
 
-  public Download create(GetAppMeta.App appToDownload, int downloadAction)
+  public Download create(GetAppMeta.App appToDownload, DownloadAction downloadAction)
       throws IllegalArgumentException {
     final GetAppMeta.GetAppMetaFile file = appToDownload.getFile();
 
@@ -48,12 +49,12 @@ public class DownloadFactory {
 
     ApkPaths downloadPaths = getDownloadPaths(downloadAction, path, altPath);
 
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(appToDownload.getFile()
         .getMd5sum());
     download.setIcon(appToDownload.getIcon());
     download.setAppName(appToDownload.getName());
-    download.setAction(downloadAction);
+    download.setAction(downloadAction.getValue());
     download.setPackageName(appToDownload.getPackageName());
     download.setVersionCode(appToDownload.getFile()
         .getVercode());
@@ -67,7 +68,7 @@ public class DownloadFactory {
                 .getVercode(), appToDownload.getFile()
                 .getVername()));
 
-    return download;
+    return new DownloadWrapper(download);
   }
 
   private void validateApp(String md5, Obb appObb, String packageName, String appName,
@@ -86,17 +87,17 @@ public class DownloadFactory {
     }
   }
 
-  ApkPaths getDownloadPaths(int downloadAction, String path, String altPath) {
+  ApkPaths getDownloadPaths(DownloadAction downloadAction, String path, String altPath) {
     switch (downloadAction) {
-      case Download.ACTION_INSTALL:
+      case INSTALL:
         path += INSTALL_ACTION;
         altPath += INSTALL_ACTION;
         break;
-      case Download.ACTION_DOWNGRADE:
+      case DOWNGRADE:
         path += DOWNGRADE_ACTION;
         altPath += DOWNGRADE_ACTION;
         break;
-      case Download.ACTION_UPDATE:
+      case UPDATE:
         path += UPDATE_ACTION;
         altPath += UPDATE_ACTION;
         break;
@@ -163,11 +164,11 @@ public class DownloadFactory {
     validateApp(updateDisplayable.getMd5(), null, updateDisplayable.getPackageName(),
         updateDisplayable.getLabel(), updateDisplayable.getApkPath(),
         updateDisplayable.getAlternativeApkPath());
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(updateDisplayable.getMd5());
     download.setIcon(updateDisplayable.getIcon());
     download.setAppName(updateDisplayable.getLabel());
-    download.setAction(Download.ACTION_UPDATE);
+    download.setAction(DownloadAction.UPDATE.getValue());
     download.setPackageName(updateDisplayable.getPackageName());
     download.setVersionCode(updateDisplayable.getVersionCode());
     download.setVersionName(updateDisplayable.getUpdateVersionName());
@@ -179,10 +180,10 @@ public class DownloadFactory {
             updateDisplayable.getPatchObbPath(), updateDisplayable.getPatchObbMd5(),
             updateDisplayable.getVersionCode(), updateDisplayable.getUpdateVersionName(),
             updateDisplayable.getMainObbName(), updateDisplayable.getPatchObbName()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
-  public Download create(App appToDownload, int downloadAction) {
+  public Download create(App appToDownload, DownloadAction downloadAction) {
     final File file = appToDownload.getFile();
     validateApp(appToDownload.getFile()
             .getMd5sum(), appToDownload.getObb(), appToDownload.getPackageName(),
@@ -195,11 +196,11 @@ public class DownloadFactory {
         .getPathAlt();
     ApkPaths downloadPaths = getDownloadPaths(downloadAction, path, altPath);
 
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(appToDownload.getFile()
         .getMd5sum());
     download.setIcon(appToDownload.getIcon());
-    download.setAction(downloadAction);
+    download.setAction(downloadAction.getValue());
     download.setAppName(appToDownload.getName());
     download.setPackageName(appToDownload.getPackageName());
     download.setVersionCode(appToDownload.getFile()
@@ -211,10 +212,10 @@ public class DownloadFactory {
         .getMd5sum(), appToDownload.getObb(), downloadPaths.altPath, appToDownload.getFile()
         .getVercode(), appToDownload.getFile()
         .getVername()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
-  public Download create(AppUpdate app, int downloadAction) {
+  public Download create(AppUpdate app, DownloadAction downloadAction) {
     final File file = app.getFile();
     validateApp(app.getFile()
             .getMd5sum(), app.getObb(), app.getPackageName(), app.getAppUpdateName(),
@@ -224,11 +225,11 @@ public class DownloadFactory {
     String altPath = app.getFile()
         .getPathAlt();
     ApkPaths downloadPaths = getDownloadPaths(downloadAction, path, altPath);
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(app.getFile()
         .getMd5sum());
     download.setIcon(app.getAppUpdateIcon());
-    download.setAction(downloadAction);
+    download.setAction(downloadAction.getValue());
     download.setAppName(app.getAppUpdateName());
     download.setPackageName(app.getPackageName());
     download.setVersionCode(app.getFile()
@@ -240,17 +241,17 @@ public class DownloadFactory {
         .getMd5sum(), app.getObb(), downloadPaths.altPath, app.getFile()
         .getVercode(), app.getFile()
         .getVername()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
   public Download create(Update update) {
     validateApp(update.getMd5(), null, update.getPackageName(), update.getLabel(),
         update.getApkPath(), update.getAlternativeApkPath());
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(update.getMd5());
     download.setIcon(update.getIcon());
     download.setAppName(update.getLabel());
-    download.setAction(Download.ACTION_UPDATE);
+    download.setAction(DownloadAction.UPDATE.getValue());
     download.setPackageName(update.getPackageName());
     download.setVersionCode(update.getUpdateVersionCode());
     download.setVersionName(update.getUpdateVersionName());
@@ -259,11 +260,11 @@ public class DownloadFactory {
         update.getMd5(), update.getMainObbPath(), update.getMainObbMd5(), update.getPatchObbPath(),
         update.getPatchObbMd5(), update.getVersionCode(), update.getUpdateVersionName(),
         update.getMainObbName(), update.getPatchObbName()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
   public Download create(Rollback rollback) {
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     if (rollback.getAppId() <= 0) {
       download.setMd5(IdUtils.randomString());
     } else {
@@ -279,17 +280,17 @@ public class DownloadFactory {
     String path = rollback.getApkPath();
     switch (Rollback.Action.valueOf(rollback.getAction())) {
       case INSTALL:
-        download.setAction(Download.ACTION_INSTALL);
+        download.setAction(DownloadAction.INSTALL.getValue());
         path += INSTALL_ACTION;
         alternativePath += INSTALL_ACTION;
         break;
       case DOWNGRADE:
-        download.setAction(Download.ACTION_DOWNGRADE);
+        download.setAction(DownloadAction.DOWNGRADE.getValue());
         path += DOWNGRADE_ACTION;
         alternativePath += DOWNGRADE_ACTION;
         break;
       case UPDATE:
-        download.setAction(Download.ACTION_UPDATE);
+        download.setAction(DownloadAction.UPDATE.getValue());
         path += UPDATE_ACTION;
         alternativePath += UPDATE_ACTION;
         break;
@@ -300,26 +301,26 @@ public class DownloadFactory {
             rollback.getMd5(), rollback.getMainObbPath(), rollback.getMainObbMd5(),
             rollback.getPatchObbPath(), rollback.getPatchObbMd5(), rollback.getVersionCode(),
             rollback.getVersionName(), rollback.getMainObbName(), rollback.getPatchObbName()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
-  public Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
-    Download download = new Download();
+  public cm.aptoide.pt.downloadmanager.Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setAppName(Application.getConfiguration()
         .getMarketName());
     download.setMd5(autoUpdateInfo.md5);
     download.setVersionCode(autoUpdateInfo.vercode);
     //download.setVersionName(null); // no info available
     download.setPackageName(autoUpdateInfo.packageName);
-    download.setAction(Download.ACTION_UPDATE);
+    download.setAction(DownloadAction.UPDATE.getValue());
     download.setFilesToDownload(
         createFileList(autoUpdateInfo.md5, null, autoUpdateInfo.path, autoUpdateInfo.md5, null,
             null, autoUpdateInfo.vercode, null));
-    return download;
+    return new DownloadWrapper(download);
   }
 
   public Download create(Scheduled scheduled) {
-    Download download = new Download();
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setAppName(scheduled.getName());
     download.setPackageName(scheduled.getPackageName());
     download.setVersionCode(scheduled.getVerCode());
@@ -330,19 +331,19 @@ public class DownloadFactory {
     String alternativePath = scheduled.getAlternativeApkPath();
     switch (AppAction.valueOf(scheduled.getAppAction())) {
       case DOWNGRADE:
-        download.setAction(Download.ACTION_DOWNGRADE);
+        download.setAction(DownloadAction.DOWNGRADE.getValue());
         path += DOWNGRADE_ACTION;
         alternativePath += DOWNGRADE_ACTION;
         break;
       case UPDATE:
-        download.setAction(Download.ACTION_UPDATE);
+        download.setAction(DownloadAction.UPDATE.getValue());
         path += UPDATE_ACTION;
         alternativePath += UPDATE_ACTION;
         break;
       case INSTALL:
       case OPEN:
       default:
-        download.setAction(Download.ACTION_INSTALL);
+        download.setAction(DownloadAction.INSTALL.getValue());
         path += INSTALL_ACTION;
         alternativePath += INSTALL_ACTION;
     }
@@ -351,7 +352,7 @@ public class DownloadFactory {
         createFileList(scheduled.getMd5(), scheduled.getPackageName(), path, scheduled.getMd5(),
             extractObb(scheduled), alternativePath, scheduled.getVerCode(),
             scheduled.getVersionName()));
-    return download;
+    return new DownloadWrapper(download);
   }
 
   private Obb extractObb(Scheduled scheduled) {

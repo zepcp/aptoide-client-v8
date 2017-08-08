@@ -6,9 +6,9 @@
 package cm.aptoide.pt.v8engine.install.rollback;
 
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
-import cm.aptoide.pt.database.realm.Download;
-import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.database.realm.Installed;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.v8engine.install.InstalledRepository;
 import cm.aptoide.pt.v8engine.install.installer.RollbackInstallation;
 import java.io.File;
@@ -86,7 +86,7 @@ public class DownloadInstallationAdapter implements RollbackInstallation {
     return download.getIcon();
   }
 
-  @Override public List<FileToDownload> getFiles() {
+  @Override public List<DownloadFile> getFiles() {
     return download.getFilesToDownload();
   }
 

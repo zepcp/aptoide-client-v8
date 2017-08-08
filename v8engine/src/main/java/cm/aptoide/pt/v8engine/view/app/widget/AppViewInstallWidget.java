@@ -24,7 +24,6 @@ import android.widget.TextView;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;
@@ -34,6 +33,8 @@ import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.ListAppVersions;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
@@ -425,7 +426,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                   ShowMessage.asSnack(view, R.string.downgrading_msg);
 
                   DownloadFactory factory = new DownloadFactory();
-                  Download appDownload = factory.create(app, Download.ACTION_DOWNGRADE);
+                  Download appDownload = factory.create(app, DownloadAction.DOWNGRADE);
                   showRootInstallWarningPopup(context);
                   compositeSubscription.add(
                       new PermissionManager().requestDownloadAccess(permissionRequest)
@@ -495,7 +496,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
     @StringRes final int installOrUpgradeMsg =
         this.isUpdate ? R.string.updating_msg : R.string.installing_msg;
-    int downloadAction = isUpdate ? Download.ACTION_UPDATE : Download.ACTION_INSTALL;
+    DownloadAction downloadAction = isUpdate ? DownloadAction.UPDATE : DownloadAction.INSTALL;
     final View.OnClickListener installHandler = v -> {
       if (installOrUpgradeMsg == R.string.installing_msg) {
         Analytics.ClickedOnInstallButton.clicked(app);
@@ -604,22 +605,22 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
   private void setupDownloadControls(GetAppMeta.App app, boolean isSetup,
       Install.InstallationType installationType) {
     if (isSetup) {
-      int actionInstall;
+      DownloadAction actionInstall;
       switch (installationType) {
         case INSTALLED:
           //in case of app is uninstalled inside the appview, the setup won't run again. The unique
           // possible action will be install
         case INSTALL:
-          actionInstall = Download.ACTION_INSTALL;
+          actionInstall = DownloadAction.INSTALL;
           break;
         case UPDATE:
-          actionInstall = Download.ACTION_UPDATE;
+          actionInstall = DownloadAction.UPDATE;
           break;
         case DOWNGRADE:
-          actionInstall = Download.ACTION_DOWNGRADE;
+          actionInstall = DownloadAction.DOWNGRADE;
           break;
         default:
-          actionInstall = Download.ACTION_INSTALL;
+          actionInstall = DownloadAction.INSTALL;
       }
       String md5 = app.getMd5();
       Download download = downloadFactory.create(app, actionInstall);

@@ -16,12 +16,12 @@ import android.widget.TextView;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
 import cm.aptoide.pt.database.accessors.ScheduledAccessor;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
@@ -210,17 +210,6 @@ public class ScheduledDownloadsFragment extends AptoideBaseFragment<BaseAdapter>
           clearDisplayables();
           finishLoading();
         });
-
-    // keep installing data when downloading were stoped
-    //scheduledDownloadRepository.getAllScheduledDownloads().first().subscribe(scheduleds -> {
-    //  ArrayList<Scheduled> installing = new ArrayList<>();
-    //  for (Scheduled s : scheduleds) {
-    //    if (s.isDownloading()) installing.add(s);
-    //  }
-    //  downloadAndInstallScheduledList(installing);
-    //});
-
-    //compositeSubscription.add(subscription);
   }
 
   public void setupEvents(Download download, DownloadEvent.Action action) {

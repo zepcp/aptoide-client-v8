@@ -4,9 +4,9 @@ import java.util.List;
 
 public interface Download {
 
-  DownloadStatus getDownloadError();
+  DownloadError getDownloadError();
 
-  void setDownloadError(DownloadStatus downloadError);
+  void setDownloadError(DownloadError downloadError);
 
   long getTimeStamp();
 
@@ -44,9 +44,9 @@ public interface Download {
 
   void setPackageName(String packageName);
 
-  int getAction();
+  DownloadAction getAction();
 
-  void setAction(int action);
+  void setAction(DownloadAction action);
 
   boolean isScheduled();
 

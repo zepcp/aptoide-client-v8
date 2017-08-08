@@ -2,6 +2,8 @@ package cm.aptoide.pt.v8engine.download;
 
 import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
+import cm.aptoide.pt.downloadmanager.DownloadError;
 import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import io.realm.RealmList;
@@ -15,12 +17,12 @@ class DownloadWrapper implements Download {
     this.download = download;
   }
 
-  @Override public DownloadStatus getDownloadError() {
-    return download.getDownloadError();
+  @Override public DownloadError getDownloadError() {
+    return DownloadError.fromValue(download.getDownloadError());
   }
 
-  @Override public void setDownloadError(DownloadStatus downloadError) {
-    download.setDownloadError(downloadError);
+  @Override public void setDownloadError(DownloadError downloadError) {
+    download.setDownloadError(downloadError.getValue());
   }
 
   @Override public long getTimeStamp() {
@@ -58,11 +60,11 @@ class DownloadWrapper implements Download {
   }
 
   @Override public DownloadStatus getOverallDownloadStatus() {
-    return download.getOverallDownloadStatus();
+    return DownloadStatus.fromValue(download.getOverallDownloadStatus());
   }
 
   @Override public void setOverallDownloadStatus(DownloadStatus overallDownloadStatus) {
-    download.setOverallDownloadStatus(overallDownloadStatus);
+    download.setOverallDownloadStatus(overallDownloadStatus.getValue());
   }
 
   @Override public int getOverallProgress() {
@@ -105,12 +107,12 @@ class DownloadWrapper implements Download {
     download.setPackageName(packageName);
   }
 
-  @Override public int getAction() {
-    return download.getAction();
+  @Override public DownloadAction getAction() {
+    return DownloadAction.fromValue(download.getAction());
   }
 
-  @Override public void setAction(int action) {
-    download.setAction(action);
+  @Override public void setAction(DownloadAction action) {
+    download.setAction(action.getValue());
   }
 
   @Override public boolean isScheduled() {

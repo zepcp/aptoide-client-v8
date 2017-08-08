@@ -1,7 +1,7 @@
 package cm.aptoide.pt.v8engine.download;
 
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.v8engine.analytics.Analytics;
 
 /**

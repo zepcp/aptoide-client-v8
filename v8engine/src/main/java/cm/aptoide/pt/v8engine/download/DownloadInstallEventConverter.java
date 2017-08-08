@@ -4,17 +4,17 @@ import android.net.ConnectivityManager;
 import android.support.annotation.Nullable;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import cm.aptoide.pt.database.realm.Download;
-import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.App;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Data;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.DownloadInstallAnalyticsBaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Obb;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.ResultError;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.utils.AptoideUtils;
-import io.realm.RealmList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by trinkes on 02/01/2017.
@@ -92,7 +92,7 @@ abstract class DownloadInstallEventConverter<T extends DownloadInstallBaseEvent>
     String obbPath = null;
     String patchObbPath = null;
 
-    RealmList<FileToDownload> filesToDownload = download.getFilesToDownload();
+    List<DownloadFile> filesToDownload = download.getFilesToDownload();
     if (!filesToDownload.isEmpty()) {
       appUrl = filesToDownload.get(0)
           .getLink();
@@ -113,17 +113,16 @@ abstract class DownloadInstallEventConverter<T extends DownloadInstallBaseEvent>
   public DownloadInstallBaseEvent.Origin getOrigin(Download download) {
     DownloadInstallBaseEvent.Origin origin;
     switch (download.getAction()) {
-      case Download.ACTION_INSTALL:
-        origin = DownloadInstallBaseEvent.Origin.INSTALL;
-        break;
-      case Download.ACTION_UPDATE:
+      case UPDATE:
         origin = DownloadInstallBaseEvent.Origin.UPDATE;
         break;
-      case Download.ACTION_DOWNGRADE:
+      case DOWNGRADE:
         origin = DownloadInstallBaseEvent.Origin.DOWNGRADE;
         break;
+      case INSTALL:
       default:
         origin = DownloadInstallBaseEvent.Origin.INSTALL;
+        break;
     }
     return origin;
   }

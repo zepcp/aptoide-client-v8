@@ -14,8 +14,9 @@ import android.text.Spannable;
 import android.view.WindowManager;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.dataprovider.model.v7.timeline.AppUpdate;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.v8engine.Install;
@@ -30,7 +31,6 @@ import cm.aptoide.pt.v8engine.download.InstallEvent;
 import cm.aptoide.pt.v8engine.download.InstallEventConverter;
 import cm.aptoide.pt.v8engine.timeline.SocialRepository;
 import cm.aptoide.pt.v8engine.timeline.TimelineAnalytics;
-import cm.aptoide.pt.v8engine.timeline.TimelineSocialActionData;
 import cm.aptoide.pt.v8engine.timeline.view.ShareCardCallback;
 import cm.aptoide.pt.v8engine.util.DateCalculator;
 import cm.aptoide.pt.v8engine.view.recycler.displayable.SpannableFactory;
@@ -46,20 +46,22 @@ import static cm.aptoide.pt.v8engine.analytics.Analytics.AppsTimeline.BLANK;
 public class AppUpdateDisplayable extends CardDisplayable {
 
   public static final String CARD_TYPE_NAME = "APP_UPDATE";
+
   @Getter private String appIconUrl;
   @Getter private String storeIconUrl;
   @Getter private String storeName;
+  @Getter private String packageName;
+  @Getter private String abUrl;
   @Getter private String storeTheme;
+  @Getter private float appRating;
+  @Getter private Long updateStoreId;
 
   private Date dateUpdated;
-  private String appVersionName;
   private SpannableFactory spannableFactory;
   private String appName;
-  @Getter private String packageName;
   private Download download;
   private DateCalculator dateCalculator;
   private long appId;
-  @Getter private String abUrl;
   private InstallManager installManager;
   private PermissionManager permissionManager;
   private TimelineAnalytics timelineAnalytics;
@@ -67,17 +69,13 @@ public class AppUpdateDisplayable extends CardDisplayable {
   private DownloadEventConverter downloadConverter;
   private InstallEventConverter installConverter;
   private Analytics analytics;
-  private TimelineSocialActionData timelineSocialActionData;
-  @Getter private float appRating;
-  @Getter private Long updateStoreId;
   private Resources resources;
 
   public AppUpdateDisplayable() {
   }
 
   public AppUpdateDisplayable(AppUpdate appUpdate, String appIconUrl, String storeIconUrl,
-      String storeName, Date dateUpdated, String appVersionName, SpannableFactory spannableFactory,
-      String appName, String packageName, Download download, DateCalculator dateCalculator,
+      String storeName, Date dateUpdated, SpannableFactory spannableFactory, String appName, String packageName, Download download, DateCalculator dateCalculator,
       long appId, String abUrl, InstallManager installManager, PermissionManager permissionManager,
       TimelineAnalytics timelineAnalytics, SocialRepository socialRepository,
       DownloadEventConverter downloadConverter, InstallEventConverter installConverter,
@@ -87,7 +85,6 @@ public class AppUpdateDisplayable extends CardDisplayable {
     this.storeIconUrl = storeIconUrl;
     this.storeName = storeName;
     this.dateUpdated = dateUpdated;
-    this.appVersionName = appVersionName;
     this.spannableFactory = spannableFactory;
     this.appName = appName;
     this.packageName = packageName;
@@ -131,9 +128,8 @@ public class AppUpdateDisplayable extends CardDisplayable {
     }
     return new AppUpdateDisplayable(appUpdate, appUpdate.getIcon(), appUpdate.getStore()
         .getAvatar(), appUpdate.getStore()
-        .getName(), appUpdate.getAdded(), appUpdate.getFile()
-        .getVername(), spannableFactory, appUpdate.getName(), appUpdate.getPackageName(),
-        downloadFactory.create(appUpdate, Download.ACTION_UPDATE), dateCalculator,
+        .getName(), appUpdate.getAdded(), spannableFactory, appUpdate.getName(), appUpdate.getPackageName(),
+        downloadFactory.create(appUpdate, DownloadAction.UPDATE), dateCalculator,
         appUpdate.getId(), abTestingURL, installManager, permissionManager, timelineAnalytics,
         socialRepository, downloadConverter, installConverter, analytics, appUpdate.getStore()
         .getAppearance()

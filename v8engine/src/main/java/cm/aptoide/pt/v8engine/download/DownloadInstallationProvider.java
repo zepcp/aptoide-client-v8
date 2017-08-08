@@ -8,11 +8,12 @@ package cm.aptoide.pt.v8engine.download;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.dataprovider.ads.AdNetworkUtils;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import cm.aptoide.pt.v8engine.ads.MinimalAdMapper;
 import cm.aptoide.pt.v8engine.install.InstalledRepository;
 import cm.aptoide.pt.v8engine.install.exception.InstallationException;
@@ -48,7 +49,7 @@ public class DownloadInstallationProvider implements InstallationProvider {
     return downloadManager.getDownload(md5)
         .first()
         .flatMap(download -> {
-          if (download.getOverallDownloadStatus() == Download.COMPLETED) {
+          if (download.getOverallDownloadStatus() == DownloadStatus.COMPLETED) {
             return installedRepository.get(download.getPackageName(), download.getVersionCode())
                 .map(installed -> {
                   if (installed == null) {

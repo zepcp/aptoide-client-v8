@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.v8engine.install.installer;
 
-import cm.aptoide.pt.database.realm.FileToDownload;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public interface RollbackInstallation extends Installation {
 
   String getIcon();
 
-  List<FileToDownload> getFiles();
+  List<DownloadFile> getFiles();
 
   void saveFileChanges();
 }

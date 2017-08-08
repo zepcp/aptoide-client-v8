@@ -17,11 +17,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import cm.aptoide.pt.database.accessors.ScheduledAccessor;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.Constants;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.v8engine.ads.MinimalAdMapper;
@@ -160,7 +162,7 @@ public class InstallService extends Service {
         .flatMap(download -> downloadManager.startDownload(download))
         .doOnNext(download -> {
           stopOnDownloadError(download.getOverallDownloadStatus());
-          if (download.getOverallDownloadStatus() == Download.PROGRESS) {
+          if (download.getOverallDownloadStatus() == DownloadStatus.PROGRESS) {
             DownloadEvent report =
                 (DownloadEvent) analytics.get(download.getPackageName() + download.getVersionCode(),
                     DownloadEvent.class);
@@ -169,7 +171,7 @@ public class InstallService extends Service {
             }
           }
         })
-        .first(download -> download.getOverallDownloadStatus() == Download.COMPLETED)
+        .first(download -> download.getOverallDownloadStatus() == DownloadStatus.COMPLETED)
         .doOnNext(download -> {
           DownloadEvent report =
               (DownloadEvent) analytics.get(download.getPackageName() + download.getVersionCode(),
@@ -189,8 +191,8 @@ public class InstallService extends Service {
     installedRepository.save(installed);
   }
 
-  private void stopOnDownloadError(int downloadStatus) {
-    if (downloadStatus == Download.ERROR) {
+  private void stopOnDownloadError(DownloadStatus downloadStatus) {
+    if (downloadStatus == DownloadStatus.ERROR) {
       removeNotificationAndStop();
     }
   }
@@ -229,11 +231,11 @@ public class InstallService extends Service {
     Installer installer = getInstaller(download.getMd5());
     stopForeground(removeNotification);
     switch (download.getAction()) {
-      case Download.ACTION_INSTALL:
+      case INSTALL:
         return installer.install(context, download.getMd5(), forceDefaultInstall);
-      case Download.ACTION_UPDATE:
+      case UPDATE:
         return installer.update(context, download.getMd5(), forceDefaultInstall);
-      case Download.ACTION_DOWNGRADE:
+      case DOWNGRADE:
         return installer.downgrade(context, download.getMd5(), forceDefaultInstall);
       default:
         return Completable.error(
@@ -287,7 +289,7 @@ public class InstallService extends Service {
 
   @NonNull private NotificationCompat.Action getPauseAction(int requestCode, String md5) {
     Bundle appIdExtras = new Bundle();
-    appIdExtras.putString(AptoideDownloadManager.FILE_MD5_EXTRA, md5);
+    appIdExtras.putString(Constants.FILE_MD5_EXTRA, md5);
     return getAction(cm.aptoide.pt.downloadmanager.R.drawable.media_pause,
         getString(cm.aptoide.pt.downloadmanager.R.string.pause_download), requestCode,
         ACTION_STOP_INSTALL, md5);
@@ -295,7 +297,7 @@ public class InstallService extends Service {
 
   @NonNull private NotificationCompat.Action getDownloadManagerAction(int requestCode, String md5) {
     Bundle appIdExtras = new Bundle();
-    appIdExtras.putString(AptoideDownloadManager.FILE_MD5_EXTRA, md5);
+    appIdExtras.putString(Constants.FILE_MD5_EXTRA, md5);
     return getAction(R.drawable.ic_manager, getString(R.string.open_apps_manager), requestCode,
         ACTION_OPEN_DOWNLOAD_MANAGER, md5);
   }
@@ -313,7 +315,7 @@ public class InstallService extends Service {
             .append(" - ")
             .append(getString(cm.aptoide.pt.database.R.string.download_progress)))
         .setContentIntent(contentIntent)
-        .setProgress(AptoideDownloadManager.PROGRESS_MAX_VALUE, installation.getProgress(),
+        .setProgress(Constants.PROGRESS_MAX_VALUE, installation.getProgress(),
             installation.isIndeterminate())
         .addAction(pauseAction)
         .addAction(openDownloadManager);
