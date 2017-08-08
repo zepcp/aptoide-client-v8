@@ -1,7 +1,5 @@
 package cm.aptoide.pt.downloadmanager;
 
-import cm.aptoide.pt.database.realm.Download;
-
 /**
  * Created by trinkes on 04/01/2017.
  */

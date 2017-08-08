@@ -1,9 +1,6 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
-import cm.aptoide.pt.database.accessors.DownloadAccessor;
-import cm.aptoide.pt.database.realm.Download;
-import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
@@ -12,7 +9,6 @@ import com.liulishuo.filedownloader.FileDownloader;
 import java.util.List;
 import rx.Completable;
 import rx.Observable;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by trinkes on 5/13/16.
@@ -29,13 +25,13 @@ public class AptoideDownloadManager {
   private final String obbPath;
   private boolean isDownloading = false;
   private boolean isPausing = false;
-  private DownloadAccessor downloadAccessor;
+  private DownloadRepository downloadRepository;
   private CacheManager cacheHelper;
   private FileUtils fileUtils;
   private Analytics analytics;
   private FileDownloader fileDownloader;
 
-  public AptoideDownloadManager(DownloadAccessor downloadAccessor, CacheManager cacheHelper,
+  public AptoideDownloadManager(DownloadRepository downloadRepository, CacheManager cacheHelper,
       FileUtils fileUtils, Analytics analytics, FileDownloader fileDownloader,
       String downloadsStoragePath, String apkPath, String obbPath) {
     this.fileDownloader = fileDownloader;
@@ -45,7 +41,7 @@ public class AptoideDownloadManager {
     this.downloadsStoragePath = downloadsStoragePath;
     this.apkPath = apkPath;
     this.obbPath = obbPath;
-    this.downloadAccessor = downloadAccessor;
+    this.downloadRepository = downloadRepository;
   }
 
   /**
@@ -61,29 +57,23 @@ public class AptoideDownloadManager {
   public Observable<Download> startDownload(Download download) throws IllegalArgumentException {
     return getDownloadStatus(download.getMd5()).first()
         .flatMap(status -> {
-          if (status == Download.COMPLETED) {
+          if (status == DownloadStatus.COMPLETED) {
             return Observable.just(download);
-          } else {
-            Observable.fromCallable(() -> {
-              startNewDownload(download);
-              return null;
-            })
-                .subscribeOn(Schedulers.computation())
-                .subscribe(o -> {
-                }, throwable -> CrashReport.getInstance()
-                    .log(throwable));
-            return getDownload(download.getMd5());
           }
+
+          return Completable.fromAction(() -> startNewDownload(download))
+              .toObservable()
+              .flatMap(__ -> getDownload(download.getMd5()));
         });
   }
 
   private void startNewDownload(Download download) {
-    download.setOverallDownloadStatus(Download.IN_QUEUE);
+    download.setOverallDownloadStatus(DownloadStatus.IN_QUEUE);
     //commented to prevent the ui glitch with "0" value
     // (trusting in progress value from outside can be dangerous)
     //		download.setOverallProgress(0);
     download.setTimeStamp(System.currentTimeMillis());
-    downloadAccessor.save(download);
+    downloadRepository.save(download);
 
     startNextDownload();
   }
@@ -95,26 +85,24 @@ public class AptoideDownloadManager {
    * @return observable for download state changes.
    */
   public Observable<Download> getDownload(String md5) {
-    return downloadAccessor.get(md5)
+    return downloadRepository.get(md5)
         .flatMap(download -> {
-          if (download == null || (download.getOverallDownloadStatus() == Download.COMPLETED
-              && getStateIfFileExists(download) == Download.FILE_MISSING)) {
+          if (isInvalid(download)) {
             return Observable.error(new DownloadNotFoundException());
           } else {
             return Observable.just(download);
           }
         })
-        .takeUntil(
-            storedDownload -> storedDownload.getOverallDownloadStatus() == Download.COMPLETED);
+        .takeUntil(storedDownload -> storedDownload.getOverallDownloadStatus()
+            == DownloadStatus.COMPLETED);
   }
 
   public Observable<Download> getAsListDownload(String md5) {
-    return downloadAccessor.getAsList(md5)
+    return downloadRepository.getAsList(md5)
         .map(downloads -> {
           for (int i = 0; i < downloads.size(); i++) {
             Download download = downloads.get(i);
-            if (download == null || (download.getOverallDownloadStatus() == Download.COMPLETED
-                && getStateIfFileExists(download) == Download.FILE_MISSING)) {
+            if (isInvalid(download)) {
               downloads.remove(i);
               i--;
             }
@@ -128,14 +116,19 @@ public class AptoideDownloadManager {
         .distinctUntilChanged();
   }
 
-  @NonNull @Download.DownloadState private int getStateIfFileExists(Download downloadToCheck) {
-    @Download.DownloadState int downloadStatus = Download.COMPLETED;
-    if (downloadToCheck.getOverallDownloadStatus() == Download.PROGRESS) {
-      downloadStatus = Download.PROGRESS;
+  private boolean isInvalid(Download download) {
+    return download == null || (download.getOverallDownloadStatus() == DownloadStatus.COMPLETED
+        && getStateIfFileExists(download) == DownloadStatus.FILE_MISSING);
+  }
+
+  private DownloadStatus getStateIfFileExists(Download downloadToCheck) {
+    DownloadStatus downloadStatus = DownloadStatus.COMPLETED;
+    if (downloadToCheck.getOverallDownloadStatus() == DownloadStatus.PROGRESS) {
+      downloadStatus = DownloadStatus.PROGRESS;
     } else {
-      for (final FileToDownload fileToDownload : downloadToCheck.getFilesToDownload()) {
+      for (final DownloadFile fileToDownload : downloadToCheck.getFilesToDownload()) {
         if (!FileUtils.fileExists(fileToDownload.getFilePath())) {
-          downloadStatus = Download.FILE_MISSING;
+          downloadStatus = DownloadStatus.FILE_MISSING;
           break;
         }
       }
@@ -145,48 +138,45 @@ public class AptoideDownloadManager {
 
   public Observable<Download> getCurrentDownload() {
     return getDownloads().flatMapIterable(downloads -> downloads)
-        .filter(downloads -> downloads.getOverallDownloadStatus() == Download.PROGRESS);
+        .filter(downloads -> downloads.getOverallDownloadStatus() == DownloadStatus.PROGRESS);
   }
 
   public Observable<List<Download>> getDownloads() {
-    return downloadAccessor.getAll();
+    return downloadRepository.getAll();
   }
 
   public Observable<List<Download>> getCurrentDownloads() {
-    return downloadAccessor.getRunningDownloads();
+    return downloadRepository.getRunningDownloads();
   }
 
   /**
    * Pause all the downloads
    */
-  public void pauseAllDownloads() {
-    fileDownloader.pauseAll();
-    isPausing = true;
-
-    downloadAccessor.getRunningDownloads()
+  public Completable pauseAllDownloads() {
+    return downloadRepository.getRunningDownloads()
         .first()
+        .toSingle()
         .doOnUnsubscribe(() -> isPausing = false)
-        .subscribe(downloads -> {
+        .flatMapCompletable(downloads -> Completable.fromAction(() -> {
+          fileDownloader.pauseAll();
+          isPausing = true;
           for (int i = 0; i < downloads.size(); i++) {
             downloads.get(i)
-                .setOverallDownloadStatus(Download.PAUSED);
+                .setOverallDownloadStatus(DownloadStatus.PAUSED);
           }
-          downloadAccessor.save(downloads);
-          Logger.d(TAG, "Downloads paused");
-        }, err -> {
-          Logger.e(TAG, err);
-        });
+          downloadRepository.save(downloads);
+        }));
   }
 
-  private Observable<Integer> getDownloadStatus(String md5) {
+  private Observable<DownloadStatus> getDownloadStatus(String md5) {
     return getDownload(md5).map(download -> {
       if (download != null) {
-        if (download.getOverallDownloadStatus() == Download.COMPLETED) {
+        if (download.getOverallDownloadStatus() == DownloadStatus.COMPLETED) {
           return getStateIfFileExists(download);
         }
         return download.getOverallDownloadStatus();
       } else {
-        return Download.NOT_DOWNLOADED;
+        return DownloadStatus.NOT_DOWNLOADED;
       }
     });
   }
@@ -195,13 +185,13 @@ public class AptoideDownloadManager {
     startNextDownload();
   }
 
-  synchronized void startNextDownload() {
+  private synchronized void startNextDownload() {
     if (!isDownloading && !isPausing) {
       isDownloading = true;
       getNextDownload().first()
           .subscribe(download -> {
             if (download != null) {
-              new DownloadTask(downloadAccessor, download, fileUtils, analytics, this, apkPath,
+              new DownloadTask(downloadRepository, download, fileUtils, analytics, this, apkPath,
                   obbPath, downloadsStoragePath, fileDownloader).startDownload();
               Logger.d(TAG, "Download with md5 " + download.getMd5() + " started");
             } else {
@@ -218,8 +208,8 @@ public class AptoideDownloadManager {
     }
   }
 
-  public Observable<Download> getNextDownload() {
-    return downloadAccessor.getInQueueSortedDownloads()
+  private Observable<Download> getNextDownload() {
+    return downloadRepository.getInQueueSortedDownloads()
         .map(downloads -> {
           if (downloads == null || downloads.size() <= 0) {
             return null;
@@ -238,28 +228,28 @@ public class AptoideDownloadManager {
     return isDownloading;
   }
 
-  public void setDownloading(boolean downloading) {
+  void setDownloading(boolean downloading) {
     isDownloading = downloading;
   }
 
-  public void removeDownload(String md5) {
-    Observable.fromCallable(() -> pauseDownload(md5))
-        .flatMap(paused -> downloadAccessor.get(md5))
-        .first(download -> download.getOverallDownloadStatus() == Download.PAUSED)
-        .subscribe(download -> {
-          deleteDownloadlFiles(download);
+  public Completable removeDownload(String md5) {
+    return pauseDownload(md5).andThen(downloadRepository.get(md5)
+        .first(download -> download.getOverallDownloadStatus() == DownloadStatus.PAUSED))
+        .doOnNext(download -> {
+          deleteDownloadedFiles(download);
           deleteDownloadFromDb(download.getMd5());
-        }, throwable -> {
+        })
+        .onErrorResumeNext(throwable -> {
           if (throwable instanceof NullPointerException) {
-            Logger.d(TAG, "Download item was null, are you pressing on remove button too fast?");
-          } else {
-            throwable.printStackTrace();
+            return Observable.error(new DownloadNotFoundException());
           }
-        });
+          return Observable.error(throwable);
+        })
+        .toCompletable();
   }
 
-  public void deleteDownloadlFiles(Download download) {
-    for (FileToDownload fileToDownload : download.getFilesToDownload()) {
+  void deleteDownloadedFiles(Download download) {
+    for (DownloadFile fileToDownload : download.getFilesToDownload()) {
       fileDownloader.clear(fileToDownload.getDownloadId(), fileToDownload.getFilePath());
       FileUtils.removeFile(fileToDownload.getFilePath());
       FileUtils.removeFile(downloadsStoragePath + fileToDownload.getFileName() + ".temp");
@@ -271,11 +261,11 @@ public class AptoideDownloadManager {
   }
 
   @NonNull private Observable<Download> internalPause(String md5) {
-    return downloadAccessor.get(md5)
+    return downloadRepository.get(md5)
         .first()
         .map(download -> {
-          download.setOverallDownloadStatus(Download.PAUSED);
-          downloadAccessor.save(download);
+          download.setOverallDownloadStatus(DownloadStatus.PAUSED);
+          downloadRepository.save(download);
           for (int i = download.getFilesToDownload()
               .size() - 1; i >= 0; i--) {
             fileDownloader.pause(download.getFilesToDownload()
@@ -286,29 +276,20 @@ public class AptoideDownloadManager {
         });
   }
 
-  public Void pauseDownload(String md5) {
-    internalPause(md5).subscribe(download -> {
-      Logger.d(TAG, "Download with " + md5 + " paused");
-    }, throwable -> {
-      if (throwable instanceof DownloadNotFoundException) {
-        Logger.d(TAG, "there are no download to pause with the md5: " + md5);
-      } else {
-        throwable.printStackTrace();
-      }
-    });
-    return null;
+  public Completable pauseDownload(String md5) {
+    return internalPause(md5).toCompletable();
   }
 
   private void deleteDownloadFromDb(String md5) {
-    downloadAccessor.delete(md5);
+    downloadRepository.delete(md5);
   }
 
   public Observable<Void> invalidateDatabase() {
     return getDownloads().first()
         .flatMapIterable(downloads -> downloads)
-        .filter(download -> getStateIfFileExists(download) == Download.FILE_MISSING)
+        .filter(download -> getStateIfFileExists(download) == DownloadStatus.FILE_MISSING)
         .map(download -> {
-          downloadAccessor.delete(download.getMd5());
+          downloadRepository.delete(download.getMd5());
           return null;
         })
         .toList()

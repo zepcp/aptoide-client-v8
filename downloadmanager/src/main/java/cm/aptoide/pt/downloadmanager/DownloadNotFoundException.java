@@ -5,8 +5,6 @@
 
 package cm.aptoide.pt.downloadmanager;
 
-import cm.aptoide.pt.utils.BaseException;
-
-public class DownloadNotFoundException extends BaseException {
+public class DownloadNotFoundException extends Exception {
 
 }

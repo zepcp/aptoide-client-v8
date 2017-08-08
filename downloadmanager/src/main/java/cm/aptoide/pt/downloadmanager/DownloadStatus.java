@@ -1,0 +1,5 @@
+package cm.aptoide.pt.downloadmanager;
+
+public enum DownloadStatus {
+  PROGRESS, IN_QUEUE, PENDING, PAUSED, ERROR, GENERIC_ERROR, NOT_ENOUGH_SPACE_ERROR, WARNING, NOT_DOWNLOADED, FILE_MISSING, COMPLETED
+}

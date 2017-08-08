@@ -8,9 +8,6 @@ package cm.aptoide.pt.downloadmanager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import cm.aptoide.pt.database.accessors.DownloadAccessor;
-import cm.aptoide.pt.database.realm.Download;
-import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
@@ -20,10 +17,9 @@ import com.liulishuo.filedownloader.FileDownloadLargeFileListener;
 import com.liulishuo.filedownloader.FileDownloader;
 import com.liulishuo.filedownloader.exception.FileDownloadHttpException;
 import com.liulishuo.filedownloader.exception.FileDownloadOutOfSpaceException;
-import io.realm.RealmList;
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import lombok.Setter;
 import rx.Observable;
 import rx.observables.ConnectableObservable;
 import rx.schedulers.Schedulers;
@@ -36,11 +32,10 @@ class DownloadTask extends FileDownloadLargeFileListener {
   public static final int RETRY_TIMES = 3;
   private static final int INTERVAL = 1000;    //interval between progress updates
   private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
-  private static final int FILE_NOTFOUND_HTTP_ERROR = 404;
+  private static final int FILE_NOT_FOUND_HTTP_ERROR = 404;
   private static final String TAG = DownloadTask.class.getSimpleName();
   private final Download download;
-  private final String md5;
-  private final DownloadAccessor downloadAccessor;
+  private final DownloadRepository downloadRepository;
   private final FileUtils fileUtils;
   private final AptoideDownloadManager downloadManager;
   /**
@@ -48,7 +43,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
    * default value is
    * true
    */
-  @Setter boolean isSerial = true;
+  boolean isSerial = true;
   private ConnectableObservable<Download> observable;
   private Analytics analytics;
   private String apkPath;
@@ -56,13 +51,16 @@ class DownloadTask extends FileDownloadLargeFileListener {
   private String genericPath;
   private FileDownloader fileDownloader;
 
-  DownloadTask(DownloadAccessor downloadAccessor, Download download, FileUtils fileUtils,
+  public void setSerial(boolean serial) {
+    isSerial = serial;
+  }
+
+  DownloadTask(DownloadRepository downloadRepository, Download download, FileUtils fileUtils,
       Analytics analytics, AptoideDownloadManager downloadManager, String apkPath, String obbPath,
       String genericPath, FileDownloader fileDownloader) {
     this.analytics = analytics;
     this.download = download;
-    this.md5 = download.getMd5();
-    this.downloadAccessor = downloadAccessor;
+    this.downloadRepository = downloadRepository;
     this.fileUtils = fileUtils;
     this.downloadManager = downloadManager;
     this.apkPath = apkPath;
@@ -71,18 +69,18 @@ class DownloadTask extends FileDownloadLargeFileListener {
     this.fileDownloader = fileDownloader;
     this.observable = Observable.interval(INTERVAL / 4, INTERVAL, TimeUnit.MILLISECONDS)
         .subscribeOn(Schedulers.io())
-        .takeUntil(integer1 -> download.getOverallDownloadStatus() != Download.PROGRESS
-            && download.getOverallDownloadStatus() != Download.IN_QUEUE
-            && download.getOverallDownloadStatus() != Download.PENDING)
-        .filter(aLong1 -> download.getOverallDownloadStatus() == Download.PROGRESS
-            || download.getOverallDownloadStatus() == Download.COMPLETED)
+        .takeUntil(integer1 -> download.getOverallDownloadStatus() != DownloadStatus.PROGRESS
+            && download.getOverallDownloadStatus() != DownloadStatus.IN_QUEUE
+            && download.getOverallDownloadStatus() != DownloadStatus.PENDING)
+        .filter(aLong1 -> download.getOverallDownloadStatus() == DownloadStatus.PROGRESS
+            || download.getOverallDownloadStatus() == DownloadStatus.COMPLETED)
         .map(aLong -> updateProgress())
         .filter(updatedDownload -> {
           if (updatedDownload.getOverallProgress() <= AptoideDownloadManager.PROGRESS_MAX_VALUE
-              && download.getOverallDownloadStatus() == Download.PROGRESS) {
+              && download.getOverallDownloadStatus() == DownloadStatus.PROGRESS) {
             if (updatedDownload.getOverallProgress() == AptoideDownloadManager.PROGRESS_MAX_VALUE
-                && download.getOverallDownloadStatus() != Download.COMPLETED) {
-              setDownloadStatus(Download.COMPLETED, download);
+                && download.getOverallDownloadStatus() != DownloadStatus.COMPLETED) {
+              setDownloadStatus(DownloadStatus.COMPLETED, download);
               downloadManager.currentDownloadFinished();
             }
             return true;
@@ -100,12 +98,12 @@ class DownloadTask extends FileDownloadLargeFileListener {
    */
   @NonNull private Download updateProgress() {
     if (download.getOverallProgress() >= AptoideDownloadManager.PROGRESS_MAX_VALUE
-        || download.getOverallDownloadStatus() != Download.PROGRESS) {
+        || download.getOverallDownloadStatus() != DownloadStatus.PROGRESS) {
       return download;
     }
 
     int progress = 0;
-    for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
+    for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
       progress += fileToDownload.getProgress();
     }
     download.setOverallProgress((int) Math.floor((float) progress / download.getFilesToDownload()
@@ -115,13 +113,13 @@ class DownloadTask extends FileDownloadLargeFileListener {
     return download;
   }
 
-  private void setDownloadStatus(@Download.DownloadState int status, Download download) {
+  private void setDownloadStatus(DownloadStatus status, Download download) {
     setDownloadStatus(status, download, null);
   }
 
   private synchronized void saveDownloadInDb(Download download) {
     Observable.fromCallable(() -> {
-      downloadAccessor.save(download);
+      downloadRepository.save(download);
       return null;
     })
         .subscribeOn(Schedulers.io())
@@ -130,10 +128,10 @@ class DownloadTask extends FileDownloadLargeFileListener {
             .log(err));
   }
 
-  private void setDownloadStatus(@Download.DownloadState int status, Download download,
+  private void setDownloadStatus(DownloadStatus status, Download download,
       @Nullable BaseDownloadTask task) {
     if (task != null) {
-      for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
+      for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
         if (fileToDownload.getDownloadId() == task.getId()) {
           fileToDownload.setStatus(status);
         }
@@ -142,7 +140,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
 
     this.download.setOverallDownloadStatus(status);
     saveDownloadInDb(download);
-    if (status == Download.PROGRESS || status == Download.PENDING) {
+    if (status == DownloadStatus.PROGRESS || status == DownloadStatus.PENDING) {
       downloadManager.setDownloading(true);
     } else {
       downloadManager.setDownloading(false);
@@ -150,16 +148,16 @@ class DownloadTask extends FileDownloadLargeFileListener {
   }
 
   @Override protected void pending(BaseDownloadTask task, long soFarBytes, long totalBytes) {
-    setDownloadStatus(Download.PENDING, download, task);
+    setDownloadStatus(DownloadStatus.PENDING, download, task);
   }
 
   @Override protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
     pending(task, (long) soFarBytes, (long) totalBytes);
-    setDownloadStatus(Download.PENDING, download, task);
+    setDownloadStatus(DownloadStatus.PENDING, download, task);
   }
 
   @Override protected void progress(BaseDownloadTask task, long soFarBytes, long totalBytes) {
-    for (FileToDownload fileToDownload : download.getFilesToDownload()) {
+    for (DownloadFile fileToDownload : download.getFilesToDownload()) {
       if (fileToDownload.getDownloadId() == task.getId()) {
         //sometimes to totalBytes = 0, i believe that's when a 301(Moved Permanently) http error occurs
         if (totalBytes > 0) {
@@ -171,8 +169,8 @@ class DownloadTask extends FileDownloadLargeFileListener {
       }
     }
     this.download.setDownloadSpeed(task.getSpeed() * 1024);
-    if (download.getOverallDownloadStatus() != Download.PROGRESS) {
-      setDownloadStatus(Download.PROGRESS, download, task);
+    if (download.getOverallDownloadStatus() != DownloadStatus.PROGRESS) {
+      setDownloadStatus(DownloadStatus.PROGRESS, download, task);
     }
   }
 
@@ -181,7 +179,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
   }
 
   @Override protected void paused(BaseDownloadTask task, long soFarBytes, long totalBytes) {
-    setDownloadStatus(Download.PAUSED, download, task);
+    setDownloadStatus(DownloadStatus.PAUSED, download, task);
     downloadManager.currentDownloadFinished();
   }
 
@@ -197,9 +195,9 @@ class DownloadTask extends FileDownloadLargeFileListener {
     Observable.from(download.getFilesToDownload())
         .filter(file -> file.getDownloadId() == task.getId())
         .flatMap(file -> {
-          file.setStatus(Download.COMPLETED);
-          for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
-            if (fileToDownload.getStatus() != Download.COMPLETED) {
+          file.setStatus(DownloadStatus.COMPLETED);
+          for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
+            if (fileToDownload.getStatus() != DownloadStatus.COMPLETED) {
               file.setProgress(AptoideDownloadManager.PROGRESS_MAX_VALUE);
               return Observable.just(null);
             }
@@ -210,30 +208,30 @@ class DownloadTask extends FileDownloadLargeFileListener {
               file.setProgress(AptoideDownloadManager.PROGRESS_MAX_VALUE);
             } else {
               Logger.e(TAG, "Download md5 is not correct");
-              downloadManager.deleteDownloadlFiles(download);
-              download.setDownloadError(Download.GENERIC_ERROR);
-              setDownloadStatus(Download.ERROR, download, task);
+              downloadManager.deleteDownloadedFiles(download);
+              download.setDownloadError(DownloadStatus.GENERIC_ERROR);
+              setDownloadStatus(DownloadStatus.ERROR, download, task);
             }
           });
         })
         .doOnUnsubscribe(() -> downloadManager.setDownloading(false))
         .subscribeOn(Schedulers.io())
         .subscribe(success -> saveDownloadInDb(download),
-            throwable -> setDownloadStatus(Download.ERROR, download));
+            throwable -> setDownloadStatus(DownloadStatus.ERROR, download));
     download.setDownloadSpeed(task.getSpeed() * 1024);
   }
 
   @Override protected void error(BaseDownloadTask task, Throwable e) {
     stopDownloadQueue(download);
     if (e instanceof FileDownloadHttpException
-        && ((FileDownloadHttpException) e).getCode() == FILE_NOTFOUND_HTTP_ERROR) {
+        && ((FileDownloadHttpException) e).getCode() == FILE_NOT_FOUND_HTTP_ERROR) {
       Logger.d(TAG, "File not found on link: " + task.getUrl());
-      for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
+      for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
         if (TextUtils.equals(fileToDownload.getLink(), task.getUrl()) && !TextUtils.isEmpty(
             fileToDownload.getAltLink())) {
           fileToDownload.setLink(fileToDownload.getAltLink());
           fileToDownload.setAltLink(null);
-          downloadAccessor.save(download);
+          downloadRepository.save(download);
           startDownload();
           return;
         }
@@ -249,20 +247,20 @@ class DownloadTask extends FileDownloadLargeFileListener {
       }
     }
     if (e instanceof FileDownloadOutOfSpaceException) {
-      download.setDownloadError(Download.NOT_ENOUGH_SPACE_ERROR);
+      download.setDownloadError(DownloadStatus.NOT_ENOUGH_SPACE_ERROR);
     } else {
-      download.setDownloadError(Download.GENERIC_ERROR);
+      download.setDownloadError(DownloadStatus.GENERIC_ERROR);
     }
-    setDownloadStatus(Download.ERROR, download, task);
+    setDownloadStatus(DownloadStatus.ERROR, download, task);
     downloadManager.currentDownloadFinished();
   }
 
   @Override protected void warn(BaseDownloadTask task) {
-    setDownloadStatus(Download.WARN, download, task);
+    setDownloadStatus(DownloadStatus.WARNING, download, task);
   }
 
   /**
-   * this method will pause all downloads listed on {@link Download#filesToDownload} without change
+   * this method will pause all downloads listed on {@link Download} without change
    * download state, the listener is removed in order to keep the download state, this means that
    * the "virtual" pause will not affect the download state
    */
@@ -271,7 +269,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
     try {
       for (int i = download.getFilesToDownload()
           .size() - 1; i >= 0; i--) {
-        FileToDownload fileToDownload = download.getFilesToDownload()
+        DownloadFile fileToDownload = download.getFilesToDownload()
             .get(i);
         fileDownloader.getStatus(fileToDownload.getDownloadId(), fileToDownload.getPath());
         int taskId = fileDownloader.replaceListener(fileToDownload.getDownloadId(), null);
@@ -291,8 +289,8 @@ class DownloadTask extends FileDownloadLargeFileListener {
     observable.connect();
     if (download.getFilesToDownload() != null) {
 
-      RealmList<FileToDownload> filesToDownload = download.getFilesToDownload();
-      FileToDownload fileToDownload = null;
+      List<DownloadFile> filesToDownload = download.getFilesToDownload();
+      DownloadFile fileToDownload;
       for (int i = 0; i < filesToDownload.size(); i++) {
 
         fileToDownload = filesToDownload.get(i);
@@ -342,7 +340,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
 
   private Observable<Boolean> checkMd5AndMoveFileToRightPlace(Download download) {
     return Observable.fromCallable(() -> {
-      for (final FileToDownload fileToDownload : download.getFilesToDownload()) {
+      for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
         fileToDownload.setFileName(fileToDownload.getFileName()
             .replace(".temp", ""));
         if (!TextUtils.isEmpty(fileToDownload.getMd5())) {
@@ -359,16 +357,16 @@ class DownloadTask extends FileDownloadLargeFileListener {
     });
   }
 
-  @NonNull private String getFilePathFromFileType(FileToDownload fileToDownload) {
+  @NonNull private String getFilePathFromFileType(DownloadFile fileToDownload) {
     String path;
     switch (fileToDownload.getFileType()) {
-      case FileToDownload.APK:
+      case APK:
         path = apkPath;
         break;
-      case FileToDownload.OBB:
+      case OBB:
         path = obbPath + fileToDownload.getPackageName() + "/";
         break;
-      case FileToDownload.GENERIC:
+      case GENERIC:
       default:
         path = genericPath;
         break;

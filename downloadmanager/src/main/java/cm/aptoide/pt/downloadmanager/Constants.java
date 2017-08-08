@@ -5,7 +5,6 @@ package cm.aptoide.pt.downloadmanager;
  */
 
 public class Constants {
-
   public static final String VERSION_CODE = "versioncode";
   public static final String PACKAGE = "package";
   public static final String FILE_TYPE = "fileType";

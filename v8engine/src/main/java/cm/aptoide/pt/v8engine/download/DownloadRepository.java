@@ -1,4 +1,4 @@
-package cm.aptoide.pt.v8engine.repository;
+package cm.aptoide.pt.v8engine.download;
 
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.database.realm.Download;
