@@ -39,7 +39,6 @@ import cm.aptoide.pt.database.accessors.Database;
 import cm.aptoide.pt.database.accessors.InstalledAccessor;
 import cm.aptoide.pt.database.accessors.NotificationAccessor;
 import cm.aptoide.pt.database.accessors.RealmToRealmDatabaseMigration;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Notification;
 import cm.aptoide.pt.database.realm.Store;
@@ -123,6 +122,7 @@ import cm.aptoide.pt.v8engine.database.AccessorFactory;
 import cm.aptoide.pt.v8engine.deprecated.SQLiteDatabaseHelper;
 import cm.aptoide.pt.v8engine.download.DownloadAnalytics;
 import cm.aptoide.pt.v8engine.download.DownloadMirrorEventInterceptor;
+import cm.aptoide.pt.v8engine.download.DownloadRepository;
 import cm.aptoide.pt.v8engine.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.v8engine.filemanager.CacheHelper;
 import cm.aptoide.pt.v8engine.filemanager.FileManager;
@@ -601,9 +601,10 @@ public abstract class V8Engine extends Application {
       FileDownloader.init(this, new DownloadMgrInitialParams.InitCustomMaker().connectionCreator(
           new OkHttp3Connection.Creator(httpClientBuilder)));
 
-      downloadManager = new AptoideDownloadManager(
-          AccessorFactory.getAccessorFor(((V8Engine) this.getApplicationContext()).getDatabase(),
-              Download.class), getCacheHelper(),
+      final DownloadRepository downloadRepository =
+          RepositoryFactory.getDownloadRepository(getApplicationContext());
+
+      downloadManager = new AptoideDownloadManager(downloadRepository, getCacheHelper(),
           new FileUtils(action -> Analytics.File.moveFile(action)),
           new DownloadAnalytics(Analytics.getInstance()), FileDownloader.getImpl(),
           getConfiguration().getCachePath(), apkPath, obbPath);
@@ -619,15 +620,15 @@ public abstract class V8Engine extends Application {
 
     InstallManager installManager = installManagers.get(installerType);
     if (installManager == null) {
-      installManager = new InstallManager(getApplicationContext(), getDownloadManager(),
+      final Context applicationContext = getApplicationContext();
+      installManager = new InstallManager(applicationContext, getDownloadManager(),
           new InstallerFactory(new MinimalAdMapper(),
               new InstallFabricEvents(Analytics.getInstance(), Answers.getInstance())).create(this,
               installerType), getRootAvailabilityManager(), getDefaultSharedPreferences(),
-          SecurePreferencesImplementation.getInstance(getApplicationContext(),
+          SecurePreferencesImplementation.getInstance(applicationContext,
               getDefaultSharedPreferences()),
-          RepositoryFactory.getDownloadRepository(getApplicationContext().getApplicationContext()),
-          RepositoryFactory.getInstalledRepository(
-              getApplicationContext().getApplicationContext()));
+          RepositoryFactory.getDownloadRepository(applicationContext),
+          RepositoryFactory.getInstalledRepository(applicationContext));
       installManagers.put(installerType, installManager);
     }
 

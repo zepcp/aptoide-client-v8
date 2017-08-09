@@ -78,10 +78,15 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
   }
 
   private cm.aptoide.pt.database.realm.Download mapToDatabase(Download download) {
-    return null;
+    if (DownloadAdapter.class.isAssignableFrom(download.getClass())) {
+      return ((DownloadAdapter) download).getDecoratedEntity();
+    }
+    throw new IllegalStateException(
+        String.format("Only classes that extend %s are supported in this method call",
+            DownloadAdapter.class.getSimpleName()));
   }
 
   private Download mapFromDatabase(cm.aptoide.pt.database.realm.Download download) {
-    return null;
+    return new DownloadAdapter(download);
   }
 }

@@ -11,10 +11,10 @@ import io.realm.RealmList;
 import java.util.LinkedList;
 import java.util.List;
 
-class DownloadDecorator implements Download {
+class DownloadAdapter implements Download {
   private final cm.aptoide.pt.database.realm.Download download;
 
-  DownloadDecorator(cm.aptoide.pt.database.realm.Download download) {
+  DownloadAdapter(cm.aptoide.pt.database.realm.Download download) {
     this.download = download;
   }
 
@@ -45,7 +45,7 @@ class DownloadDecorator implements Download {
   @Override public List<DownloadFile> getFilesToDownload() {
     List<DownloadFile> files = new LinkedList<>();
     for (FileToDownload file : download.getFilesToDownload()) {
-      files.add(new DownloadFileDecorator(file));
+      files.add(new DownloadFileAdapter(file));
     }
     return files;
   }
@@ -140,16 +140,16 @@ class DownloadDecorator implements Download {
     download.setVersionName(versionName);
   }
 
-  public void save(cm.aptoide.pt.downloadmanager.DownloadRepository downloadRepository) {
-    downloadRepository.save(this);
-  }
-
   private FileToDownload getDbDownload(@NonNull DownloadFile downloadFile) {
-    if (DownloadFileDecorator.class.isAssignableFrom(downloadFile.getClass())) {
-      return ((DownloadFileDecorator) downloadFile).getDecoratedEntity();
+    if (DownloadFileAdapter.class.isAssignableFrom(downloadFile.getClass())) {
+      return ((DownloadFileAdapter) downloadFile).getDecoratedEntity();
     }
     throw new IllegalStateException(
         String.format("Only classes that extend %s are supported in this method call",
-            DownloadFileDecorator.class.getSimpleName()));
+            DownloadFileAdapter.class.getSimpleName()));
+  }
+
+  public cm.aptoide.pt.database.realm.Download getDecoratedEntity() {
+    return download;
   }
 }

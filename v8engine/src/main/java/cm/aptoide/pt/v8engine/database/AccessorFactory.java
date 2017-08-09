@@ -48,6 +48,8 @@ import io.realm.RealmObject;
       return (A) new NotificationAccessor(database);
     }
 
-    throw new RuntimeException("Create accessor for class " + clazz.getName());
+    throw new RuntimeException(
+        String.format("Class %s does not have an %s implementation", clazz.getName(),
+            Accessor.class.getSimpleName()));
   }
 }

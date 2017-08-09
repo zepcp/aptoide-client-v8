@@ -5,11 +5,11 @@ import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadFileType;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 
-public class DownloadFileDecorator implements DownloadFile {
+public class DownloadFileAdapter implements DownloadFile {
 
   private final FileToDownload downloadFile;
 
-  public DownloadFileDecorator(FileToDownload downloadFile) {
+  public DownloadFileAdapter(FileToDownload downloadFile) {
     this.downloadFile = downloadFile;
   }
 

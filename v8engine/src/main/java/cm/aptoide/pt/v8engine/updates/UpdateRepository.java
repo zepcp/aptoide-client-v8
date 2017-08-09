@@ -198,6 +198,9 @@ public class UpdateRepository {
   }
 
   public Completable remove(Update update) {
+    if (update == null || TextUtils.isEmpty(update.getPackageName())) {
+      return Completable.error(new NullPointerException("Update does not exist"));
+    }
     return Single.just(update.getPackageName())
         .flatMapCompletable(updateName -> {
           if (!TextUtils.isEmpty(updateName)) {

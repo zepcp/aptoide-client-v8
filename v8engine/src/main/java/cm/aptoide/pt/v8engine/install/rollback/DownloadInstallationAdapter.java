@@ -8,7 +8,7 @@ package cm.aptoide.pt.v8engine.install.rollback;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.downloadmanager.DownloadFile;
-import cm.aptoide.pt.v8engine.download.DownloadRepository;
+import cm.aptoide.pt.downloadmanager.DownloadRepository;
 import cm.aptoide.pt.v8engine.install.InstalledRepository;
 import cm.aptoide.pt.v8engine.install.installer.RollbackInstallation;
 import java.io.File;
@@ -91,6 +91,6 @@ public class DownloadInstallationAdapter implements RollbackInstallation {
   }
 
   @Override public void saveFileChanges() {
-    download.save(downloadRepository);
+    downloadRepository.save(download);
   }
 }
