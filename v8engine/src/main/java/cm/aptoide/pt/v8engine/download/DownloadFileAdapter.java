@@ -100,4 +100,8 @@ public class DownloadFileDecorator implements DownloadFile {
   @Override public int getVersionCode() {
     return downloadFile.getVersionCode();
   }
+
+  public FileToDownload getDecoratedEntity() {
+    return downloadFile;
+  }
 }

@@ -44,4 +44,6 @@ public interface DownloadFile {
   void setMd5(String md5);
 
   int getVersionCode();
+
+
 }

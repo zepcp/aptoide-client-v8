@@ -1,7 +1,12 @@
 package cm.aptoide.pt.v8engine.download;
 
+import android.support.annotation.NonNull;
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.*;
+import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
+import cm.aptoide.pt.downloadmanager.DownloadError;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import io.realm.RealmList;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,14 +58,6 @@ class DownloadDecorator implements Download {
     }
 
     download.setFilesToDownload(dbFiles);
-  }
-
-  private FileToDownload getDbDownload(DownloadFile downloadFile) {
-    return downloadFile.get;
-  }
-
-  public void save(cm.aptoide.pt.downloadmanager.DownloadRepository downloadRepository){
-    downloadRepository.save(this);
   }
 
   @Override public DownloadStatus getOverallDownloadStatus() {
@@ -141,5 +138,18 @@ class DownloadDecorator implements Download {
 
   @Override public void setVersionName(String versionName) {
     download.setVersionName(versionName);
+  }
+
+  public void save(cm.aptoide.pt.downloadmanager.DownloadRepository downloadRepository) {
+    downloadRepository.save(this);
+  }
+
+  private FileToDownload getDbDownload(@NonNull DownloadFile downloadFile) {
+    if (DownloadFileDecorator.class.isAssignableFrom(downloadFile.getClass())) {
+      return ((DownloadFileDecorator) downloadFile).getDecoratedEntity();
+    }
+    throw new IllegalStateException(
+        String.format("Only classes that extend %s are supported in this method call",
+            DownloadFileDecorator.class.getSimpleName()));
   }
 }
