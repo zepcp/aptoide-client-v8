@@ -55,6 +55,10 @@ class DownloadDecorator implements Download {
     download.setFilesToDownload(dbFiles);
   }
 
+  private FileToDownload getDbDownload(DownloadFile downloadFile) {
+    return downloadFile.get;
+  }
+
   public void save(cm.aptoide.pt.downloadmanager.DownloadRepository downloadRepository){
     downloadRepository.save(this);
   }
