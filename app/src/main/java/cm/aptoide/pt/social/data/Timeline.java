@@ -60,9 +60,9 @@ public class Timeline {
 
   public Observable<Install> updateApp(CardTouchEvent cardTouchEvent) {
     AppUpdate card = (AppUpdate) cardTouchEvent.getCard();
-    return installManager.install(downloadFactory.create(
-        (cm.aptoide.pt.social.data.AppUpdate) cardTouchEvent.getCard(),
-        DownloadAction.UPDATE))
+    return installManager.install(
+        downloadFactory.create((cm.aptoide.pt.social.data.AppUpdate) cardTouchEvent.getCard(),
+            DownloadAction.UPDATE))
         .andThen(installManager.getInstall(card.getFile()
             .getMd5sum(), card.getPackageName(), card.getFile()
             .getVercode()));

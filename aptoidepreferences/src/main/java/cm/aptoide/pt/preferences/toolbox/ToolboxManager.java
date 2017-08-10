@@ -82,7 +82,6 @@ public class ToolboxManager {
 
   /**
    * @param intervalTime time in ms
-   * @param sharedPreferences
    */
   public static void setPushNotificationPullingInterval(long intervalTime,
       SharedPreferences sharedPreferences) {

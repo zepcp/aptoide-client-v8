@@ -19,16 +19,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import cm.aptoide.pt.preferences.Application;
-import cm.aptoide.pt.utils.AptoideUtils;
-import cm.aptoide.pt.utils.GenericDialogs;
-import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.networking.image.ImageLoader;
+import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.presenter.CompositePresenter;
 import cm.aptoide.pt.store.StoreTheme;
+import cm.aptoide.pt.utils.AptoideUtils;
+import cm.aptoide.pt.utils.GenericDialogs;
+import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.view.BackButtonFragment;
 import cm.aptoide.pt.view.account.ImagePickerErrorHandler;
 import cm.aptoide.pt.view.account.ImagePickerNavigator;
@@ -362,8 +362,8 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
       this.newAvatar = false;
     }
 
-    public StoreViewModel(long storeId, StoreTheme storeTheme, String storeName, String storeDescription,
-        String pictureUri) {
+    public StoreViewModel(long storeId, StoreTheme storeTheme, String storeName,
+        String storeDescription, String pictureUri) {
       this.storeId = storeId;
       this.storeName = storeName;
       this.storeDescription = storeDescription;
@@ -372,7 +372,8 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
       this.newAvatar = false;
     }
 
-    public static StoreViewModel update(StoreViewModel model, String storeName, String storeDescription) {
+    public static StoreViewModel update(StoreViewModel model, String storeName,
+        String storeDescription) {
 
       // if current store name is empty we use the old one
       if (!TextUtils.isEmpty(storeName)) {

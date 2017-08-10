@@ -29,7 +29,6 @@ import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
 import cm.aptoide.pt.analytics.Analytics;
-import cm.aptoide.pt.analytics.DownloadCompleteAnalytics;
 import cm.aptoide.pt.app.AppBoughtReceiver;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.WebService;

@@ -52,9 +52,6 @@ import rx.subscriptions.CompositeSubscription;
 
   /**
    * Same code as in {@link Type#getPerLineCount()} todo: terminar este doc
-   *
-   * @param windowManager
-   * @param resources
    */
   public int getPerLineCount(WindowManager windowManager, Resources resources) {
 

@@ -78,15 +78,13 @@ public final class RepositoryFactory {
             Installed.class));
   }
 
-  public static cm.aptoide.pt.repository.StoreRepository getStoreRepository(
-      Context context) {
+  public static cm.aptoide.pt.repository.StoreRepository getStoreRepository(Context context) {
     return new cm.aptoide.pt.repository.StoreRepository(
         AccessorFactory.getAccessorFor(((V8Engine) context.getApplicationContext()).getDatabase(),
             Store.class));
   }
 
-  public static DownloadRepository getDownloadRepository(
-      Context context) {
+  public static DownloadRepository getDownloadRepository(Context context) {
     return new DownloadRepository(
         AccessorFactory.getAccessorFor(((V8Engine) context.getApplicationContext()).getDatabase(),
             Download.class));

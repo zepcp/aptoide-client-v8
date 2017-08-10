@@ -5,9 +5,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
 import cm.aptoide.pt.view.ThrowableToStringMapper;
@@ -29,8 +29,8 @@ public class ManageUserPresenter implements Presenter {
 
   public ManageUserPresenter(ManageUserView view, CrashReport crashReport,
       AptoideAccountManager accountManager, ThrowableToStringMapper errorMapper,
-      ManageUserNavigator navigator, ManageUserFragment.UserViewModel userData, boolean isEditProfile,
-      UriToPathResolver uriToPathResolver) {
+      ManageUserNavigator navigator, ManageUserFragment.UserViewModel userData,
+      boolean isEditProfile, UriToPathResolver uriToPathResolver) {
     this.view = view;
     this.crashReport = crashReport;
     this.accountManager = accountManager;

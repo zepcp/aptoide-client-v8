@@ -6,10 +6,10 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
-import cm.aptoide.pt.preferences.managed.ManagerPreferences;
-import cm.aptoide.pt.preferences.secure.SecureCoderDecoder;
 import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.deprecated.SQLiteDatabaseHelper;
+import cm.aptoide.pt.preferences.managed.ManagerPreferences;
+import cm.aptoide.pt.preferences.secure.SecureCoderDecoder;
 import rx.Completable;
 
 /**
@@ -84,8 +84,6 @@ public class AndroidAccountDataMigration {
    * This method is responsible for cleaning a preference that allowing
    * the share dialog on app install to show. This preference should be cleaned every time
    * we upgrade to a new major version (X.X.0.0)
-   *
-   * @return
    */
   private Completable cleanShareDialogShowPref() {
     String versionName = V8Engine.getConfiguration()

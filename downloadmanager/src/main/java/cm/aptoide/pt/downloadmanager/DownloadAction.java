@@ -9,14 +9,14 @@ public enum DownloadAction {
     this.value = value;
   }
 
-  public int getValue() {
-    return value;
-  }
-
   public static DownloadAction fromValue(int action) {
-    for(DownloadAction downloadAction : DownloadAction.values()){
-      if(downloadAction.getValue()==action) return downloadAction;
+    for (DownloadAction downloadAction : DownloadAction.values()) {
+      if (downloadAction.getValue() == action) return downloadAction;
     }
     return null;
+  }
+
+  public int getValue() {
+    return value;
   }
 }

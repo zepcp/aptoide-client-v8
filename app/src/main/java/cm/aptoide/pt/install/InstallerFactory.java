@@ -74,8 +74,7 @@ public class InstallerFactory {
 
   @NonNull private DownloadInstallationProvider getInstallationProvider(
       AptoideDownloadManager downloadManager, Context context) {
-    final DownloadRepository downloadRepository =
-        RepositoryFactory.getDownloadRepository(context);
+    final DownloadRepository downloadRepository = RepositoryFactory.getDownloadRepository(context);
 
     final InstalledRepository installedRepository =
         RepositoryFactory.getInstalledRepository(context);
@@ -84,7 +83,7 @@ public class InstallerFactory {
         ((V8Engine) context.getApplicationContext()
             .getApplicationContext()).getDatabase(), StoredMinimalAd.class);
 
-    return new DownloadInstallationProvider(downloadManager,
-        downloadRepository, installedRepository, adMapper, minimalAdAccessor);
+    return new DownloadInstallationProvider(downloadManager, downloadRepository,
+        installedRepository, adMapper, minimalAdAccessor);
   }
 }

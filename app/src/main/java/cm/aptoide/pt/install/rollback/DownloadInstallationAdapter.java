@@ -5,10 +5,10 @@
 
 package cm.aptoide.pt.install.rollback;
 
+import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadRepository;
-import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.installer.RollbackInstallation;
 import java.io.File;

@@ -23,8 +23,6 @@ public class ManagerPreferences {
   }
 
   /**
-   * @param sharedPreferences
-   *
    * @return true when updates should hide alpha and beta versions.
    */
   public static boolean getUpdatesFilterAlphaBetaKey(SharedPreferences sharedPreferences) {
@@ -32,8 +30,6 @@ public class ManagerPreferences {
   }
 
   /**
-   * @param sharedPreferences
-   *
    * @return true when updates should include system apps
    */
   public static boolean getUpdatesSystemAppsKey(SharedPreferences sharedPreferences) {

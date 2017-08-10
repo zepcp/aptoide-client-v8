@@ -9,14 +9,14 @@ public enum DownloadError {
     this.value = value;
   }
 
-  public int getValue() {
-    return value;
-  }
-
   public static DownloadError fromValue(int errorState) {
     for (DownloadError downloadAction : DownloadError.values()) {
       if (downloadAction.getValue() == errorState) return downloadAction;
     }
     return null;
+  }
+
+  public int getValue() {
+    return value;
   }
 }

@@ -1,6 +1,5 @@
 package cm.aptoide.pt.view.updates;
 
-import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.Analytics;
@@ -9,6 +8,7 @@ import cm.aptoide.pt.download.DownloadEventConverter;
 import cm.aptoide.pt.download.DownloadInstallBaseEvent;
 import cm.aptoide.pt.download.InstallEvent;
 import cm.aptoide.pt.download.InstallEventConverter;
+import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import lombok.Getter;
 
