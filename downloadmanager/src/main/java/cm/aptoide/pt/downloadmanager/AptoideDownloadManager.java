@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
-import cm.aptoide.pt.v8engine.crashreports.CrashReport;
+import cm.aptoide.pt.crashreports.CrashReport;
 import com.liulishuo.filedownloader.FileDownloader;
 import java.util.List;
 import rx.Completable;
