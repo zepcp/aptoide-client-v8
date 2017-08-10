@@ -23,13 +23,13 @@ public class ManageUserPresenter implements Presenter {
   private final AptoideAccountManager accountManager;
   private final ThrowableToStringMapper errorMapper;
   private final ManageUserNavigator navigator;
-  private final ManageUserFragment.ViewModel userData;
+  private final ManageUserFragment.UserViewModel userData;
   private final boolean isEditProfile;
   private final UriToPathResolver uriToPathResolver;
 
   public ManageUserPresenter(ManageUserView view, CrashReport crashReport,
       AptoideAccountManager accountManager, ThrowableToStringMapper errorMapper,
-      ManageUserNavigator navigator, ManageUserFragment.ViewModel userData, boolean isEditProfile,
+      ManageUserNavigator navigator, ManageUserFragment.UserViewModel userData, boolean isEditProfile,
       UriToPathResolver uriToPathResolver) {
     this.view = view;
     this.crashReport = crashReport;
@@ -71,7 +71,7 @@ public class ManageUserPresenter implements Presenter {
           // if it is an edition and not after a configuration change event
           // after a configuration change this values could differ
           if (isEditProfile) {
-            return new ManageUserFragment.ViewModel(userAccount.getNickname(),
+            return new ManageUserFragment.UserViewModel(userAccount.getNickname(),
                 userAccount.getAvatar());
           }
 
@@ -109,7 +109,7 @@ public class ManageUserPresenter implements Presenter {
         .subscribe();
   }
 
-  @NonNull private Completable saveUserData(ManageUserFragment.ViewModel userData) {
+  @NonNull private Completable saveUserData(ManageUserFragment.UserViewModel userData) {
     return updateUserAccount(userData).observeOn(AndroidSchedulers.mainThread())
         .doOnCompleted(() -> view.hideProgressDialog())
         .doOnCompleted(() -> sendAnalytics(userData))
@@ -141,11 +141,11 @@ public class ManageUserPresenter implements Presenter {
         .andThen(errorHandler);
   }
 
-  private void sendAnalytics(ManageUserFragment.ViewModel userData) {
+  private void sendAnalytics(ManageUserFragment.UserViewModel userData) {
     Analytics.Account.createdUserProfile(!TextUtils.isEmpty(userData.getPictureUri()));
   }
 
-  private Completable updateUserAccount(ManageUserFragment.ViewModel userData) {
+  private Completable updateUserAccount(ManageUserFragment.UserViewModel userData) {
     if (userData.hasNewPicture()) {
       final String mediaStoragePath =
           uriToPathResolver.getMediaStoragePath(Uri.parse(userData.getPictureUri()));

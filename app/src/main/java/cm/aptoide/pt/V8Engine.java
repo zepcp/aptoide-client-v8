@@ -49,6 +49,7 @@ import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.ads.MinimalAdMapper;
 import cm.aptoide.pt.ads.PackageRepositoryVersionCodeProvider;
 import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.DownloadCompleteAnalytics;
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.billing.AccountPayer;
 import cm.aptoide.pt.billing.Billing;
@@ -108,6 +109,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.store.RequestBodyFactory;
 import cm.aptoide.pt.deprecated.SQLiteDatabaseHelper;
 import cm.aptoide.pt.download.DownloadAnalytics;
 import cm.aptoide.pt.download.DownloadMirrorEventInterceptor;
+import cm.aptoide.pt.download.DownloadRepository;
 import cm.aptoide.pt.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.filemanager.CacheHelper;
@@ -146,7 +148,6 @@ import cm.aptoide.pt.preferences.secure.SecureCoderDecoder;
 import cm.aptoide.pt.preferences.secure.SecurePreferences;
 import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
-import cm.aptoide.pt.repository.DownloadRepository;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.root.RootAvailabilityManager;
 import cm.aptoide.pt.root.RootValueSaver;
@@ -608,7 +609,9 @@ public abstract class V8Engine extends Application {
 
       downloadManager = new AptoideDownloadManager(downloadRepository, getCacheHelper(),
           new FileUtils(action -> Analytics.File.moveFile(action)),
-          new DownloadAnalytics(Analytics.getInstance()), FileDownloader.getImpl(),
+          new DownloadAnalytics(Analytics.getInstance(),
+              new DownloadCompleteAnalytics(Analytics.getInstance(), Answers.getInstance(),
+                  AppEventsLogger.newLogger(this))), FileDownloader.getImpl(),
           getConfiguration().getCachePath(), apkPath, obbPath);
     }
     return downloadManager;

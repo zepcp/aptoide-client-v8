@@ -25,7 +25,7 @@ public class MyAccountNavigator {
   }
 
   public void navigateToEditStoreView(Store store) {
-    ManageStoreFragment.ViewModel viewModel = new ManageStoreFragment.ViewModel(store.getId(),
+    ManageStoreFragment.StoreViewModel viewModel = new ManageStoreFragment.StoreViewModel(store.getId(),
         StoreTheme.fromName(store.getAppearance()
             .getTheme()), store.getName(), store.getAppearance()
         .getDescription(), store.getAvatar());

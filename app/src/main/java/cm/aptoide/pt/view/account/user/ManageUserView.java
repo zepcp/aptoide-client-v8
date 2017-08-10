@@ -8,7 +8,7 @@ public interface ManageUserView extends ImagePickerView {
 
   void setUserName(String name);
 
-  Observable<ManageUserFragment.ViewModel> saveUserDataButtonClick();
+  Observable<ManageUserFragment.UserViewModel> saveUserDataButtonClick();
 
   Observable<Void> cancelButtonClick();
 

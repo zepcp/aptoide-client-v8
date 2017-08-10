@@ -1,4 +1,4 @@
-package cm.aptoide.pt.repository;
+package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.downloadmanager.Download;

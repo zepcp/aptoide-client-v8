@@ -91,7 +91,7 @@ public class ProfileStepTwoPresenter implements Presenter {
     } else {
       fragmentNavigator.cleanBackStack();
       fragmentNavigator.navigateTo(
-          ManageStoreFragment.newInstance(new ManageStoreFragment.ViewModel(), true));
+          ManageStoreFragment.newInstance(new ManageStoreFragment.StoreViewModel(), true));
     }
   }
 }

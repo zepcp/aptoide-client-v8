@@ -72,7 +72,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
   private RecyclerView themeSelectorView;
   private ThemeSelectorViewAdapter themeSelectorAdapter;
 
-  private ViewModel currentModel;
+  private StoreViewModel currentModel;
   private boolean goToHome;
   private Toolbar toolbar;
   private ImagePickerDialog dialogFragment;
@@ -88,7 +88,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
   private String fileProviderAuthority;
   private PhotoFileGenerator photoFileGenerator;
 
-  public static ManageStoreFragment newInstance(ViewModel storeModel, boolean goToHome) {
+  public static ManageStoreFragment newInstance(StoreViewModel storeModel, boolean goToHome) {
     Bundle args = new Bundle();
     args.putParcelable(EXTRA_STORE_MODEL, Parcels.wrap(storeModel));
     args.putBoolean(EXTRA_GO_TO_HOME, goToHome);
@@ -179,7 +179,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     currentModel.setPictureUri(pictureUri);
   }
 
-  @Override public Observable<ViewModel> saveDataClick() {
+  @Override public Observable<StoreViewModel> saveDataClick() {
     return RxView.clicks(saveDataButton)
         .map(__ -> updateAndGetStoreModel());
   }
@@ -220,7 +220,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
       try {
         currentModel = Parcels.unwrap(savedInstanceState.getParcelable(EXTRA_STORE_MODEL));
       } catch (NullPointerException ex) {
-        currentModel = new ViewModel();
+        currentModel = new StoreViewModel();
       }
       goToHome = savedInstanceState.getBoolean(EXTRA_GO_TO_HOME, true);
     }
@@ -302,8 +302,8 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     toolbar = (Toolbar) view.findViewById(R.id.toolbar);
   }
 
-  private ViewModel updateAndGetStoreModel() {
-    currentModel = ViewModel.update(currentModel, storeName.getText()
+  private StoreViewModel updateAndGetStoreModel() {
+    currentModel = StoreViewModel.update(currentModel, storeName.getText()
         .toString(), storeDescription.getText()
         .toString());
     currentModel.setStoreTheme(themeSelectorAdapter.getSelectedTheme());
@@ -337,7 +337,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     }
   }
 
-  private String getViewTitle(ViewModel storeModel) {
+  private String getViewTitle(StoreViewModel storeModel) {
     if (!storeModel.storeExists()) {
       return getString(R.string.create_store_title);
     } else {
@@ -345,7 +345,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     }
   }
 
-  @Parcel public static class ViewModel {
+  @Parcel public static class StoreViewModel {
     long storeId;
     String storeName;
     String storeDescription;
@@ -353,7 +353,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     StoreTheme storeTheme;
     boolean newAvatar;
 
-    public ViewModel() {
+    public StoreViewModel() {
       this.storeId = -1;
       this.storeName = "";
       this.storeDescription = "";
@@ -362,7 +362,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
       this.newAvatar = false;
     }
 
-    public ViewModel(long storeId, StoreTheme storeTheme, String storeName, String storeDescription,
+    public StoreViewModel(long storeId, StoreTheme storeTheme, String storeName, String storeDescription,
         String pictureUri) {
       this.storeId = storeId;
       this.storeName = storeName;
@@ -372,7 +372,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
       this.newAvatar = false;
     }
 
-    public static ViewModel update(ViewModel model, String storeName, String storeDescription) {
+    public static StoreViewModel update(StoreViewModel model, String storeName, String storeDescription) {
 
       // if current store name is empty we use the old one
       if (!TextUtils.isEmpty(storeName)) {

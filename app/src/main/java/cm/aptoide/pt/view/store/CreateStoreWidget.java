@@ -47,7 +47,7 @@ public class CreateStoreWidget extends Widget<CreateStoreDisplayable> {
           if (account.isLoggedIn()) {
             button.setText(R.string.create_store_displayable_button);
             getFragmentNavigator().navigateTo(
-                ManageStoreFragment.newInstance(new ManageStoreFragment.ViewModel(), false));
+                ManageStoreFragment.newInstance(new ManageStoreFragment.StoreViewModel(), false));
           } else {
             button.setText(R.string.login);
             accountNavigator.navigateToAccountView(Analytics.Account.AccountOrigins.STORE);

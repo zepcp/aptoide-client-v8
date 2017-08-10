@@ -81,7 +81,7 @@ public class ProfileStepOnePresenter implements Presenter {
   private void navigateToCreateStore() {
     fragmentNavigator.cleanBackStack();
     fragmentNavigator.navigateTo(
-        ManageStoreFragment.newInstance(new ManageStoreFragment.ViewModel(), true));
+        ManageStoreFragment.newInstance(new ManageStoreFragment.StoreViewModel(), true));
   }
 
   private Completable makeUserProfilePublic() {

@@ -64,7 +64,7 @@ public class ManageUserFragment extends BackButtonFragment implements ManageUser
   private ProgressDialog uploadWaitDialog;
   private Button cancelUserProfile;
   private TextView header;
-  private ViewModel currentModel;
+  private UserViewModel currentModel;
   private boolean isEditProfile;
   private Toolbar toolbar;
   private ImagePickerDialog dialogFragment;
@@ -104,7 +104,7 @@ public class ManageUserFragment extends BackButtonFragment implements ManageUser
     if (savedInstanceState != null && savedInstanceState.containsKey(EXTRA_USER_MODEL)) {
       currentModel = Parcels.unwrap(savedInstanceState.getParcelable(EXTRA_USER_MODEL));
     } else {
-      currentModel = new ViewModel();
+      currentModel = new UserViewModel();
     }
 
     Bundle args = getArguments();
@@ -209,7 +209,7 @@ public class ManageUserFragment extends BackButtonFragment implements ManageUser
     userName.setText(name);
   }
 
-  @Override public Observable<ViewModel> saveUserDataButtonClick() {
+  @Override public Observable<UserViewModel> saveUserDataButtonClick() {
     return RxView.clicks(createUserButton)
         .map(__ -> updateModelAndGet());
   }
@@ -278,29 +278,29 @@ public class ManageUserFragment extends BackButtonFragment implements ManageUser
     dialogFragment.dismiss();
   }
 
-  @Nullable public ViewModel updateModelAndGet() {
-    return ViewModel.from(currentModel, userName.getText()
+  @Nullable public UserViewModel updateModelAndGet() {
+    return UserViewModel.from(currentModel, userName.getText()
         .toString());
   }
 
-  @Parcel protected static class ViewModel {
+  @Parcel protected static class UserViewModel {
     String name;
     String pictureUri;
     boolean hasNewPicture;
 
-    public ViewModel() {
+    public UserViewModel() {
       name = "";
       pictureUri = "";
       hasNewPicture = false;
     }
 
-    public ViewModel(String name, String pictureUri) {
+    public UserViewModel(String name, String pictureUri) {
       this.name = name;
       this.pictureUri = pictureUri;
       this.hasNewPicture = false;
     }
 
-    public static ViewModel from(ViewModel otherModel, String otherName) {
+    public static UserViewModel from(UserViewModel otherModel, String otherName) {
       otherModel.setName(otherName);
       return otherModel;
     }

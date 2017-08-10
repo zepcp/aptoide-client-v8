@@ -9,7 +9,7 @@ public interface ManageStoreView extends ImagePickerView {
 
   void loadImageStateless(String pictureUri);
 
-  Observable<ManageStoreFragment.ViewModel> saveDataClick();
+  Observable<ManageStoreFragment.StoreViewModel> saveDataClick();
 
   Observable<Void> cancelClick();
 
