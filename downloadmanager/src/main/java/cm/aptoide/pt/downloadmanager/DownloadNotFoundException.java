@@ -5,6 +5,9 @@
 
 package cm.aptoide.pt.downloadmanager;
 
-public class DownloadNotFoundException extends Exception {
+public class DownloadNotFoundException extends RuntimeException {
 
+  DownloadNotFoundException(String downloadHash) {
+    super(String.format("Download not found for hash %s", downloadHash));
+  }
 }

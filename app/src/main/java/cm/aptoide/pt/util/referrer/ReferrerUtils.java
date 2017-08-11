@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -51,7 +52,7 @@ public class ReferrerUtils extends cm.aptoide.pt.dataprovider.util.referrer.Refe
 
   private static final String TAG = ReferrerUtils.class.getSimpleName();
 
-  public static void extractReferrer(MinimalAd minimalAd, final int retries,
+  @UiThread public static void extractReferrer(MinimalAd minimalAd, final int retries,
       boolean broadcastReferrer, AdsRepository adsRepository, final OkHttpClient httpClient,
       final Converter.Factory converterFactory, final QManager qManager, Context context,
       final SharedPreferences sharedPreferences, MinimalAdMapper adMapper) {

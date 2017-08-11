@@ -84,7 +84,7 @@ public class AptoideDownloadManager {
     return downloadRepository.get(md5)
         .flatMap(download -> {
           if (isInvalid(download)) {
-            return Observable.error(new DownloadNotFoundException());
+            return Observable.error(new DownloadNotFoundException(md5));
           } else {
             return Observable.just(download);
           }
@@ -237,7 +237,7 @@ public class AptoideDownloadManager {
         })
         .onErrorResumeNext(throwable -> {
           if (throwable instanceof NullPointerException) {
-            return Observable.error(new DownloadNotFoundException());
+            return Observable.error(new DownloadNotFoundException(md5));
           }
           return Observable.error(throwable);
         })

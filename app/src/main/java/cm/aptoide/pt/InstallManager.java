@@ -163,10 +163,16 @@ public class InstallManager {
   }
 
   public Observable<Install> getInstall(String md5, String packageName, int versioncode) {
-    return Observable.combineLatest(aptoideDownloadManager.getAsListDownload(md5),
-        installer.getState(packageName, versioncode), getInstallationType(packageName, versioncode),
-        (download, installationState, installationType) -> createInstall(download,
-            installationState, md5, packageName, versioncode, installationType));
+    final Observable<Download> download = aptoideDownloadManager.getAsListDownload(md5);
+    final Observable<InstallationState> installationState =
+        installer.getState(packageName, versioncode);
+    final Observable<Install.InstallationType> installationType =
+        getInstallationType(packageName, versioncode);
+
+    return Observable.combineLatest(download, installationState, installationType,
+        (downloadResult, installationStateResult, installationTypeResult) -> createInstall(
+            downloadResult, installationStateResult, md5, packageName, versioncode,
+            installationTypeResult));
   }
 
   private Install createInstall(Download download, InstallationState installationState, String md5,

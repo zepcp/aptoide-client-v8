@@ -2,12 +2,15 @@ package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 
 public class DownloadRepository implements cm.aptoide.pt.downloadmanager.DownloadRepository {
+
+  private static final String TAG = DownloadRepository.class.getName();
 
   private final DownloadAccessor accessor;
 
@@ -72,7 +75,6 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
             return downloads.get(0);
           }
         })
-        .filter(download -> download != null)
         .map(download -> mapFromDatabase(download))
         .toList();
   }
@@ -87,6 +89,11 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
   }
 
   private Download mapFromDatabase(cm.aptoide.pt.database.realm.Download download) {
+    if (download == null) {
+      Logger.w(TAG, "Avoid calling this method with a null Download object");
+      return null;
+    }
+
     return new DownloadAdapter(download);
   }
 }

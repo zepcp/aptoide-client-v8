@@ -45,7 +45,9 @@ class DownloadAdapter implements Download {
   @Override public List<DownloadFile> getFilesToDownload() {
     List<DownloadFile> files = new LinkedList<>();
     for (FileToDownload file : download.getFilesToDownload()) {
-      files.add(new DownloadFileAdapter(file));
+      if (file != null) {
+        files.add(new DownloadFileAdapter(file));
+      }
     }
     return files;
   }

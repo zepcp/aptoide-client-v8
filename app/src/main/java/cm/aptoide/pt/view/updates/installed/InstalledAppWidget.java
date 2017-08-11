@@ -22,10 +22,10 @@ import cm.aptoide.pt.view.dialog.DialogUtils;
 import cm.aptoide.pt.view.recycler.widget.Widget;
 import cm.aptoide.pt.view.share.ShareAppHelper;
 import com.jakewharton.rxbinding.view.RxView;
-import com.jakewharton.rxrelay.PublishRelay;
 import java.util.Locale;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by neuro on 17-05-2016.
@@ -84,7 +84,7 @@ public class InstalledAppWidget extends Widget<InstalledAppDisplayable> {
         RepositoryFactory.getInstalledRepository(getContext().getApplicationContext()),
         accountManager, accountNavigator, getContext(),
         new SpotAndShareAnalytics(Analytics.getInstance()), displayable.getTimelineAnalytics(),
-        PublishRelay.create(),
+        PublishSubject.create(),
         ((V8Engine) getContext().getApplicationContext()).getDefaultSharedPreferences());
     appName = pojo.getName();
     packageName = pojo.getPackageName();

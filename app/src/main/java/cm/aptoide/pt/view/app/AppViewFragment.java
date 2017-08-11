@@ -85,7 +85,6 @@ import cm.aptoide.pt.spotandshare.SpotAndShareAnalytics;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
-import cm.aptoide.pt.timeline.SocialRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.util.SearchUtils;
 import cm.aptoide.pt.util.StoreEnum;
@@ -114,7 +113,6 @@ import cm.aptoide.pt.view.share.ShareAppHelper;
 import cm.aptoide.pt.view.store.StoreFragment;
 import com.crashlytics.android.answers.Answers;
 import com.facebook.appevents.AppEventsLogger;
-import com.jakewharton.rxrelay.PublishRelay;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import java.util.Collections;
 import java.util.Iterator;
@@ -127,6 +125,7 @@ import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action0;
+import rx.subjects.PublishSubject;
 
 /**
  * Created on 04/05/16.
@@ -135,32 +134,24 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     implements Scrollable, AppMenuOptions {
 
   public static final int VIEW_ID = R.layout.fragment_app_view;
-  //
-  // constants
-  //
+
   private static final String TAG = AppViewFragment.class.getSimpleName();
-  private static final String BAR_EXPANDED = "BAR_EXPANDED";
   private static final int PAY_APP_REQUEST_CODE = 12;
 
   private final String key_appId = "appId";
   private final String key_packageName = "packageName";
   private final String key_uname = "uname";
-  private final String key_md5sum = "md5sum";
-  //private static final String TAG = AppViewFragment.class.getName();
-  //
-  // vars
-  //
+
+  @Partners private String packageName;
+  @Partners private String appName;
+  @Partners private String wUrl;
+
   private AppViewHeader header;
   private long appId;
-  @Partners @Getter private String packageName;
   private OpenType openType;
-  private Scheduled scheduled;
   private String storeTheme;
-  //
-  // static fragment default new instance method
-  //
+
   private MinimalAd minimalAd;
-  // Stored to postpone ads logic
   private InstallManager installManager;
   private Action0 unInstallAction;
   private MenuItem uninstallMenuItem;
@@ -168,29 +159,20 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private Subscription subscription;
   private AdsRepository adsRepository;
   private boolean sponsored;
-  // buy app vars
   private String storeName;
   private AppViewInstallDisplayable installDisplayable;
   private String md5;
   private String uname;
-  private PermissionManager permissionManager;
   private Menu menu;
-  @Partners @Getter private String appName;
-  @Partners @Getter private String wUrl;
   private GetAppMeta.App app;
   private Group group;
   private AppAction appAction = AppAction.OPEN;
   private InstalledRepository installedRepository;
-  private AptoideAccountManager accountManager;
   private StoreCredentialsProvider storeCredentialsProvider;
-  private BodyInterceptor<BaseBody> bodyInterceptor;
-  private SocialRepository socialRepository;
-  private AccountNavigator accountNavigator;
   private OkHttpClient httpClient;
   private Converter.Factory converterFactory;
   private StoredMinimalAdAccessor storedMinimalAdAccessor;
   private BillingAnalytics billingAnalytics;
-  private SpotAndShareAnalytics spotAndShareAnalytics;
   private PurchaseBundleMapper purchaseBundleMapper;
   private ShareAppHelper shareAppHelper;
   private QManager qManager;
@@ -199,8 +181,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private AppViewAnalytics appViewAnalytics;
   private AppViewSimilarAppAnalytics appViewSimilarAppAnalytics;
   private MinimalAdMapper adMapper;
-  private PublishRelay installAppRelay;
-  @Getter private boolean suggestedShowing;
+  private PublishSubject installAppSubject;
+  private boolean suggestedShowing;
   private List<String> keywords;
   private BillingIdResolver billingIdResolver;
 
@@ -274,6 +256,22 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     return fragment;
   }
 
+  public String getPackageName() {
+    return packageName;
+  }
+
+  public String getwUrl() {
+    return wUrl;
+  }
+
+  public boolean isSuggestedShowing() {
+    return suggestedShowing;
+  }
+
+  public String getAppName() {
+    return appName;
+  }
+
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     billingIdResolver = ((V8Engine) getContext().getApplicationContext()).getBillingIdResolver();
@@ -281,12 +279,14 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     qManager = ((V8Engine) getContext().getApplicationContext()).getQManager();
     purchaseBundleMapper =
         ((V8Engine) getContext().getApplicationContext()).getPurchaseBundleMapper();
-    accountManager = ((V8Engine) getContext().getApplicationContext()).getAccountManager();
-    accountNavigator = new AccountNavigator(getFragmentNavigator(), accountManager);
-    permissionManager = new PermissionManager();
+    AptoideAccountManager accountManager =
+        ((V8Engine) getContext().getApplicationContext()).getAccountManager();
+    AccountNavigator accountNavigator =
+        new AccountNavigator(getFragmentNavigator(), accountManager);
     installManager = ((V8Engine) getContext().getApplicationContext()).getInstallManager(
         InstallerFactory.ROLLBACK);
-    bodyInterceptor = ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptorV7();
+    BodyInterceptor<BaseBody> bodyInterceptor =
+        ((V8Engine) getContext().getApplicationContext()).getBaseBodyInterceptorV7();
     billingAnalytics = ((V8Engine) getContext().getApplicationContext()).getBillingAnalytics();
     final TokenInvalidator tokenInvalidator =
         ((V8Engine) getContext().getApplicationContext()).getTokenInvalidator();
@@ -295,10 +295,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         httpClient, converterFactory, tokenInvalidator, V8Engine.getConfiguration()
         .getAppId(),
         ((V8Engine) getContext().getApplicationContext()).getDefaultSharedPreferences());
-    socialRepository =
-        new SocialRepository(accountManager, bodyInterceptor, converterFactory, httpClient,
-            timelineAnalytics, tokenInvalidator,
-            ((V8Engine) getContext().getApplicationContext()).getDefaultSharedPreferences());
+
     appRepository = RepositoryFactory.getAppRepository(getContext(),
         ((V8Engine) getContext().getApplicationContext()).getDefaultSharedPreferences());
     httpClient = ((V8Engine) getContext().getApplicationContext()).getDefaultClient();
@@ -312,16 +309,17 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     storedMinimalAdAccessor = AccessorFactory.getAccessorFor(
         ((V8Engine) getContext().getApplicationContext()
             .getApplicationContext()).getDatabase(), StoredMinimalAd.class);
-    spotAndShareAnalytics = new SpotAndShareAnalytics(Analytics.getInstance());
+    SpotAndShareAnalytics spotAndShareAnalytics =
+        new SpotAndShareAnalytics(Analytics.getInstance());
     appViewAnalytics = new AppViewAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()));
     appViewSimilarAppAnalytics = new AppViewSimilarAppAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()));
 
-    installAppRelay = PublishRelay.create();
+    installAppSubject = PublishSubject.create();
     shareAppHelper =
         new ShareAppHelper(installedRepository, accountManager, accountNavigator, getActivity(),
-            spotAndShareAnalytics, timelineAnalytics, installAppRelay,
+            spotAndShareAnalytics, timelineAnalytics, installAppSubject,
             ((V8Engine) getContext().getApplicationContext()).getDefaultSharedPreferences());
     downloadFactory = new DownloadFactory();
     appViewAnalytics = new AppViewAnalytics(Analytics.getInstance(),
@@ -517,7 +515,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
       return true;
     } else if (i == R.id.menu_schedule) {
       appViewAnalytics.sendScheduleDownloadEvent();
-      scheduled = createScheduled(app, appAction);
+      Scheduled scheduled = createScheduled(app, appAction);
 
       ScheduledAccessor scheduledAccessor = AccessorFactory.getAccessorFor(
           ((V8Engine) getContext().getApplicationContext()
@@ -777,8 +775,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     }
     installDisplayable =
         AppViewInstallDisplayable.newInstance(getApp, installManager, minimalAd, shouldInstall,
-            installedRepository, downloadFactory, timelineAnalytics, appViewAnalytics,
-            installAppRelay, this,
+            downloadFactory, timelineAnalytics, appViewAnalytics, installAppSubject, this,
             new DownloadCompleteAnalytics(Analytics.getInstance(), Answers.getInstance(),
                 AppEventsLogger.newLogger(getContext().getApplicationContext())));
     displayables.add(installDisplayable);
@@ -809,16 +806,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         .getStore()
         .getId();
 
-    // For stores subscription
-    //DeprecatedDatabase.StoreQ.getAll(realm)
-    //    .asObservable()
-    //    .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-    //    .subscribe(stores -> {
-    //      if (DeprecatedDatabase.StoreQ.get(storeId, realm) != null) {
-    //        adapter.notifyDataSetChanged();
-    //      }
-    //    });
-
     final StoreAccessor storeAccessor = AccessorFactory.getAccessorFor(
         ((V8Engine) getContext().getApplicationContext()
             .getApplicationContext()).getDatabase(), Store.class);
@@ -830,16 +817,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         .subscribe(store -> {
           getAdapter().notifyDataSetChanged();
         });
-
-    // ??
-
-    // For install actions
-    //DeprecatedDatabase.RollbackQ.getAll(realm)
-    //    .asObservable()
-    //    .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-    //    .subscribe(rollbacks -> {
-    //      adapter.notifyDataSetChanged();
-    //    });
 
     final RollbackAccessor rollbackAccessor = AccessorFactory.getAccessorFor(
         ((V8Engine) getContext().getApplicationContext()
@@ -891,10 +868,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   @Override protected void setupToolbarDetails(Toolbar toolbar) {
     toolbar.setTitle("");
   }
-
-  //
-  // micro widget for header
-  //
 
   @Override public void scroll(Position position) {
     RecyclerView rView = getRecyclerView();
@@ -1049,34 +1022,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
           ContextCompat.getColor(getActivity(), storeTheme.getPrimaryColor()));
       ThemeUtils.setStatusBarThemeColor(getActivity(),
           StoreTheme.get(AppViewFragment.this.storeTheme));
-      // un-comment the following lines to give app icon a fading effect when user expands / collapses the action bar
-      /*
-      appBarLayout.addOnOffsetChangedListener(new AppBarStateChangeListener() {
-
-				@Override
-				public void onStateChanged(AppBarLayout appBarLayout, State state) {
-					switch (state) {
-						case EXPANDED:
-							if (animationsEnabled) {
-								appIcon.animate().alpha(1F).start();
-							} else {
-								appIcon.setVisibility(View.VISIBLE);
-							}
-							break;
-
-						default:
-						case IDLE:
-						case COLLAPSED:
-							if (animationsEnabled) {
-								appIcon.animate().alpha(0F).start();
-							} else {
-								appIcon.setVisibility(View.INVISIBLE);
-							}
-							break;
-					}
-				}
-			});
-			*/
 
       fileSize.setText(AptoideUtils.StringU.formatBytes(app.getSize(), false));
 

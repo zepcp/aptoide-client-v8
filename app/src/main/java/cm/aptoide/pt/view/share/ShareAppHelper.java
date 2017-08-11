@@ -24,8 +24,8 @@ import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.view.account.AccountNavigator;
 import cm.aptoide.pt.view.dialog.SharePreviewDialog;
-import com.jakewharton.rxrelay.PublishRelay;
 import rx.Observable;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by neuro on 16-05-2017.
@@ -40,12 +40,12 @@ public class ShareAppHelper {
   private final Activity activity;
   private final TimelineAnalytics timelineAnalytics;
   private final SharedPreferences sharedPreferences;
-  private final PublishRelay installAppRelay;
+  private final PublishSubject installAppSubject;
 
   public ShareAppHelper(InstalledRepository installedRepository,
       AptoideAccountManager accountManager, AccountNavigator accountNavigator, Activity activity,
       SpotAndShareAnalytics spotAndShareAnalytics, TimelineAnalytics timelineAnalytics,
-      PublishRelay installAppRelay, SharedPreferences sharedPreferences) {
+      PublishSubject installAppSubject, SharedPreferences sharedPreferences) {
     this.installedRepository = installedRepository;
     this.accountManager = accountManager;
     this.accountNavigator = accountNavigator;
@@ -53,7 +53,7 @@ public class ShareAppHelper {
     this.spotAndShareAnalytics = spotAndShareAnalytics;
     this.timelineAnalytics = timelineAnalytics;
     this.sharedPreferences = sharedPreferences;
-    this.installAppRelay = installAppRelay;
+    this.installAppSubject = installAppSubject;
   }
 
   private boolean isInstalled(String packageName) {
@@ -77,17 +77,17 @@ public class ShareAppHelper {
         if (isInstalled(packageName)) {
           caseSpotAndShareShare(appName, packageName, origin);
         } else {
-          showInstallSnackbar(installAppRelay);
+          showInstallSnackbar(installAppSubject);
         }
       }
     }, CrashReport.getInstance()::log);
   }
 
-  private void showInstallSnackbar(PublishRelay installAppRelay) {
+  private void showInstallSnackbar(PublishSubject installAppRelay) {
     ShowMessage.asSnack(activity, R.string.appview_message_install_before_share_spotandshare,
         R.string.appview_button_install_before_share_spotandshare, new View.OnClickListener() {
           @Override public void onClick(View v) {
-            installAppRelay.call(null);
+            installAppRelay.onNext(null);
           }
         }, Snackbar.LENGTH_INDEFINITE);
   }

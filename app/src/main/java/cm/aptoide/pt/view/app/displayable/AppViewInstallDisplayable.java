@@ -15,11 +15,10 @@ import cm.aptoide.pt.database.realm.MinimalAd;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.download.DownloadFactory;
-import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.view.app.AppViewFragment;
-import com.jakewharton.rxrelay.PublishRelay;
 import rx.Observable;
+import rx.subjects.PublishSubject;
 
 /**
  * Created on 06/05/16.
@@ -41,12 +40,12 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
 
   public AppViewInstallDisplayable() {
     super();
-    installAppRelay = PublishRelay.empty();
+    installAppRelay = PublishSubject.empty();
   }
 
   public AppViewInstallDisplayable(InstallManager installManager, GetApp getApp,
       MinimalAd minimalAd, boolean shouldInstall, TimelineAnalytics timelineAnalytics,
-      AppViewAnalytics appViewAnalytics, PublishRelay installAppRelay,
+      AppViewAnalytics appViewAnalytics, PublishSubject installAppRelay,
       DownloadFactory downloadFactory, AppViewFragment appViewFragment,
       DownloadCompleteAnalytics analytics) {
     super(getApp, appViewAnalytics);
@@ -75,10 +74,10 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
   }
 
   public static AppViewInstallDisplayable newInstance(GetApp getApp, InstallManager installManager,
-      MinimalAd minimalAd, boolean shouldInstall, InstalledRepository installedRepository,
-      DownloadFactory downloadFactory, TimelineAnalytics timelineAnalytics,
-      AppViewAnalytics appViewAnalytics, PublishRelay installAppRelay,
-      AppViewFragment appViewFragment, DownloadCompleteAnalytics analytics) {
+      MinimalAd minimalAd, boolean shouldInstall, DownloadFactory downloadFactory,
+      TimelineAnalytics timelineAnalytics, AppViewAnalytics appViewAnalytics,
+      PublishSubject installAppRelay, AppViewFragment appViewFragment,
+      DownloadCompleteAnalytics analytics) {
     return new AppViewInstallDisplayable(installManager, getApp, minimalAd, shouldInstall,
         timelineAnalytics, appViewAnalytics, installAppRelay, downloadFactory, appViewFragment,
         analytics);
