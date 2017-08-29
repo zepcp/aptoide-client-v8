@@ -93,24 +93,18 @@ public class AptoideDownloadManager {
             == DownloadStatus.COMPLETED);
   }
 
+  /*
   public Observable<Download> getAsListDownload(String md5) {
-    return downloadRepository.getAsList(md5)
-        .map(downloads -> {
-          for (int i = 0; i < downloads.size(); i++) {
-            Download download = downloads.get(i);
-            if (isInvalid(download)) {
-              downloads.remove(i);
-              i--;
-            }
-          }
-          if (downloads.isEmpty()) {
+    return downloadRepository.get(md5)
+        .map(download -> {
+          if (isInvalid(download)) {
             return null;
-          } else {
-            return downloads.get(0);
           }
+          return download;
         })
         .distinctUntilChanged();
   }
+  */
 
   private boolean isInvalid(Download download) {
     return download == null || (download.getOverallDownloadStatus() == DownloadStatus.COMPLETED
@@ -205,14 +199,7 @@ public class AptoideDownloadManager {
   }
 
   private Observable<Download> getNextDownload() {
-    return downloadRepository.getInQueueSortedDownloads()
-        .map(downloads -> {
-          if (downloads == null || downloads.size() <= 0) {
-            return null;
-          } else {
-            return downloads.get(0);
-          }
-        });
+    return downloadRepository.getNextDownloadInQueue();
   }
 
   /**

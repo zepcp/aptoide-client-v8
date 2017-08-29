@@ -163,7 +163,7 @@ public class InstallManager {
   }
 
   public Observable<Install> getInstall(String md5, String packageName, int versioncode) {
-    final Observable<Download> download = aptoideDownloadManager.getAsListDownload(md5);
+    final Observable<Download> download = aptoideDownloadManager.getDownload(md5);
     final Observable<InstallationState> installationState =
         installer.getState(packageName, versioncode);
     final Observable<Install.InstallationType> installationType =

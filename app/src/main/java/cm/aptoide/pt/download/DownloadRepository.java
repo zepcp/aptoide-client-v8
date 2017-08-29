@@ -58,14 +58,18 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         .toList();
   }
 
-  @Override public Observable<List<Download>> getInQueueSortedDownloads() {
-    return accessor.getInQueueSortedDownloads()
-        .flatMapIterable(list -> list)
-        .map(download -> mapFromDatabase(download))
-        .toList();
+  @Override public Observable<Download> getNextDownloadInQueue() {
+    return accessor.getDownloadsInQueue()
+        .first()
+        .map(downloads -> {
+          if (downloads != null && !downloads.isEmpty()) {
+            return mapFromDatabase(downloads.get(0));
+          }
+          return null;
+        });
   }
 
-  public Observable<List<Download>> getAsList(String md5) {
+  @Deprecated public Observable<List<Download>> getAsList(String md5) {
     return accessor.getAsList(md5)
         .observeOn(Schedulers.io())
         .map(downloads -> {

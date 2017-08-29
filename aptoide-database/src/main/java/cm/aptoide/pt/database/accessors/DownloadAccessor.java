@@ -74,7 +74,7 @@ public class DownloadAccessor extends SimpleAccessor<Download> {
         .observeOn(Schedulers.io());
   }
 
-  public Observable<List<Download>> getInQueueSortedDownloads() {
+  public Observable<List<Download>> getDownloadsInQueue() {
     return Observable.fromCallable(() -> database.get())
         .flatMap(realm -> realm.where(Download.class)
             .equalTo("overallDownloadStatus", Download.IN_QUEUE)
@@ -86,6 +86,7 @@ public class DownloadAccessor extends SimpleAccessor<Download> {
         .observeOn(Schedulers.io());
   }
 
+  /*
   public Observable<List<Download>> getAllSorted(Sort sort) {
     return Observable.fromCallable(() -> database.get())
         .flatMap(realm -> realm.where(Download.class)
@@ -96,6 +97,7 @@ public class DownloadAccessor extends SimpleAccessor<Download> {
         .subscribeOn(RealmSchedulers.getScheduler())
         .observeOn(Schedulers.io());
   }
+  */
 
   public Observable<List<Download>> getAsList(String md5) {
     return database.getAsList(Download.class, Download.MD5, md5);

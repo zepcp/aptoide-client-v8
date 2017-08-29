@@ -18,7 +18,7 @@ public interface DownloadRepository {
 
   Observable<List<Download>> getRunningDownloads();
 
-  Observable<List<Download>> getInQueueSortedDownloads();
+  Observable<Download> getNextDownloadInQueue();
 
-  Observable<List<Download>> getAsList(String md5);
+  @Deprecated Observable<List<Download>> getAsList(String md5);
 }
