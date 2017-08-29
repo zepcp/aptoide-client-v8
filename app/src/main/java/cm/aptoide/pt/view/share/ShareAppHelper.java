@@ -104,7 +104,7 @@ public class ShareAppHelper {
         }, CrashReport.getInstance()::log);
   }
 
-  @Partners private void caseDefaultShare(String appName, String wUrl) {
+  private void caseDefaultShare(String appName, String wUrl) {
     if (wUrl != null) {
       Intent sharingIntent = new Intent(Intent.ACTION_SEND);
       sharingIntent.setType("text/plain");

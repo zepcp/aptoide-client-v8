@@ -11,7 +11,6 @@ import android.support.v4.app.Fragment;
 import cm.aptoide.pt.AutoUpdate;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;
-import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
 import cm.aptoide.pt.install.InstallCompletedNotifier;
@@ -137,7 +136,7 @@ public class MainPresenter implements Presenter {
   private void navigate() {
     showHome();
     if (ManagerPreferences.isCheckAutoUpdateEnable(sharedPreferences)
-        && !V8Engine.isAutoUpdateWasCalled()) {
+        && !AptoideApplication.isAutoUpdateWasCalled()) {
       // only call auto update when the app was not on the background
       autoUpdate.execute();
     }
@@ -156,8 +155,8 @@ public class MainPresenter implements Presenter {
   }
 
   private void showHome() {
-    Fragment home = HomeFragment.newInstance(V8Engine.getConfiguration()
-        .getDefaultStore(), StoreContext.home, V8Engine.getConfiguration()
+    Fragment home = HomeFragment.newInstance(AptoideApplication.getConfiguration()
+        .getDefaultStore(), StoreContext.home, AptoideApplication.getConfiguration()
         .getDefaultTheme());
     fragmentNavigator.navigateToWithoutBackSave(home);
   }

@@ -8,7 +8,6 @@ package cm.aptoide.pt.install;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.BuildConfig;
-import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.ads.MinimalAdMapper;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.database.AccessorFactory;
@@ -52,24 +51,24 @@ public class InstallerFactory {
   }
 
   @NonNull private DefaultInstaller getDefaultInstaller(Context context) {
-    return new DefaultInstaller(context.getPackageManager(),
-        getInstallationProvider(((V8Engine) context.getApplicationContext()).getDownloadManager(),
-            context.getApplicationContext()), new FileUtils(), Analytics.getInstance(),
+    return new DefaultInstaller(context.getPackageManager(), getInstallationProvider(
+        ((AptoideApplication) context.getApplicationContext()).getDownloadManager(),
+        context.getApplicationContext()), new FileUtils(), Analytics.getInstance(),
         ToolboxManager.isDebug(
-            ((V8Engine) context.getApplicationContext()).getDefaultSharedPreferences())
+            ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences())
             || BuildConfig.DEBUG,
         RepositoryFactory.getInstalledRepository(context.getApplicationContext()), 180000,
-        ((V8Engine) context.getApplicationContext()).getRootAvailabilityManager(),
-        ((V8Engine) context.getApplicationContext()).getDefaultSharedPreferences(),
+        ((AptoideApplication) context.getApplicationContext()).getRootAvailabilityManager(),
+        ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences(),
         installerAnalytics);
   }
 
   @NonNull private RollbackInstaller getRollbackInstaller(Context context) {
     return new RollbackInstaller(getDefaultInstaller(context),
         RepositoryFactory.getRollbackRepository(context.getApplicationContext()),
-        new RollbackFactory(),
-        getInstallationProvider(((V8Engine) context.getApplicationContext()).getDownloadManager(),
-            context.getApplicationContext()));
+        new RollbackFactory(), getInstallationProvider(
+        ((AptoideApplication) context.getApplicationContext()).getDownloadManager(),
+        context.getApplicationContext()));
   }
 
   @NonNull private DownloadInstallationProvider getInstallationProvider(
@@ -80,7 +79,7 @@ public class InstallerFactory {
         RepositoryFactory.getInstalledRepository(context);
 
     final StoredMinimalAdAccessor minimalAdAccessor = AccessorFactory.getAccessorFor(
-        ((V8Engine) context.getApplicationContext()
+        ((AptoideApplication) context.getApplicationContext()
             .getApplicationContext()).getDatabase(), StoredMinimalAd.class);
 
     return new DownloadInstallationProvider(downloadManager, downloadRepository,

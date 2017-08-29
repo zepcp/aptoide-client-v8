@@ -2,6 +2,9 @@ package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.database.accessors.DownloadAccessor;
+import cm.aptoide.pt.database.realm.Download;
+import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;

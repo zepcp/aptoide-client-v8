@@ -2,8 +2,8 @@ package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.DownloadCompleteAnalytics;
+import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
-import cm.aptoide.pt.downloadmanager.Download;
 
 /**
  * Created by trinkes on 04/01/2017.

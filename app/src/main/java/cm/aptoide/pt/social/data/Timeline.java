@@ -3,10 +3,11 @@ package cm.aptoide.pt.social.data;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;
+import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.download.DownloadFactory;
-import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.preferences.Application;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.timeline.TimelineSocialActionData;
 import java.io.IOException;
@@ -156,8 +157,11 @@ public class Timeline {
         });
   }
 
-  public void clearLoading() {
-    timelinePostsRepository.clearLoading();
+  public Completable setPostRead(String markAsReadUrl, String cardId, CardType cardType) {
+    if (markAsReadUrl != null && !markAsReadUrl.isEmpty()) {
+      return service.setPostRead(markAsReadUrl, cardId, cardType.name());
+    }
+    return Completable.complete();
   }
 }
 

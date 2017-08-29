@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
@@ -97,7 +96,7 @@ public class ProfileStepTwoFragment extends BaseToolbarFragment implements Profi
     super.setupViews();
     final Context applicationContext = getContext().getApplicationContext();
     final AptoideAccountManager accountManager =
-        ((V8Engine) applicationContext).getAccountManager();
+        ((AptoideApplication) applicationContext).getAccountManager();
     ProfileStepTwoPresenter presenter =
         new ProfileStepTwoPresenter(this, accountManager, CrashReport.getInstance(),
             getFragmentNavigator());
