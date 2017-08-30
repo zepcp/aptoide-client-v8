@@ -17,7 +17,6 @@ import cm.aptoide.pt.AutoUpdate;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.actions.PermissionManager;
-import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;

@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.ImageView;
+import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.model.v7.Event;

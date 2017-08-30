@@ -7,6 +7,7 @@ package cm.aptoide.pt.install;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.ads.MinimalAdMapper;
 import cm.aptoide.pt.analytics.Analytics;

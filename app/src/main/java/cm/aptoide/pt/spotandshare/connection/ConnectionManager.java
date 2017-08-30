@@ -258,7 +258,7 @@ public class ConnectionManager implements NetworkHolder {
   public static ConnectionManager getInstance(Context context) {
     if (instance == null) {
       final SharedPreferences defaultSharedPreferences =
-          ((V8Engine) context.getApplicationContext()).getDefaultSharedPreferences();
+          ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences();
       HotspotSSIDCodeMapper hotspotSSIDCodeMapper = new HotspotSSIDCodeMapper();
 
       instance = new ConnectionManager(context, defaultSharedPreferences,

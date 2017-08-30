@@ -31,7 +31,6 @@ import cm.aptoide.pt.actions.PermissionService;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.app.AppBoughtReceiver;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;

@@ -11,6 +11,7 @@ import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;

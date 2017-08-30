@@ -8,6 +8,7 @@ package cm.aptoide.pt.presenter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.AutoUpdate;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;

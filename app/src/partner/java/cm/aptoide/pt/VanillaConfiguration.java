@@ -17,28 +17,31 @@ import lombok.Setter;
 
 public class VanillaConfiguration implements AptoidePreferencesConfiguration {
 
-  @Setter @Getter private BootConfig bootConfig;
-  private static final String PATH_SDCARD =
-      Environment.getExternalStorageDirectory().getAbsolutePath();
+  private static final String PATH_SDCARD = Environment.getExternalStorageDirectory()
+      .getAbsolutePath();
+  private static final String APP_ID = BuildConfig.APPLICATION_ID;
   private static String PATH_CACHE;
   private static final String PATH_CACHE_APKS = PATH_CACHE + "apks/";
   private static final String PATH_CACHE_IMAGES = PATH_CACHE + "icons/";
   private static final String PATH_CACHE_USER_AVATAR = PATH_CACHE + "user_avatar/";
-  private static final String APP_ID = BuildConfig.APPLICATION_ID;
   private static String AUTO_UPDATE_URL;
   private static String DEFAULT_STORE;
   private final SharedPreferences sharedPreferences;
+  @Setter @Getter private BootConfig bootConfig;
 
   VanillaConfiguration(SharedPreferences sharedPreferences, BootConfig bootConfig) {
     this.bootConfig = bootConfig;
     this.sharedPreferences = sharedPreferences;
-    DEFAULT_STORE = bootConfig.getPartner().getStore().getName();
+    DEFAULT_STORE = bootConfig.getPartner()
+        .getStore()
+        .getName();
     PATH_CACHE = PATH_SDCARD + "/." + DEFAULT_STORE + "/";
     AUTO_UPDATE_URL = "http://imgs.aptoide.com/latest_version_" + DEFAULT_STORE + ".xml";
   }
 
   @Override public String getAppId() {
-    return APP_ID.replace(".dev", "").replace(".internal", "");
+    return APP_ID.replace(".dev", "")
+        .replace(".internal", "");
   }
 
   @Override public String getCachePath() {
@@ -58,7 +61,8 @@ public class VanillaConfiguration implements AptoidePreferencesConfiguration {
   }
 
   @Override public String getAccountType() {
-    return APP_ID.replace(".dev", "").replace(".internal", "");
+    return APP_ID.replace(".dev", "")
+        .replace(".internal", "");
   }
 
   @Override public String getAutoUpdateUrl() {
@@ -66,7 +70,9 @@ public class VanillaConfiguration implements AptoidePreferencesConfiguration {
   }
 
   @Override public String getMarketName() {
-    return bootConfig.getPartner().getStore().getLabel();
+    return bootConfig.getPartner()
+        .getStore()
+        .getLabel();
   }
 
   @Override public int getIcon() {
@@ -103,11 +109,13 @@ public class VanillaConfiguration implements AptoidePreferencesConfiguration {
   }
 
   @Override public String getPartnerId() {
-    return String.valueOf(bootConfig.getPartner().getUid());
+    return String.valueOf(bootConfig.getPartner()
+        .getUid());
   }
 
   @Override public String getExtraId() {
-    return String.valueOf(bootConfig.getPartner().getUid());
+    return String.valueOf(bootConfig.getPartner()
+        .getUid());
   }
 
   @Override public boolean isAlwaysUpdate() {
@@ -115,32 +123,43 @@ public class VanillaConfiguration implements AptoidePreferencesConfiguration {
   }
 
   @Override public String getDefaultTheme() {
-    return bootConfig.getPartner().getAppearance().getTheme();
+    return bootConfig.getPartner()
+        .getAppearance()
+        .getTheme();
   }
 
   @Override public int getDefaultThemeRes() {
-    return StoreTheme.get(getDefaultTheme()).getThemeResource();
+    return StoreTheme.get(getDefaultTheme())
+        .getThemeResource();
   }
 
   @Override public String getFeedbackEmail() {
-    return bootConfig.getPartner().getFeedback().getEmail();
+    return bootConfig.getPartner()
+        .getFeedback()
+        .getEmail();
   }
 
   @Override public boolean isLoginAvailable(SocialLogin loginType) {
     switch (loginType) {
       case FACEBOOK:
-        return bootConfig.getPartner().getSocial().getLogin().isFacebook();
+        return bootConfig.getPartner()
+            .getSocial()
+            .getLogin()
+            .isFacebook();
       case GOOGLE:
     }
     return false;
   }
 
   @Override public String getPartnerDimension() {
-    return bootConfig.getPartner().getStore().getName();
+    return bootConfig.getPartner()
+        .getStore()
+        .getName();
   }
 
   @Override public String getVerticalDimension() {
-    return bootConfig.getPartner().getType();
+    return bootConfig.getPartner()
+        .getType();
   }
 
   @Override public boolean isCreateStoreAndSetUserPrivacyAvailable() {

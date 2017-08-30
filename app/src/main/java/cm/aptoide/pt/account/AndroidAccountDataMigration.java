@@ -3,7 +3,6 @@ package cm.aptoide.pt.account;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 import cm.aptoide.pt.AptoideApplication;

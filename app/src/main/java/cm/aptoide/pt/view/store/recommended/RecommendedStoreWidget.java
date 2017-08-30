@@ -10,6 +10,7 @@ import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.networking.image.ImageLoader;
+import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.design.ShowMessage;

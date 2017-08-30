@@ -6,8 +6,8 @@
 package cm.aptoide.pt.view.updates.rollback;
 
 import android.content.Context;
-import cm.aptoide.pt.R;
 import cm.aptoide.pt.AptoideApplication;
+import cm.aptoide.pt.R;
 import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.download.DownloadFactory;
 import cm.aptoide.pt.downloadmanager.Download;

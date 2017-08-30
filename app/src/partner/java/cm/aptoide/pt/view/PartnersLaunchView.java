@@ -7,8 +7,8 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.widget.ImageView;
+import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.V8Engine;
 import cm.aptoide.pt.VanillaConfiguration;
 import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.logger.Logger;
@@ -61,7 +61,7 @@ public class PartnersLaunchView extends ActivityView {
    */
   private void disableWizard() {
     final SharedPreferences sharedPreferences =
-        ((V8Engine) getApplicationContext()).getDefaultSharedPreferences();
+        ((AptoideApplication) getApplicationContext()).getDefaultSharedPreferences();
     final SharedPreferences securePreferences =
         SecurePreferencesImplementation.getInstance(getApplicationContext(), sharedPreferences);
     SecurePreferences.setWizardAvailable(false, securePreferences);
@@ -78,7 +78,8 @@ public class PartnersLaunchView extends ActivityView {
         .isEnable();
     if (usesSplashScreen) {
       setContentView(R.layout.partners_launch);
-      setTheme(Application.getConfiguration().getDefaultThemeRes());
+      setTheme(Application.getConfiguration()
+          .getDefaultThemeRes());
       String url;
       if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
         url = ((VanillaConfiguration) Application.getConfiguration()).getBootConfig()
@@ -93,7 +94,8 @@ public class PartnersLaunchView extends ActivityView {
             .getSplash()
             .getPortrait();
       }
-      ImageLoader.with(this).load(url, (ImageView) findViewById(R.id.splashscreen));
+      ImageLoader.with(this)
+          .load(url, (ImageView) findViewById(R.id.splashscreen));
     }
   }
 
@@ -106,20 +108,21 @@ public class PartnersLaunchView extends ActivityView {
         + BuildConfig.APTOIDE_WEB_SERVICES_V7_HOST
         + "/api/7/client/boot/")
         .addConverterFactory(GsonConverterFactory.create())
-        .client(((V8Engine) context.getApplicationContext()).getDefaultClient())
+        .client(((AptoideApplication) context.getApplicationContext()).getDefaultClient())
         .build();
     Call<RemoteBootConfig> call = retrofit.create(BootConfigServices.class)
-        .getRemoteBootConfig(Application.getConfiguration().getAppId(),
-            Application.getConfiguration().getVerticalDimension(),
-            Application.getConfiguration().getPartnerId(),
-            String.valueOf(BuildConfig.VERSION_CODE));
+        .getRemoteBootConfig(Application.getConfiguration()
+            .getAppId(), Application.getConfiguration()
+            .getVerticalDimension(), Application.getConfiguration()
+            .getPartnerId(), String.valueOf(BuildConfig.VERSION_CODE));
     call.enqueue(new Callback<RemoteBootConfig>() {
       @Override
       public void onResponse(Call<RemoteBootConfig> call, Response<RemoteBootConfig> response) {
         if (response.body() != null) {
           BootConfigJSONUtils.saveRemoteBootConfig(context, response.body());
           ((VanillaConfiguration) Application.getConfiguration()).setBootConfig(
-              BootConfigJSONUtils.getSavedRemoteBootConfig(context).getData());
+              BootConfigJSONUtils.getSavedRemoteBootConfig(context)
+                  .getData());
         }
         handleSplashScreenTimer();
       }

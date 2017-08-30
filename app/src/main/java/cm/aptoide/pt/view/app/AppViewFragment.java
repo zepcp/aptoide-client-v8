@@ -69,7 +69,6 @@ import cm.aptoide.pt.dataprovider.model.v7.Malware;
 import cm.aptoide.pt.dataprovider.model.v7.Obb;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
-import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.download.DownloadFactory;
 import cm.aptoide.pt.install.AppAction;
 import cm.aptoide.pt.install.InstalledRepository;
@@ -80,6 +79,7 @@ import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.spotandshare.SpotAndShareAnalytics;
+import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
@@ -91,7 +91,6 @@ import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.SimpleSubscriber;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.utils.q.QManager;
-import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.view.ThemeUtils;
 import cm.aptoide.pt.view.account.AccountNavigator;
 import cm.aptoide.pt.view.app.displayable.AppViewDescriptionDisplayable;
@@ -139,10 +138,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private final String key_appId = "appId";
   private final String key_packageName = "packageName";
   private final String key_uname = "uname";
-
-  @Partners private String packageName;
-  @Partners private String appName;
-  @Partners private String wUrl;
 
   private AppViewHeader header;
   private long appId;
@@ -285,27 +280,27 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     qManager = ((AptoideApplication) getContext().getApplicationContext()).getQManager();
     purchaseBundleMapper =
         ((AptoideApplication) getContext().getApplicationContext()).getPurchaseBundleMapper();
-    accountManager =
+    AptoideAccountManager accountManager =
         ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
-    accountNavigator = new AccountNavigator(getFragmentNavigator(), accountManager);
-    permissionManager = new PermissionManager();
+
+    AccountNavigator accountNavigator =
+        new AccountNavigator(getFragmentNavigator(), accountManager);
+
     installManager = ((AptoideApplication) getContext().getApplicationContext()).getInstallManager(
         InstallerFactory.ROLLBACK);
-    bodyInterceptor =
+    BodyInterceptor bodyInterceptor =
         ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
     billingAnalytics =
         ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
     final TokenInvalidator tokenInvalidator =
         ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
+
     timelineAnalytics = new TimelineAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()), bodyInterceptor,
         httpClient, converterFactory, tokenInvalidator, AptoideApplication.getConfiguration()
         .getAppId(),
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
-    socialRepository =
-        new SocialRepository(accountManager, bodyInterceptor, converterFactory, httpClient,
-            timelineAnalytics, tokenInvalidator,
-            ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
+
     appRepository = RepositoryFactory.getAppRepository(getContext(),
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
@@ -329,7 +324,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     installAppSubject = PublishSubject.create();
     shareAppHelper =
         new ShareAppHelper(installedRepository, accountManager, accountNavigator, getActivity(),
-            spotAndShareAnalytics, timelineAnalytics, installAppRelay,
+            spotAndShareAnalytics, timelineAnalytics, installAppSubject,
             ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
     downloadFactory = new DownloadFactory();
     appViewAnalytics = new AppViewAnalytics(Analytics.getInstance(),
