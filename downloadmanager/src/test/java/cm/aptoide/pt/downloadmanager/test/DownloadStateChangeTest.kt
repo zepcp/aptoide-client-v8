@@ -9,6 +9,7 @@ import cm.aptoide.pt.downloadmanager.*
 import cm.aptoide.pt.downloadmanager.mock.MockDownloadCreator
 import cm.aptoide.pt.utils.FileUtils
 import com.liulishuo.filedownloader.FileDownloader
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -17,30 +18,40 @@ import org.mockito.Mockito.`when` as whenever
 
 class DownloadStateChangeTest {
 
-    private var downloadRepository: DownloadRepository? = null
+    private var downloadManager: AptoideDownloadManager? = null
     private var downloadCreator: MockDownloadCreator? = null
 
     @Before
     fun preparationBeforeEachMethod() {
-        downloadRepository = mock<DownloadRepository>(DownloadRepository::class.java)
         downloadCreator = MockDownloadCreator()
+
+        val downloadRepository = mock<DownloadRepository>(DownloadRepository::class.java)
+        val cacheManager = mock(CacheManager::class.java)
+        val fileUtils = FileUtils()
+        val analytics = mock(Analytics::class.java)
+        val fileDownloader = mock(FileDownloader::class.java)
+        val paths = mock(FilePaths::class.java)
+        val crashLogger = mock(CrashLogger::class.java)
+
+        downloadManager = AptoideDownloadManager(downloadRepository, cacheManager, fileUtils, analytics, fileDownloader, paths, crashLogger)
+
     }
 
     @Test
     fun fromIdleToStarted() {
-        var cacheManager = mock(CacheManager::class.java)
-        var fileUtils = FileUtils()
-        var analytics = mock(Analytics::class.java)
-        var fileDownloader = mock(FileDownloader::class.java)
-        var paths = mock(FilePaths::class.java)
-        var crashLogger = mock(CrashLogger::class.java)
+        // prepare
+        val download = downloadCreator?.createDownload()
 
-        var downloadManager = AptoideDownloadManager(downloadRepository, cacheManager, fileUtils, analytics, fileDownloader, paths, crashLogger)
-        assertTrue("Download Manager, after creation, should not be downloading", !downloadManager.isDownloading)
+        // execute
+        val observableDownload = downloadManager?.startDownload(download)
+        val testSubscriber = rx.observers.TestSubscriber<Download>()
+        observableDownload?.subscribe(testSubscriber)
 
+        // assert
+        assertTrue(downloadManager?.isDownloading!!)
+        val downloads = testSubscriber.onNextEvents
+        assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
 
-        downloadManager.startDownload(downloadCreator?.createDownload())
-        
     }
 
     @Test

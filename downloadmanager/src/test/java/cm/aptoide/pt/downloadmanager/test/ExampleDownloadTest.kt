@@ -20,13 +20,13 @@ class ExampleDownloadTest {
 
     @org.junit.Test
     fun sampleDownloadCreation() {
-        org.mockito.Mockito.`when`(downloadRepository?.get(0)).thenReturn(downloadCreator?.createDownload())
-        var testSubscriber = rx.observers.TestSubscriber<Download>()
-        var observableDownload = downloadRepository?.get(0)
+        org.mockito.Mockito.`when`(downloadRepository?.get(0)).thenReturn(downloadCreator?.createObservableDownload())
+        val testSubscriber = rx.observers.TestSubscriber<Download>()
+        val observableDownload = downloadRepository?.get(0)
         observableDownload?.subscribe(testSubscriber)
 
         testSubscriber.assertNoErrors()
-        var resultDownload = testSubscriber.onNextEvents
+        val resultDownload = testSubscriber.onNextEvents
         org.junit.Assert.assertEquals("abcd", resultDownload[0].md5)
     }
 }
