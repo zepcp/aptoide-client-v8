@@ -34,7 +34,6 @@ class DownloadStateChangeTest {
         val crashLogger = mock(CrashLogger::class.java)
 
         downloadManager = AptoideDownloadManager(downloadRepository, cacheManager, fileUtils, analytics, fileDownloader, paths, crashLogger)
-
     }
 
     @Test
@@ -51,12 +50,22 @@ class DownloadStateChangeTest {
         assertTrue(downloadManager?.isDownloading!!)
         val downloads = testSubscriber.onNextEvents
         assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
-
     }
 
     @Test
     fun formStartedToPaused() {
+        // prepare
+        val download = downloadCreator?.createDownload()
 
+        // execute
+        val observableDownload = downloadManager?.startDownload(download)
+        val testSubscriber = rx.observers.TestSubscriber<Download>()
+        observableDownload?.subscribe(testSubscriber)
+
+        // assert
+        assertTrue(downloadManager?.isDownloading!!)
+        val downloads = testSubscriber.onNextEvents
+        assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
     }
 
     @Test

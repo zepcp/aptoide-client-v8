@@ -30,6 +30,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
+import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.actions.PermissionManager;
@@ -73,7 +74,6 @@ import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.networking.image.ImageLoader;
-import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.spotandshare.SpotAndShareAnalytics;
@@ -180,6 +180,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private boolean suggestedShowing;
   private List<String> keywords;
   private BillingIdResolver billingIdResolver;
+  private String marketName;
+  private String defaultTheme;
   private CrashReport crashReport;
 
   public static AppViewFragment newInstanceUname(String uname) {
@@ -275,6 +277,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
     handleSavedInstance(savedInstanceState);
 
+    defaultTheme = ((AptoideApplication) getContext().getApplicationContext()).getDefaultTheme();
+    marketName = ((AptoideApplication) getContext().getApplicationContext()).getMarketName();
     billingIdResolver =
         ((AptoideApplication) getContext().getApplicationContext()).getBillingIdResolver();
     adMapper = new MinimalAdMapper();
@@ -298,8 +302,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
     timelineAnalytics = new TimelineAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()), bodyInterceptor,
-        httpClient, converterFactory, tokenInvalidator, AptoideApplication.getConfiguration()
-        .getAppId(),
+        httpClient, converterFactory, tokenInvalidator, BuildConfig.APPLICATION_ID,
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
 
     appRepository = RepositoryFactory.getAppRepository(getContext(),
@@ -326,8 +329,9 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     shareAppHelper =
         new ShareAppHelper(installedRepository, accountManager, accountNavigator, getActivity(),
             spotAndShareAnalytics, timelineAnalytics, installAppSubject,
-            ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
-    downloadFactory = new DownloadFactory();
+            ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
+            ((AptoideApplication) getContext().getApplicationContext()).isCreateStoreUserPrivacyEnabled());
+    downloadFactory = new DownloadFactory(marketName);
     appViewAnalytics = new AppViewAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()));
     storeAnalytics =
@@ -374,10 +378,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     header = null;
     suggestedShowing = false;
     if (storeTheme != null) {
-      ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(
-          AptoideApplication.getConfiguration()
-              .getDefaultTheme()));
-      ThemeUtils.setAptoideTheme(getActivity());
+      ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(defaultTheme));
+      ThemeUtils.setAptoideTheme(getActivity(), defaultTheme);
     }
   }
 
@@ -699,8 +701,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     setupShare(getApp);
     if (openType == OpenType.OPEN_WITH_INSTALL_POPUP) {
       openType = null;
-      GenericDialogs.createGenericOkCancelMessage(getContext(), Application.getConfiguration()
-          .getMarketName(), getContext().getString(R.string.installapp_alrt, appName))
+      GenericDialogs.createGenericOkCancelMessage(getContext(), marketName,
+          getContext().getString(R.string.installapp_alrt, appName))
           .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
           .subscribe(new SimpleSubscriber<GenericDialogs.EResponse>() {
             @Override public void onNext(GenericDialogs.EResponse eResponse) {

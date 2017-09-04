@@ -37,6 +37,8 @@ public abstract class FragmentView extends LeakFragment implements View {
   private Presenter presenter;
   private NavigationProvider navigationProvider;
   private SharedPreferences sharedPreferences;
+  private String defaultStore;
+  private String defaultTheme;
 
   public FragmentNavigator getFragmentNavigator() {
     return navigationProvider.getFragmentNavigator();
@@ -48,7 +50,7 @@ public abstract class FragmentView extends LeakFragment implements View {
 
   public FragmentNavigator getFragmentChildNavigator(@IdRes int containerId) {
     return new FragmentNavigator(getChildFragmentManager(), containerId, android.R.anim.fade_in,
-        android.R.anim.fade_out, sharedPreferences);
+        android.R.anim.fade_out, sharedPreferences, defaultStore, defaultTheme);
   }
 
   @Override public void onAttach(Activity activity) {
@@ -63,6 +65,8 @@ public abstract class FragmentView extends LeakFragment implements View {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    defaultStore = ((AptoideApplication) getContext().getApplicationContext()).getDefaultStore();
+    defaultTheme = ((AptoideApplication) getContext().getApplicationContext()).getDefaultTheme();
     sharedPreferences =
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences();
     ScreenTrackingUtils.getInstance()

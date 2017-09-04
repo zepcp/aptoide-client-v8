@@ -19,7 +19,6 @@ import cm.aptoide.pt.dataprovider.model.v7.listapp.File;
 import cm.aptoide.pt.downloadmanager.Download;
 import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.install.AppAction;
-import cm.aptoide.pt.preferences.Application;
 import cm.aptoide.pt.social.data.AppUpdate;
 import cm.aptoide.pt.utils.IdUtils;
 import cm.aptoide.pt.view.updates.UpdateDisplayable;
@@ -33,6 +32,11 @@ public class DownloadFactory {
   private static final String UPDATE_ACTION = "?action=update";
   private static final String INSTALL_ACTION = "?action=install";
   private static final String DOWNGRADE_ACTION = "?action=downgrade";
+  private final String marketName;
+
+  public DownloadFactory(String marketName) {
+    this.marketName = marketName;
+  }
 
   public Download create(GetAppMeta.App appToDownload, DownloadAction downloadAction)
       throws IllegalArgumentException {
@@ -306,8 +310,7 @@ public class DownloadFactory {
 
   public cm.aptoide.pt.downloadmanager.Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
     cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
-    download.setAppName(Application.getConfiguration()
-        .getMarketName());
+    download.setAppName(marketName);
     download.setMd5(autoUpdateInfo.md5);
     download.setVersionCode(autoUpdateInfo.vercode);
     //download.setVersionName(null); // no info available

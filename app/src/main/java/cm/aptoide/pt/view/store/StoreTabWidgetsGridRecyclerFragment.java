@@ -58,9 +58,11 @@ public abstract class StoreTabWidgetsGridRecyclerFragment extends StoreTabGridRe
   private QManager qManager;
   private TokenInvalidator tokenInvalidator;
   private StoreAnalytics storeAnalytics;
+  private String partnerId;
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    partnerId = ((AptoideApplication) getContext().getApplicationContext()).getPartnerId();
     sharedPreferences =
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences();
     qManager = ((AptoideApplication) getContext().getApplicationContext()).getQManager();
@@ -97,8 +99,7 @@ public abstract class StoreTabWidgetsGridRecyclerFragment extends StoreTabGridRe
               StoreUtils.getStoreCredentialsFromUrl(url, storeCredentialsProvider), refresh,
               idsRepository.getUniqueIdentifier(),
               AdNetworkUtils.isGooglePlayServicesAvailable(getContext().getApplicationContext()),
-              AptoideApplication.getConfiguration()
-                  .getPartnerId(), accountManager.isAccountMature(), bodyInterceptor, httpClient,
+              partnerId, accountManager.isAccountMature(), bodyInterceptor, httpClient,
               converterFactory, qManager.getFilters(ManagerPreferences.getHWSpecsFilter(
                   ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences())),
               tokenInvalidator, sharedPreferences, getContext().getResources(),

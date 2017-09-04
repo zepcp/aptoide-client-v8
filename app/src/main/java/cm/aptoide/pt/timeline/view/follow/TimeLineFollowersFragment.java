@@ -32,6 +32,7 @@ public class TimeLineFollowersFragment extends TimeLineFollowFragment {
   private OkHttpClient httpClient;
   private Converter.Factory converterFactory;
   private TokenInvalidator tokenInvalidator;
+  private String defaultTheme;
 
   public static TimeLineFollowFragment newInstanceUsingUser(Long id, String storeTheme,
       String title) {
@@ -67,6 +68,7 @@ public class TimeLineFollowersFragment extends TimeLineFollowFragment {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    defaultTheme = ((AptoideApplication) getContext().getApplicationContext()).getDefaultTheme();
     baseBodyInterceptor =
         ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
@@ -92,7 +94,7 @@ public class TimeLineFollowersFragment extends TimeLineFollowFragment {
   }
 
   @Override protected Displayable createUserDisplayable(GetFollowers.TimelineUser user) {
-    return new FollowUserDisplayable(user, false);
+    return new FollowUserDisplayable(user, false, defaultTheme);
   }
 
   @Override
