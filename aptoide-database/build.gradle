@@ -4,6 +4,7 @@
  */
 
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 apply plugin: 'realm-android'
 apply plugin: 'me.tatarka.retrolambda'
 retrolambda {
@@ -76,4 +77,8 @@ dependencies {
   provided "org.projectlombok:lombok:${LOMBOK_VERSION}"
   // Just for lombok not to complain
   provided "org.glassfish:javax.annotation:${JAVAX_ANNOTATIONS_VERSION}"
+  compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+}
+repositories {
+  mavenCentral()
 }

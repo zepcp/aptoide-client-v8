@@ -2,13 +2,12 @@ package cm.aptoide.pt;
 
 import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
-import lombok.ToString;
 
 /**
  * Created by trinkes on 10/04/2017.
  */
 
-public @ToString(of = { "state", "isIndeterminate" }) class Install {
+public class Install {
   private final int progress;
   private final InstallationStatus state;
   private final InstallationType type;
@@ -113,5 +112,17 @@ public @ToString(of = { "state", "isIndeterminate" }) class Install {
 
   public enum InstallationType {
     INSTALLED, INSTALL, UPDATE, DOWNGRADE
+  }
+
+  @Override public String toString() {
+    return "Install{"
+        + "state="
+        + state
+        + ", isIndeterminate="
+        + isIndeterminate
+        + ", appName='"
+        + appName
+        + '\''
+        + '}';
   }
 }

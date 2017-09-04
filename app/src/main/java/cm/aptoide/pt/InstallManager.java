@@ -149,10 +149,10 @@ public class InstallManager {
         .first()
         .map(storedDownload -> updateDownloadAction(download, storedDownload))
         .retryWhen(errors -> createDownloadAndRetry(errors, download))
-        .doOnNext(downloadProgress -> {
-          if (downloadProgress.getOverallDownloadStatus() == DownloadStatus.ERROR) {
-            downloadProgress.setOverallDownloadStatus(DownloadStatus.INVALID_STATUS);
-            downloadRepository.save(downloadProgress);
+        .doOnNext(download1 -> {
+          if (download1.getOverallDownloadStatus() == DownloadStatus.ERROR) {
+            download1.setOverallDownloadStatus(DownloadStatus.INVALID_STATUS);
+            downloadRepository.save(download1);
           }
         })
         .flatMap(download1 -> getInstall(download.getMd5(), download.getPackageName(),
@@ -163,7 +163,12 @@ public class InstallManager {
   }
 
   public Observable<Install> getInstall(String md5, String packageName, int versioncode) {
-    final Observable<Download> download = aptoideDownloadManager.getDownload(md5);
+    final Observable<Download> download = aptoideDownloadManager.getDownload(md5).onErrorResumeNext(err -> {
+      if(err instanceof DownloadNotFoundException){
+        return Observable.just(null);
+      }
+      return Observable.error(err);
+    });
     final Observable<InstallationState> installationState =
         installer.getState(packageName, versioncode);
     final Observable<Install.InstallationType> installationType =

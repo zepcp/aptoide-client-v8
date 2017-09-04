@@ -103,6 +103,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
   private DownloadFactory downloadFactory;
   private PermissionService permissionService;
   private PermissionManager permissionManager;
+  private CrashReport crashReport;
 
   public AppViewInstallWidget(View itemView) {
     super(itemView);
@@ -134,6 +135,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
   @Override public void bindView(AppViewInstallDisplayable displayable) {
     this.displayable = displayable;
+    crashReport = CrashReport.getInstance();
     this.displayable.setInstallButton(actionButton);
 
     final OkHttpClient httpClient =
@@ -195,8 +197,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
         .observeOn(AndroidSchedulers.mainThread())
         .doOnNext(installationProgress -> updateUi(displayable, installationProgress, true, getApp))
         .subscribe(viewUpdated -> {
-        }, throwable -> CrashReport.getInstance()
-            .log(throwable)));
+        }, throwable -> crashReport.log(throwable)));
 
     //listen ui events
     compositeSubscription.add(displayable.getInstallState()
@@ -205,8 +206,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
         .doOnNext(
             installationProgress -> updateUi(displayable, installationProgress, false, getApp))
         .subscribe(viewUpdated -> {
-        }, throwable -> CrashReport.getInstance()
-            .log(throwable)));
+        }, throwable -> crashReport.log(throwable)));
 
     if (isThisTheLatestVersionAvailable(currentApp, getApp.getNodes()
         .getVersions())) {
@@ -284,7 +284,6 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
   @NonNull private void updateUninstalledUi(AppViewInstallDisplayable displayable, GetApp getApp,
       boolean isSetup, Install.InstallationType installationType) {
-
     GetAppMeta.App app = getApp.getNodes()
         .getMeta()
         .getData();
@@ -438,8 +437,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                           .subscribe(progress -> {
                             // TODO: 12/07/2017 this code doesnt run
                             Logger.d(TAG, "Installing");
-                          }, throwable -> CrashReport.getInstance()
-                              .log(throwable)));
+                          }, throwable -> crashReport.log(throwable)));
                   Analytics.Rollback.downgradeDialogContinue();
                 } else {
                   Analytics.Rollback.downgradeDialogCancel();
@@ -550,13 +548,12 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                 });
           })
           .observeOn(AndroidSchedulers.mainThread())
-          .subscribe(progress -> {
-          }, err -> {
+          .subscribe(download -> Logger.v(TAG,
+              String.format("download progress: %s%", download.getOverallProgress())), err -> {
             if (err instanceof SecurityException) {
               ShowMessage.asSnack(v, R.string.needs_permission_to_fs);
             }
-            CrashReport.getInstance()
-                .log(err);
+            crashReport.log(err);
           }));
     };
 
@@ -599,8 +596,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
     GenericDialogs.createGenericOkMessage(getContext(), title, message)
         .subscribeOn(AndroidSchedulers.mainThread())
         .subscribe(eResponse -> {
-        }, throwable -> CrashReport.getInstance()
-            .log(throwable));
+        }, throwable -> crashReport.log(throwable));
   }
 
   private void setupDownloadControls(GetAppMeta.App app, boolean isSetup,
@@ -642,8 +638,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                 .toObservable()
                 .doOnSubscribe(() -> setupEvents(download)))
             .subscribe(downloadProgress -> Logger.d(TAG, "Installing"),
-                err -> CrashReport.getInstance()
-                    .log(err)));
+                err -> crashReport.log(err)));
       });
     }
   }

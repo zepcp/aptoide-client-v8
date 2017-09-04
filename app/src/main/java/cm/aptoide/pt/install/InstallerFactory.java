@@ -52,16 +52,19 @@ public class InstallerFactory {
   }
 
   @NonNull private DefaultInstaller getDefaultInstaller(Context context) {
+    final AptoideApplication applicationContext =
+        (AptoideApplication) context.getApplicationContext();
+
     return new DefaultInstaller(context.getPackageManager(), getInstallationProvider(
-        ((AptoideApplication) context.getApplicationContext()).getDownloadManager(),
+        applicationContext.getDownloadManager(),
         context.getApplicationContext()), new FileUtils(), Analytics.getInstance(),
         ToolboxManager.isDebug(
-            ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences())
+            applicationContext.getDefaultSharedPreferences())
             || BuildConfig.DEBUG,
         RepositoryFactory.getInstalledRepository(context.getApplicationContext()), 180000,
-        ((AptoideApplication) context.getApplicationContext()).getRootAvailabilityManager(),
-        ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences(),
-        installerAnalytics);
+        applicationContext.getRootAvailabilityManager(),
+        applicationContext.getDefaultSharedPreferences(),
+        installerAnalytics, BuildConfig.CONTENT_AUTHORITY );
   }
 
   @NonNull private RollbackInstaller getRollbackInstaller(Context context) {

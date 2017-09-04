@@ -4,6 +4,7 @@
  */
 
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 apply plugin: 'me.tatarka.retrolambda'
 
 retrolambda {
@@ -74,4 +75,8 @@ dependencies {
   compile "io.reactivex:rxjava:${RXJAVA_VERSION}"
   compile "nl.littlerobots.rxlint:rxlint:${Rx_lint_version}"
   compile "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
+  compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+}
+repositories {
+  mavenCentral()
 }

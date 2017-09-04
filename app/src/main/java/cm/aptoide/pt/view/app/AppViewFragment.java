@@ -50,12 +50,9 @@ import cm.aptoide.pt.billing.view.PaymentActivity;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
-import cm.aptoide.pt.database.accessors.RollbackAccessor;
 import cm.aptoide.pt.database.accessors.ScheduledAccessor;
-import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
 import cm.aptoide.pt.database.realm.MinimalAd;
-import cm.aptoide.pt.database.realm.Rollback;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
@@ -65,6 +62,7 @@ import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.dataprovider.model.v7.Group;
+import cm.aptoide.pt.dataprovider.model.v7.ListApps;
 import cm.aptoide.pt.dataprovider.model.v7.Malware;
 import cm.aptoide.pt.dataprovider.model.v7.Obb;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
@@ -141,7 +139,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   private AppViewHeader header;
   private long appId;
-  @Getter private String packageName;
+  private String packageName;
   private OpenType openType;
   private String storeTheme;
 
@@ -158,8 +156,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private String md5;
   private String uname;
   private Menu menu;
-  @Getter private String appName;
-  @Getter private String wUrl;
+  private String appName;
+  private String wUrl;
   private GetAppMeta.App app;
   private Group group;
   private AppAction appAction = AppAction.OPEN;
@@ -182,6 +180,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private boolean suggestedShowing;
   private List<String> keywords;
   private BillingIdResolver billingIdResolver;
+  private CrashReport crashReport;
 
   public static AppViewFragment newInstanceUname(String uname) {
     Bundle bundle = new Bundle();
@@ -271,6 +270,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    crashReport = CrashReport.getInstance();
 
     handleSavedInstance(savedInstanceState);
 
@@ -425,12 +426,9 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
             setupAppView(getApp);
           }, throwable -> {
             finishLoading(throwable);
-            CrashReport.getInstance()
-                .log(key_appId, String.valueOf(appId));
-            CrashReport.getInstance()
-                .log(key_packageName, String.valueOf(packageName));
-            CrashReport.getInstance()
-                .log(key_uname, uname);
+            crashReport.log(key_appId, String.valueOf(appId));
+            crashReport.log(key_packageName, String.valueOf(packageName));
+            crashReport.log(key_uname, uname);
           });
     } else {
       Logger.d(TAG, "loading app info using app package name");
@@ -558,8 +556,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
             getContext().getString(R.string.remote_install_menu_title),
             getContext().getString(R.string.install_on_tv_mobile_error))
             .subscribe(__ -> {
-            }, err -> CrashReport.getInstance()
-                .log(err));
+            }, err -> crashReport.log(err));
       } else {
         DialogFragment newFragment = RemoteInstallDialog.newInstance(appId);
         newFragment.show(getActivity().getSupportFragmentManager(),
@@ -675,13 +672,13 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     installAction(packageName, app.getFile()
         .getVercode()).observeOn(AndroidSchedulers.mainThread())
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe(appAction -> {
-          AppViewFragment.this.appAction = appAction;
+        .subscribe(installAction -> {
+          AppViewFragment.this.appAction = installAction;
           MenuItem item = menu.findItem(R.id.menu_schedule);
           if (item != null) {
-            showHideOptionsMenu(item, appAction != AppAction.OPEN);
+            showHideOptionsMenu(item, installAction != AppAction.OPEN);
           }
-          if (appAction != AppAction.INSTALL) {
+          if (installAction != AppAction.INSTALL) {
             setUnInstallMenuOptionVisible(() -> new PermissionManager().requestDownloadAccess(
                 (PermissionService) getContext())
                 .flatMap(success -> installManager.uninstall(packageName, app.getFile()
@@ -693,14 +690,11 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
           } else {
             setUnInstallMenuOptionVisible(null);
           }
-        }, err -> {
-          CrashReport.getInstance()
-              .log(err);
-        });
+        }, err -> crashReport.log(err));
 
     header.setup(getApp);
     clearDisplayables().addDisplayables(setupDisplayables(getApp), true);
-    setupObservables(getApp);
+    //setupObservables(getApp);
     showHideOptionsMenu(true);
     setupShare(getApp);
     if (openType == OpenType.OPEN_WITH_INSTALL_POPUP) {
@@ -751,26 +745,20 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   public Observable<AppAction> installAction(String packageName, int versionCode) {
     return installManager.getInstall(md5, packageName, versionCode)
-        .map(installationProgress -> installationProgress.getType())
+        .map(install -> install.getType())
         .map(installationType -> {
-          AppAction action;
           switch (installationType) {
             case INSTALLED:
-              action = AppAction.OPEN;
-              break;
+              return AppAction.OPEN;
             case INSTALL:
-              action = AppAction.INSTALL;
-              break;
+              return AppAction.INSTALL;
             case UPDATE:
-              action = AppAction.UPDATE;
-              break;
+              return AppAction.UPDATE;
             case DOWNGRADE:
-              action = AppAction.DOWNGRADE;
-              break;
+              return AppAction.DOWNGRADE;
             default:
-              action = AppAction.INSTALL;
+              return AppAction.INSTALL;
           }
-          return action;
         });
   }
 
@@ -820,40 +808,36 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     return displayables;
   }
 
-  private void setupObservables(GetApp getApp) {
-
-    // ??
-
-    final long storeId = getApp.getNodes()
-        .getMeta()
-        .getData()
-        .getStore()
-        .getId();
-
-    final StoreAccessor storeAccessor = AccessorFactory.getAccessorFor(
-        ((AptoideApplication) getContext().getApplicationContext()
-            .getApplicationContext()).getDatabase(), Store.class);
-    storeAccessor.getAll()
-        .flatMapIterable(list -> list)
-        .filter(store -> store != null && store.getStoreId() == storeId)
-        .observeOn(AndroidSchedulers.mainThread())
-        .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe(store -> {
-          getAdapter().notifyDataSetChanged();
-        });
-
-    final RollbackAccessor rollbackAccessor = AccessorFactory.getAccessorFor(
-        ((AptoideApplication) getContext().getApplicationContext()
-            .getApplicationContext()).getDatabase(), Rollback.class);
-    rollbackAccessor.getAll()
-        .observeOn(AndroidSchedulers.mainThread())
-        .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe(rollbacks -> {
-          getAdapter().notifyDataSetChanged();
-        });
-
-    // TODO: 27-05-2016 neuro install actions, not present in v7
-  }
+  //@Deprecated // FIXME un-used data fetched from accessors
+  //private void setupObservables(GetApp getApp) {
+  //  final long storeId = getApp.getNodes()
+  //      .getMeta()
+  //      .getData()
+  //      .getStore()
+  //      .getId();
+  //
+  //  final StoreAccessor storeAccessor = AccessorFactory.getAccessorFor(
+  //      ((AptoideApplication) getContext().getApplicationContext()
+  //          .getApplicationContext()).getDatabase(), Store.class);
+  //
+  //  storeAccessor.getAll()
+  //      .flatMapIterable(list -> list)
+  //      .filter(store -> store != null && store.getStoreId() == storeId)
+  //      .observeOn(AndroidSchedulers.mainThread())
+  //      .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
+  //      .subscribe(store -> getAdapter().notifyDataSetChanged());
+  //
+  //  final RollbackAccessor rollbackAccessor = AccessorFactory.getAccessorFor(
+  //      ((AptoideApplication) getContext().getApplicationContext()
+  //          .getApplicationContext()).getDatabase(), Rollback.class);
+  //
+  //  rollbackAccessor.getAll()
+  //      .observeOn(AndroidSchedulers.mainThread())
+  //      .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
+  //      .subscribe(rollbacks -> getAdapter().notifyDataSetChanged());
+  //
+  //  // TODO: 27-05-2016 neuro install actions, not present in v7
+  //}
 
   private void showHideOptionsMenu(boolean visible) {
     for (int i = 0; i < menu.size(); i++) {
@@ -876,8 +860,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   private boolean isMediaAvailable(GetAppMeta.Media media) {
     if (media != null) {
-      List<GetAppMeta.Media.Screenshot> screenshots = media.getScreenshots();
-      List<GetAppMeta.Media.Video> videos = media.getVideos();
+      final List<GetAppMeta.Media.Screenshot> screenshots = media.getScreenshots();
+      final List<GetAppMeta.Media.Video> videos = media.getVideos();
       boolean hasScreenShots = screenshots != null && screenshots.size() > 0;
       boolean hasVideos = videos != null && videos.size() > 0;
       return hasScreenShots || hasVideos;
@@ -923,17 +907,22 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     appViewSimilarAppAnalytics.similarAppsIsShown();
     suggestedShowing = true;
 
-    adsRepository.getAdsFromAppviewSuggested(packageName, keywords)
-        .onErrorReturn(throwable -> Collections.emptyList())
-        .zipWith(requestFactoryCdnWeb.newGetRecommendedRequest(6, packageName)
-            .observe(), (minimalAds, listApps) -> new AppViewSuggestedAppsDisplayable(minimalAds,
+    final Observable<List<MinimalAd>> observableAds =
+        adsRepository.getAdsFromAppviewSuggested(packageName, keywords)
+            .onErrorReturn(throwable -> Collections.emptyList());
+
+    final Observable<ListApps> observableRecommended = Observable.defer(
+        () -> requestFactoryCdnWeb.newGetRecommendedRequest(6, packageName)
+            .observe());
+
+    Observable.zip(observableAds, observableRecommended,
+        (minimalAds, listApps) -> new AppViewSuggestedAppsDisplayable(minimalAds,
             removeCurrentAppFromSuggested(listApps.getDataList()
                 .getList()), appViewSimilarAppAnalytics))
         .observeOn(AndroidSchedulers.mainThread())
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe(appViewSuggestedAppsDisplayable -> {
-          addDisplayableWithAnimation(1, appViewSuggestedAppsDisplayable);
-        }, Throwable::printStackTrace);
+        .subscribe(appViewSuggestedAppsDisplayable -> addDisplayableWithAnimation(1,
+            appViewSuggestedAppsDisplayable), err -> crashReport.log(err));
   }
 
   private List<App> removeCurrentAppFromSuggested(List<App> list) {

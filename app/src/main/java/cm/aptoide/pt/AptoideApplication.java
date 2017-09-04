@@ -110,6 +110,7 @@ import cm.aptoide.pt.download.DownloadMirrorEventInterceptor;
 import cm.aptoide.pt.download.DownloadRepository;
 import cm.aptoide.pt.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.filemanager.AptoideFilePaths;
 import cm.aptoide.pt.filemanager.CacheHelper;
 import cm.aptoide.pt.filemanager.FileManager;
 import cm.aptoide.pt.install.InstallFabricEvents;
@@ -608,12 +609,15 @@ public abstract class AptoideApplication extends Application {
       final DownloadRepository downloadRepository =
           RepositoryFactory.getDownloadRepository(getApplicationContext());
 
+      AptoideFilePaths filePaths = new AptoideFilePaths(getConfiguration().getCachePath(), apkPath,
+          obbPath);
+
       downloadManager = new AptoideDownloadManager(downloadRepository, getCacheHelper(),
           new FileUtils(action -> Analytics.File.moveFile(action)),
           new DownloadAnalytics(Analytics.getInstance(),
               new DownloadCompleteAnalytics(Analytics.getInstance(), Answers.getInstance(),
                   AppEventsLogger.newLogger(this))), FileDownloader.getImpl(),
-          getConfiguration().getCachePath(), apkPath, obbPath);
+          filePaths, CrashReport.getInstance());
     }
     return downloadManager;
   }

@@ -17,7 +17,6 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
-import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.realm.Installed;
@@ -56,6 +55,7 @@ public class DefaultInstaller implements Installer {
   @Getter(AccessLevel.PACKAGE) private final PackageManager packageManager;
   private final InstallationProvider installationProvider;
   private final SharedPreferences sharedPreferences;
+  private final String authority;
   private FileUtils fileUtils;
   private Analytics analytics;
   private RootAvailabilityManager rootAvailabilityManager;
@@ -66,13 +66,14 @@ public class DefaultInstaller implements Installer {
       FileUtils fileUtils, Analytics analytics, boolean debug,
       InstalledRepository installedRepository, int rootTimeout,
       RootAvailabilityManager rootAvailabilityManager, SharedPreferences sharedPreferences,
-      InstallerAnalytics installerAnalytics) {
+      InstallerAnalytics installerAnalytics, String authority) {
     this.packageManager = packageManager;
     this.installationProvider = installationProvider;
     this.fileUtils = fileUtils;
     this.analytics = analytics;
     this.installedRepository = installedRepository;
     this.installerAnalytics = installerAnalytics;
+    this.authority = authority;
     RootShell.debugMode = debug;
     RootShell.defaultCommandTimeout = rootTimeout;
     this.rootAvailabilityManager = rootAvailabilityManager;
@@ -270,8 +271,7 @@ public class DefaultInstaller implements Installer {
     //read: https://inthecheesefactory.com/blog/how-to-share-access-to-file-with-fileprovider-on-android-nougat/en
     if (Build.VERSION.SDK_INT > 23) {
       //content://....apk for nougat
-      photoURI = FileProvider.getUriForFile(context, AptoideApplication.getConfiguration()
-          .getAppId() + ".provider", file);
+      photoURI = FileProvider.getUriForFile(context, authority, file);
     } else {
       //file://....apk for < nougat
       photoURI = Uri.fromFile(file);

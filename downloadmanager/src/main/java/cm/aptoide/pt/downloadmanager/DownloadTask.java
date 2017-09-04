@@ -8,6 +8,7 @@ package cm.aptoide.pt.downloadmanager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import cm.aptoide.pt.crashreports.CrashLogger;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
@@ -20,6 +21,7 @@ import com.liulishuo.filedownloader.exception.FileDownloadOutOfSpaceException;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import rx.Completable;
 import rx.Observable;
 import rx.observables.ConnectableObservable;
 import rx.schedulers.Schedulers;
@@ -29,7 +31,7 @@ import rx.schedulers.Schedulers;
  */
 class DownloadTask extends FileDownloadLargeFileListener {
 
-  public static final int RETRY_TIMES = 3;
+  private static final int RETRY_TIMES = 3;
   private static final int INTERVAL = 1000;    //interval between progress updates
   private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
   private static final int FILE_NOT_FOUND_HTTP_ERROR = 404;
@@ -38,31 +40,30 @@ class DownloadTask extends FileDownloadLargeFileListener {
   private final DownloadRepository downloadRepository;
   private final FileUtils fileUtils;
   private final AptoideDownloadManager downloadManager;
+  private final FilePaths filePaths;
+
   /**
    * this boolean is used to change between serial and parallel download (in this downloadTask) the
    * default value is
    * true
    */
-  boolean isSerial = true;
+  private boolean isSerial = true;
   private ConnectableObservable<Download> observable;
   private Analytics analytics;
-  private String apkPath;
-  private String obbPath;
-  private String genericPath;
   private FileDownloader fileDownloader;
+  private final CrashLogger crashLogger;
 
   DownloadTask(DownloadRepository downloadRepository, Download download, FileUtils fileUtils,
-      Analytics analytics, AptoideDownloadManager downloadManager, String apkPath, String obbPath,
-      String genericPath, FileDownloader fileDownloader) {
+      Analytics analytics, AptoideDownloadManager downloadManager, FilePaths filePaths, FileDownloader fileDownloader,
+      CrashLogger crashLogger) {
     this.analytics = analytics;
     this.download = download;
     this.downloadRepository = downloadRepository;
     this.fileUtils = fileUtils;
     this.downloadManager = downloadManager;
-    this.apkPath = apkPath;
-    this.obbPath = obbPath;
-    this.genericPath = genericPath;
+    this.filePaths = filePaths;
     this.fileDownloader = fileDownloader;
+    this.crashLogger = crashLogger;
     this.observable = Observable.interval(INTERVAL / 4, INTERVAL, TimeUnit.MILLISECONDS)
         .subscribeOn(Schedulers.io())
         .takeUntil(integer1 -> download.getOverallDownloadStatus() != DownloadStatus.PROGRESS
@@ -118,12 +119,11 @@ class DownloadTask extends FileDownloadLargeFileListener {
   }
 
   private synchronized void saveDownloadInDb(Download download) {
-    Observable.fromCallable(() -> {
+    Completable.fromAction(() -> {
       downloadRepository.save(download);
-      return null;
     })
         .subscribeOn(Schedulers.io())
-        .subscribe(__ -> {
+        .subscribe(() -> {
         }, err -> CrashReport.getInstance()
             .log(err));
   }
@@ -202,22 +202,31 @@ class DownloadTask extends FileDownloadLargeFileListener {
               return Observable.just(null);
             }
           }
-          return checkMd5AndMoveFileToRightPlace(download).doOnNext(fileMoved -> {
-            if (fileMoved) {
-              Logger.d(TAG, "Download md5 match");
-              file.setProgress(Constants.PROGRESS_MAX_VALUE);
+          return checkMd5AndMoveFileToRightPlace(download).doOnNext(fileWasMoved -> {
+            if (fileWasMoved) {
+              Logger.d(TAG, "Expected file hash and downloaded file hash match");
             } else {
-              Logger.e(TAG, "Download md5 is not correct");
-              downloadManager.deleteDownloadedFiles(download);
-              download.setDownloadError(DownloadError.GENERIC_ERROR);
-              setDownloadStatus(DownloadStatus.ERROR, download, task);
+              Logger.e(TAG, "Expected file hash and downloaded file hash do not match");
             }
-          });
+          })
+              .doOnNext(fileWasMoved -> {
+                if (fileWasMoved) {
+                  file.setProgress(Constants.PROGRESS_MAX_VALUE);
+                } else {
+                  downloadManager.deleteDownloadedFiles(download);
+                  download.setDownloadError(DownloadError.GENERIC_ERROR);
+                  setDownloadStatus(DownloadStatus.ERROR, download, task);
+                }
+              });
         })
+        .doOnNext(__ -> saveDownloadInDb(download))
         .doOnUnsubscribe(() -> downloadManager.setDownloading(false))
         .subscribeOn(Schedulers.io())
-        .subscribe(success -> saveDownloadInDb(download),
-            throwable -> setDownloadStatus(DownloadStatus.ERROR, download));
+        .subscribe(__ -> {
+        }, throwable -> {
+          setDownloadStatus(DownloadStatus.ERROR, download);
+          crashLogger.log(throwable);
+        });
     download.setDownloadSpeed(task.getSpeed() * 1024);
   }
 
@@ -287,9 +296,8 @@ class DownloadTask extends FileDownloadLargeFileListener {
    */
   public void startDownload() throws IllegalArgumentException {
     observable.connect();
-    if (download.getFilesToDownload() != null) {
-
-      List<DownloadFile> filesToDownload = download.getFilesToDownload();
+    final List<DownloadFile> filesToDownload = download.getFilesToDownload();
+    if (filesToDownload != null) {
       DownloadFile fileToDownload;
       for (int i = 0; i < filesToDownload.size(); i++) {
 
@@ -320,10 +328,10 @@ class DownloadTask extends FileDownloadLargeFileListener {
         }
         fileToDownload.setDownloadId(baseDownloadTask.setListener(this)
             .setCallbackProgressTimes(Constants.PROGRESS_MAX_VALUE)
-            .setPath(genericPath + fileToDownload.getFileName())
+            .setPath(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())
             .asInQueueTask()
             .enqueue());
-        fileToDownload.setPath(genericPath);
+        fileToDownload.setPath(filePaths.getDownloadsStoragePath());
         fileToDownload.setFileName(fileToDownload.getFileName() + ".temp");
       }
 
@@ -345,12 +353,12 @@ class DownloadTask extends FileDownloadLargeFileListener {
             .replace(".temp", ""));
         if (!TextUtils.isEmpty(fileToDownload.getMd5())) {
           if (!TextUtils.equals(AptoideUtils.AlgorithmU.computeMd5(
-              new File(genericPath + fileToDownload.getFileName())), fileToDownload.getMd5())) {
+              new File(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())), fileToDownload.getMd5())) {
             return false;
           }
         }
         String newFilePath = getFilePathFromFileType(fileToDownload);
-        fileUtils.copyFile(genericPath, newFilePath, fileToDownload.getFileName());
+        fileUtils.copyFile(filePaths.getDownloadsStoragePath(), newFilePath, fileToDownload.getFileName());
         fileToDownload.setPath(newFilePath);
       }
       return true;
@@ -361,14 +369,14 @@ class DownloadTask extends FileDownloadLargeFileListener {
     String path;
     switch (fileToDownload.getFileType()) {
       case APK:
-        path = apkPath;
+        path = filePaths.getApkPath();
         break;
       case OBB:
-        path = obbPath + fileToDownload.getPackageName() + "/";
+        path = filePaths.getObbPath() + fileToDownload.getPackageName() + "/";
         break;
       case GENERIC:
       default:
-        path = genericPath;
+        path = filePaths.getDownloadsStoragePath();
         break;
     }
     return path;

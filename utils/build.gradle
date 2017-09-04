@@ -3,6 +3,7 @@
  * Modified on 08/07/2016.
  */
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 apply plugin: 'me.tatarka.retrolambda'
 
 retrolambda {
@@ -86,4 +87,8 @@ dependencies {
   compile "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
 
   compile("org.nanohttpd:nanohttpd:2.3.0")
+  compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+}
+repositories {
+  mavenCentral()
 }

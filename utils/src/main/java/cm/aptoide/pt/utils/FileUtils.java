@@ -23,8 +23,8 @@ import rx.schedulers.Schedulers;
  * Created by trinkes on 5/18/16.
  */
 public class FileUtils {
-  public static final String MOVE = "Move";
-  public static final String COPY = "Copy";
+  private static final String MOVE = "Move";
+  private static final String COPY = "Copy";
   private static final String TAG = FileUtils.class.getSimpleName();
   private Action1<String> sendFileMoveEvent;
 
