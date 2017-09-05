@@ -1,7 +1,7 @@
 package cm.aptoide.pt.downloadmanager;
 
 public enum DownloadAction {
-  INSTALL(0), UPDATE(1), DOWNGRADE(2);
+  INSTALL(0), UPDATE(1), DOWNGRADE(2), NOTHING(3);
 
   private final int value;
 
@@ -13,7 +13,7 @@ public enum DownloadAction {
     for (DownloadAction downloadAction : DownloadAction.values()) {
       if (downloadAction.getValue() == action) return downloadAction;
     }
-    return null;
+    return NOTHING;
   }
 
   public int getValue() {

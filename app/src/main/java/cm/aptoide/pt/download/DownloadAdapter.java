@@ -126,11 +126,11 @@ class DownloadAdapter implements Download {
     download.setScheduled(scheduled);
   }
 
-  @Override public String getMd5() {
+  @Override public String getHashCode() {
     return download.getMd5();
   }
 
-  @Override public void setMd5(String md5) {
+  @Override public void setHashCode(String md5) {
     download.setMd5(md5);
   }
 

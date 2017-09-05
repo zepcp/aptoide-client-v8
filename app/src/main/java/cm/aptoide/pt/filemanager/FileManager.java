@@ -1,7 +1,7 @@
 package cm.aptoide.pt.filemanager;
 
 import cm.aptoide.pt.dataprovider.cache.L2Cache;
-import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.DownloadManager;
 import cm.aptoide.pt.utils.FileUtils;
 import rx.Observable;
 
@@ -14,11 +14,11 @@ public class FileManager {
   private final CacheHelper cacheHelper;
   private final FileUtils fileUtils;
   private final String[] cacheFolders;
-  private final AptoideDownloadManager downloadManager;
+  private final DownloadManager downloadManager;
   private final L2Cache httpClientCache;
 
   public FileManager(CacheHelper cacheHelper, FileUtils fileUtils, String[] cacheFolders,
-      AptoideDownloadManager downloadManager, L2Cache httpClientCache) {
+      DownloadManager downloadManager, L2Cache httpClientCache) {
     this.cacheHelper = cacheHelper;
     this.fileUtils = fileUtils;
     this.cacheFolders = cacheFolders;
@@ -31,7 +31,7 @@ public class FileManager {
    */
   public Observable<Long> purgeCache() {
     return cacheHelper.cleanCache()
-        .flatMap(cleaned -> downloadManager.invalidateDatabase()
+        .flatMap(cleaned -> downloadManager.clearAllDownloads()
             .map(success -> cleaned));
   }
 
@@ -39,7 +39,7 @@ public class FileManager {
     return fileUtils.deleteFolder(cacheFolders)
         .flatMap(deletedSize -> {
           if (deletedSize > 0) {
-            return downloadManager.invalidateDatabase()
+            return downloadManager.clearAllDownloads()
                 .map(success -> deletedSize);
           } else {
             return Observable.just(deletedSize);

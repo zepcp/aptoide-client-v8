@@ -165,6 +165,17 @@ public final class Database {
     realm.commitTransaction();
   }
 
+  public <E extends RealmObject> void insertIfNotPresent(E object, RealmQuery<E> countQuery) {
+    count(countQuery).subscribe(count -> {
+      @Cleanup Realm realm = get();
+      realm.beginTransaction();
+      if (count == 0) {
+        realm.insertOrUpdate(object);
+      }
+      realm.commitTransaction();
+    });
+  }
+
   public <E extends RealmObject> void insert(E object) {
     @Cleanup Realm realm = get();
     realm.beginTransaction();

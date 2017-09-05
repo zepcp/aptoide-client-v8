@@ -180,14 +180,14 @@ public class ScheduledDownloadsFragment extends AptoideBaseFragment<BaseAdapter>
         .map(scheduled -> downloadFactory.create(scheduled))
         .flatMap(downloadItem -> installManager.install(downloadItem)
             .toObservable()
-            .flatMap(downloadProgress -> installManager.getInstall(downloadItem.getMd5(),
+            .flatMap(downloadProgress -> installManager.getInstall(downloadItem.getHashCode(),
                 downloadItem.getPackageName(), downloadItem.getVersionCode()))
             .doOnSubscribe(() -> setupEvents(downloadItem,
                 isStartedAutomatic ? DownloadEvent.Action.AUTO : DownloadEvent.Action.CLICK))
             .filter(installationProgress -> installationProgress.getState()
                 == Install.InstallationStatus.INSTALLED)
             .doOnNext(success -> scheduledDownloadRepository.deleteScheduledDownload(
-                downloadItem.getMd5())))
+                downloadItem.getHashCode())))
         .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
         .subscribe(aVoid -> {
           Logger.i(TAG, "finished installing scheduled downloads");

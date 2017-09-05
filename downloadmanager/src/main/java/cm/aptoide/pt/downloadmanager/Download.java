@@ -1,10 +1,11 @@
 package cm.aptoide.pt.downloadmanager;
 
+import android.support.annotation.NonNull;
 import java.util.List;
 
 public interface Download {
 
-  DownloadError getDownloadError();
+  @NonNull DownloadError getDownloadError();
 
   void setDownloadError(DownloadError downloadError);
 
@@ -16,11 +17,11 @@ public interface Download {
 
   void setAppName(String appName);
 
-  List<DownloadFile> getFilesToDownload();
+  @NonNull List<DownloadFile> getFilesToDownload();
 
   void setFilesToDownload(List<DownloadFile> filesToDownload);
 
-  DownloadStatus getOverallDownloadStatus();
+  @NonNull DownloadStatus getOverallDownloadStatus();
 
   void setOverallDownloadStatus(DownloadStatus overallDownloadStatus);
 
@@ -44,7 +45,7 @@ public interface Download {
 
   void setPackageName(String packageName);
 
-  DownloadAction getAction();
+  @NonNull DownloadAction getAction();
 
   void setAction(DownloadAction action);
 
@@ -52,9 +53,9 @@ public interface Download {
 
   void setScheduled(boolean scheduled);
 
-  String getMd5();
+  String getHashCode();
 
-  void setMd5(String md5);
+  void setHashCode(String hashCode);
 
   String getVersionName();
 

@@ -33,7 +33,7 @@ public class DownloadInstallationAdapter implements RollbackInstallation {
   }
 
   @Override public String getId() {
-    return download.getMd5();
+    return download.getHashCode();
   }
 
   @Override public String getPackageName() {

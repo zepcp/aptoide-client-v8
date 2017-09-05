@@ -13,26 +13,26 @@ import cm.aptoide.pt.downloadmanager.*
 
 class MockDownload : Download {
 
-    private var error: DownloadError? = DownloadError.NO_ERROR
+    private var error: DownloadError = DownloadError.NO_ERROR
     private var timestamp : Long = System.currentTimeMillis()
     private var applicationName : String? = null
-    private var downloadFileParts : MutableList<DownloadFile>? = mutableListOf()
-    private var status : DownloadStatus? = null
+    private var downloadFileParts : MutableList<DownloadFile> = mutableListOf()
+    private var status : DownloadStatus = DownloadStatus.INVALID_STATUS
     private var progressPercentage : Int = 0
     private var applicationIcon : String? = null
     private var speed : Int = 0
     private var versionCode : Int = 0
     private var packageName : String? = null
-    private var currentAction : DownloadAction? = null
+    private var currentAction : DownloadAction = DownloadAction.NOTHING
     private var scheduled: Boolean = false
     private var fileHash: String? = null
     private var versionName: String? = null
 
-    override fun getDownloadError(): DownloadError? {
+    override fun getDownloadError(): DownloadError {
         return error
     }
 
-    override fun setDownloadError(downloadError: DownloadError?) {
+    override fun setDownloadError(downloadError: DownloadError) {
         error = downloadError
     }
 
@@ -52,19 +52,19 @@ class MockDownload : Download {
         applicationName = appName
     }
 
-    override fun getFilesToDownload(): MutableList<DownloadFile>? {
+    override fun getFilesToDownload(): MutableList<DownloadFile> {
         return downloadFileParts
     }
 
-    override fun setFilesToDownload(filesToDownload: MutableList<DownloadFile>?) {
+    override fun setFilesToDownload(filesToDownload: MutableList<DownloadFile>) {
         downloadFileParts = filesToDownload
     }
 
-    override fun getOverallDownloadStatus(): DownloadStatus? {
+    override fun getOverallDownloadStatus(): DownloadStatus {
         return status
     }
 
-    override fun setOverallDownloadStatus(overallDownloadStatus: DownloadStatus?) {
+    override fun setOverallDownloadStatus(overallDownloadStatus: DownloadStatus) {
         status = overallDownloadStatus
     }
 
@@ -108,11 +108,11 @@ class MockDownload : Download {
         this.packageName = packageName
     }
 
-    override fun getAction(): DownloadAction? {
+    override fun getAction(): DownloadAction {
         return currentAction
     }
 
-    override fun setAction(action: DownloadAction?) {
+    override fun setAction(action: DownloadAction) {
         currentAction = action
     }
 
@@ -124,11 +124,11 @@ class MockDownload : Download {
         this.scheduled = scheduled
     }
 
-    override fun getMd5(): String? {
+    override fun getHashCode(): String? {
         return fileHash
     }
 
-    override fun setMd5(md5: String?) {
+    override fun setHashCode(md5: String?) {
         fileHash = md5
     }
 

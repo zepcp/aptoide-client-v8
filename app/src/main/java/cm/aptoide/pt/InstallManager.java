@@ -12,8 +12,8 @@ import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.realm.Installed;
-import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadNotFoundException;
 import cm.aptoide.pt.downloadmanager.DownloadRepository;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
@@ -39,7 +39,7 @@ import rx.schedulers.Schedulers;
 
 public class InstallManager {
 
-  private final AptoideDownloadManager aptoideDownloadManager;
+  private final DownloadManager aptoideDownloadManager;
   private final Installer installer;
   private final DownloadRepository downloadRepository;
   private final InstalledRepository installedRepository;
@@ -48,7 +48,7 @@ public class InstallManager {
   private final Context context;
   private RootAvailabilityManager rootAvailabilityManager;
 
-  public InstallManager(Context context, AptoideDownloadManager aptoideDownloadManager,
+  public InstallManager(Context context, DownloadManager aptoideDownloadManager,
       Installer installer, RootAvailabilityManager rootAvailabilityManager,
       SharedPreferences sharedPreferences, SharedPreferences securePreferences,
       DownloadRepository downloadRepository, InstalledRepository installedRepository) {
@@ -96,11 +96,11 @@ public class InstallManager {
   }
 
   public Observable<List<Install>> getInstallations() {
-    return Observable.combineLatest(aptoideDownloadManager.getDownloads(),
+    return Observable.combineLatest(aptoideDownloadManager.observeAllDownloadChanges(),
         installedRepository.getAllInstalled(), (downloads, installeds) -> downloads)
         .observeOn(Schedulers.io())
         .concatMap(downloadList -> Observable.from(downloadList)
-            .flatMap(download -> getInstall(download.getMd5(), download.getPackageName(),
+            .flatMap(download -> getInstall(download.getHashCode(), download.getPackageName(),
                 download.getVersionCode()).first())
             .toList())
         .map(installs -> sortList(installs));
@@ -145,7 +145,7 @@ public class InstallManager {
   }
 
   public Completable install(Download download, boolean forceDefaultInstall) {
-    return aptoideDownloadManager.getDownload(download.getMd5())
+    return aptoideDownloadManager.observeDownloadChanges(download.getHashCode())
         .first()
         .map(storedDownload -> updateDownloadAction(download, storedDownload))
         .retryWhen(errors -> createDownloadAndRetry(errors, download))
@@ -155,7 +155,7 @@ public class InstallManager {
             downloadRepository.save(download1);
           }
         })
-        .flatMap(download1 -> getInstall(download.getMd5(), download.getPackageName(),
+        .flatMap(download1 -> getInstall(download.getHashCode(), download.getPackageName(),
             download.getVersionCode()))
         .flatMap(install -> installInBackground(install, forceDefaultInstall))
         .first()
@@ -163,12 +163,13 @@ public class InstallManager {
   }
 
   public Observable<Install> getInstall(String md5, String packageName, int versioncode) {
-    final Observable<Download> download = aptoideDownloadManager.getDownload(md5).onErrorResumeNext(err -> {
-      if(err instanceof DownloadNotFoundException){
-        return Observable.just(null);
-      }
-      return Observable.error(err);
-    });
+    final Observable<Download> download = aptoideDownloadManager.observeDownloadChanges(md5)
+        .onErrorResumeNext(err -> {
+          if (err instanceof DownloadNotFoundException) {
+            return Observable.just(null);
+          }
+          return Observable.error(err);
+        });
     final Observable<InstallationState> installationState =
         installer.getState(packageName, versioncode);
     final Observable<Install.InstallationType> installationType =

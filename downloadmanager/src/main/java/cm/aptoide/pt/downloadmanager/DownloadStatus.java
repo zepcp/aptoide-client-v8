@@ -15,7 +15,7 @@ public enum DownloadStatus {
     for (DownloadStatus downloadStatus : DownloadStatus.values()) {
       if (downloadStatus.getValue() == status) return downloadStatus;
     }
-    return null;
+    return INVALID_STATUS;
   }
 
   public int getValue() {

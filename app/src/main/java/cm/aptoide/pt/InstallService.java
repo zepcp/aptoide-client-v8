@@ -152,7 +152,7 @@ public class InstallService extends Service {
       boolean forceDefaultInstall) {
     return downloadManager.getCurrentDownload()
         .first()
-        .flatMap(currentDownload -> downloadAndInstall(context, currentDownload.getMd5(),
+        .flatMap(currentDownload -> downloadAndInstall(context, currentDownload.getHashCode(),
             forceDefaultInstall));
   }
 
@@ -200,7 +200,7 @@ public class InstallService extends Service {
   }
 
   private Observable<Boolean> hasNextDownload() {
-    return downloadManager.getCurrentDownloads()
+    return downloadManager.observeDownloadQueueChanges()
         .first()
         .map(downloads -> downloads != null && !downloads.isEmpty());
   }
@@ -213,9 +213,9 @@ public class InstallService extends Service {
   private Completable sendBackgroundInstallFinishedBroadcast(Download download) {
     return Completable.fromAction(() -> {
       sendBroadcast(
-          new Intent(ACTION_INSTALL_FINISHED).putExtra(EXTRA_INSTALLATION_MD5, download.getMd5()));
+          new Intent(ACTION_INSTALL_FINISHED).putExtra(EXTRA_INSTALLATION_MD5, download.getHashCode()));
       if (download.isScheduled()) {
-        removeFromScheduled(download.getMd5());
+        removeFromScheduled(download.getHashCode());
       }
     });
   }
@@ -230,15 +230,15 @@ public class InstallService extends Service {
 
   private Completable stopForegroundAndInstall(Context context, Download download,
       boolean removeNotification, boolean forceDefaultInstall) {
-    Installer installer = getInstaller(download.getMd5());
+    Installer installer = getInstaller(download.getHashCode());
     stopForeground(removeNotification);
     switch (download.getAction()) {
       case INSTALL:
-        return installer.install(context, download.getMd5(), forceDefaultInstall);
+        return installer.install(context, download.getHashCode(), forceDefaultInstall);
       case UPDATE:
-        return installer.update(context, download.getMd5(), forceDefaultInstall);
+        return installer.update(context, download.getHashCode(), forceDefaultInstall);
       case DOWNGRADE:
-        return installer.downgrade(context, download.getMd5(), forceDefaultInstall);
+        return installer.downgrade(context, download.getHashCode(), forceDefaultInstall);
       default:
         return Completable.error(
             new IllegalArgumentException("Invalid download action " + download.getAction()));

@@ -1,29 +1,26 @@
 package cm.aptoide.pt.downloadmanager;
 
+import android.support.annotation.NonNull;
 import java.util.List;
-import rx.Completable;
 import rx.Observable;
+import rx.Single;
 
 public interface DownloadManager {
-  Observable<Download> startDownload(Download download) throws IllegalArgumentException;
 
-  Observable<Download> getDownload(String md5);
+  @NonNull Observable<Download> observeDownloadChanges(String downloadHash);
 
-  Observable<Download> getCurrentDownload();
+  @NonNull Observable<List<Download>> observeAllDownloadChanges();
 
-  Observable<List<Download>> getDownloads();
+  @NonNull Single<Boolean> isDownloading();
 
-  Observable<List<Download>> getCurrentDownloads();
+  void startDownload(Download download)
+      throws IllegalArgumentException, IllegalAccessException;
 
-  Completable pauseAllDownloads();
+  void removeDownload(String downloadHash);
 
-  boolean isDownloading();
+  void pauseDownload(String downloadHash);
 
-  Completable removeDownload(String md5);
+  void pauseAllDownloads();
 
-  Completable pauseDownloadSync(String md5);
-
-  Completable pauseDownload(String md5);
-
-  Observable<Void> invalidateDatabase();
+  void clearAllDownloads();
 }

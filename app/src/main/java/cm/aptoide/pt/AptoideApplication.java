@@ -112,6 +112,7 @@ import cm.aptoide.pt.download.DownloadMirrorEventInterceptor;
 import cm.aptoide.pt.download.DownloadRepository;
 import cm.aptoide.pt.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.DownloadManager;
 import cm.aptoide.pt.filemanager.AptoideFilePaths;
 import cm.aptoide.pt.filemanager.CacheHelper;
 import cm.aptoide.pt.filemanager.FileManager;
@@ -240,7 +241,7 @@ public abstract class AptoideApplication extends Application {
   private GoogleApiClient googleSignInClient;
   private LeakTool leakTool;
   private String aptoideMd5sum;
-  private AptoideDownloadManager downloadManager;
+  private DownloadManager downloadManager;
   private SparseArray<InstallManager> installManagers;
   private OkHttpClient defaultClient;
   private OkHttpClient longTimeoutClient;
@@ -587,7 +588,7 @@ public abstract class AptoideApplication extends Application {
     return httpClientCache;
   }
 
-  public AptoideDownloadManager getDownloadManager() {
+  public DownloadManager getDownloadManager() {
     if (downloadManager == null) {
 
       final String apkPath = getCachePath() + "apks/";

@@ -16,7 +16,7 @@ class MockDownloadCreator {
         download.versionCode = 1
         download.versionName = "first"
         download.appName = "mock app"
-        download.md5 = "abcd"
+        download.hashCode = "abcd"
         download.packageName = "com.unit.test.mock"
         return rx.Observable.just(download)
     }
@@ -26,7 +26,7 @@ class MockDownloadCreator {
         download.versionCode = 1
         download.versionName = "first"
         download.appName = "mock app"
-        download.md5 = "abcd"
+        download.hashCode = "abcd"
         download.packageName = "com.unit.test.mock"
         return download
     }

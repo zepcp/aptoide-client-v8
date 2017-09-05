@@ -29,31 +29,25 @@ import rx.schedulers.Schedulers;
 /**
  * Created by trinkes on 5/13/16.
  */
-class DownloadTask extends FileDownloadLargeFileListener {
+class AptoideDownloadTask extends FileDownloadLargeFileListener {
 
   private static final int RETRY_TIMES = 3;
   private static final int INTERVAL = 1000;    //interval between progress updates
   private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
   private static final int FILE_NOT_FOUND_HTTP_ERROR = 404;
-  private static final String TAG = DownloadTask.class.getSimpleName();
+  private static final String TAG = AptoideDownloadTask.class.getSimpleName();
   private final Download download;
   private final DownloadRepository downloadRepository;
   private final FileUtils fileUtils;
   private final AptoideDownloadManager downloadManager;
   private final FilePaths filePaths;
 
-  /**
-   * this boolean is used to change between serial and parallel download (in this downloadTask) the
-   * default value is
-   * true
-   */
-  private boolean isSerial = true;
   private ConnectableObservable<Download> observable;
   private Analytics analytics;
   private FileDownloader fileDownloader;
   private final CrashLogger crashLogger;
 
-  DownloadTask(DownloadRepository downloadRepository, Download download, FileUtils fileUtils,
+  AptoideDownloadTask(DownloadRepository downloadRepository, Download download, FileUtils fileUtils,
       Analytics analytics, AptoideDownloadManager downloadManager, FilePaths filePaths, FileDownloader fileDownloader,
       CrashLogger crashLogger) {
     this.analytics = analytics;
@@ -88,10 +82,6 @@ class DownloadTask extends FileDownloadLargeFileListener {
         .publish();
   }
 
-  public void setSerial(boolean serial) {
-    isSerial = serial;
-  }
-
   /**
    * Update the overall download progress. It updates the value on database and in memory list
    *
@@ -110,7 +100,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
     download.setOverallProgress((int) Math.floor((float) progress / download.getFilesToDownload()
         .size()));
     saveDownloadInDb(download);
-    Logger.d(TAG, "Download: " + download.getMd5() + " Progress: " + download.getOverallProgress());
+    Logger.d(TAG, "Download: " + download.getHashCode() + " Progress: " + download.getOverallProgress());
     return download;
   }
 
@@ -140,11 +130,6 @@ class DownloadTask extends FileDownloadLargeFileListener {
 
     this.download.setOverallDownloadStatus(status);
     saveDownloadInDb(download);
-    if (status == DownloadStatus.PROGRESS || status == DownloadStatus.PENDING) {
-      downloadManager.setDownloading(true);
-    } else {
-      downloadManager.setDownloading(false);
-    }
   }
 
   @Override protected void pending(BaseDownloadTask task, long soFarBytes, long totalBytes) {
@@ -220,7 +205,6 @@ class DownloadTask extends FileDownloadLargeFileListener {
               });
         })
         .doOnNext(__ -> saveDownloadInDb(download))
-        .doOnUnsubscribe(() -> downloadManager.setDownloading(false))
         .subscribeOn(Schedulers.io())
         .subscribe(__ -> {
         }, throwable -> {
@@ -246,7 +230,7 @@ class DownloadTask extends FileDownloadLargeFileListener {
         }
       }
     } else {
-      Logger.d(TAG, "Error on download: " + download.getMd5());
+      Logger.d(TAG, "Error on download: " + download.getHashCode());
       // Apparently throwable e can be null.
       if (e != null) {
         e.printStackTrace();
@@ -335,13 +319,13 @@ class DownloadTask extends FileDownloadLargeFileListener {
         fileToDownload.setFileName(fileToDownload.getFileName() + ".temp");
       }
 
-      if (isSerial) {
+      //if (isSerial) {
         // To form a queue with the same queueTarget and execute them linearly
         fileDownloader.start(this, true);
-      } else {
-        // To form a queue with the same queueTarget and execute them in parallel
-        fileDownloader.start(this, false);
-      }
+      //} else {
+      //  // To form a queue with the same queueTarget and execute them in parallel
+      //  fileDownloader.start(this, false);
+      //}
     }
     saveDownloadInDb(download);
   }

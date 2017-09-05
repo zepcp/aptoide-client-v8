@@ -10,6 +10,7 @@ import cm.aptoide.pt.database.schedulers.RealmSchedulers;
 import io.realm.Sort;
 import java.util.List;
 import rx.Observable;
+import rx.Single;
 import rx.schedulers.Schedulers;
 
 public class DownloadAccessor extends SimpleAccessor<Download> {
@@ -54,11 +55,20 @@ public class DownloadAccessor extends SimpleAccessor<Download> {
     database.insert(download);
   }
 
+  public void saveIfNotExisting(Download download) {
+    Single.fromCallable(() -> database.get())
+        .map(realm -> realm.where(Download.class)
+            .equalTo("md5", download.getMd5()))
+        .subscribeOn(RealmSchedulers.getScheduler())
+        .observeOn(Schedulers.io())
+        .subscribe(query -> database.insertIfNotPresent(download, query));
+  }
+
   public void save(List<Download> download) {
     database.insertAll(download);
   }
 
-  public Observable<List<Download>> getRunningDownloads() {
+  public Observable<List<Download>> getCurrentDownloads() {
     return Observable.fromCallable(() -> database.get())
         .flatMap(realm -> realm.where(Download.class)
             .equalTo("overallDownloadStatus", Download.PROGRESS)

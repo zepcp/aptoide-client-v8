@@ -27,6 +27,6 @@ class ExampleDownloadTest {
 
         testSubscriber.assertNoErrors()
         val resultDownload = testSubscriber.onNextEvents
-        org.junit.Assert.assertEquals("abcd", resultDownload[0].md5)
+        org.junit.Assert.assertEquals("abcd", resultDownload[0].hashCode)
     }
 }

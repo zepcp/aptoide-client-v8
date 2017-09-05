@@ -14,11 +14,13 @@ public interface DownloadRepository {
 
   void save(Download download);
 
+  void saveIfNotExisting(Download download);
+
   void save(List<Download> download);
 
-  Observable<List<Download>> getRunningDownloads();
+  Observable<List<Download>> getCurrentDownloads();
+
+  Observable<List<Download>> getAllInQueue();
 
   Observable<Download> getNextDownloadInQueue();
-
-  @Deprecated Observable<List<Download>> getAsList(String md5);
 }

@@ -6,7 +6,6 @@ import cm.aptoide.pt.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
-import rx.schedulers.Schedulers;
 
 public class DownloadRepository implements cm.aptoide.pt.downloadmanager.DownloadRepository {
 
@@ -43,6 +42,10 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     accessor.save(mapToDatabase(entity));
   }
 
+  @Override public void saveIfNotExisting(Download entity) {
+    accessor.saveIfNotExisting(mapToDatabase(entity));
+  }
+
   @Override public void save(List<Download> downloads) {
     List<cm.aptoide.pt.database.realm.Download> dbDownloads = new ArrayList<>(downloads.size());
     for (Download d : downloads) {
@@ -51,8 +54,15 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     accessor.save(dbDownloads);
   }
 
-  @Override public Observable<List<Download>> getRunningDownloads() {
-    return accessor.getRunningDownloads()
+  @Override public Observable<List<Download>> getCurrentDownloads() {
+    return accessor.getCurrentDownloads()
+        .flatMapIterable(list -> list)
+        .map(download -> mapFromDatabase(download))
+        .toList();
+  }
+
+  @Override public Observable<List<Download>> getAllInQueue() {
+    return accessor.getDownloadsInQueue()
         .flatMapIterable(list -> list)
         .map(download -> mapFromDatabase(download))
         .toList();
@@ -69,19 +79,19 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         });
   }
 
-  @Deprecated public Observable<List<Download>> getAsList(String md5) {
-    return accessor.getAsList(md5)
-        .observeOn(Schedulers.io())
-        .map(downloads -> {
-          if (downloads.isEmpty()) {
-            return null;
-          } else {
-            return downloads.get(0);
-          }
-        })
-        .map(download -> mapFromDatabase(download))
-        .toList();
-  }
+  //@Deprecated public Observable<List<Download>> getAsList(String md5) {
+  //  return accessor.getAsList(md5)
+  //      .observeOn(Schedulers.io())
+  //      .map(downloads -> {
+  //        if (downloads.isEmpty()) {
+  //          return null;
+  //        } else {
+  //          return downloads.get(0);
+  //        }
+  //      })
+  //      .map(download -> mapFromDatabase(download))
+  //      .toList();
+  //}
 
   private cm.aptoide.pt.database.realm.Download mapToDatabase(Download download) {
     if (DownloadAdapter.class.isAssignableFrom(download.getClass())) {

@@ -31,6 +31,6 @@ public class DownloadAnalytics implements cm.aptoide.pt.downloadmanager.Analytic
   }
 
   @Override public void onDownloadComplete(Download download) {
-    downloadCompleteAnalytics.downloadCompleted(download.getMd5());
+    downloadCompleteAnalytics.downloadCompleted(download.getHashCode());
   }
 }
