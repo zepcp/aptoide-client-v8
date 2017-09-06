@@ -54,20 +54,12 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
     return null;
   }
 
-  private void startNewDownload(Download download) {
-    download.setOverallDownloadStatus(DownloadStatus.IN_QUEUE);
-    download.setTimeStamp(System.currentTimeMillis());
-    downloadRepository.save(download);
-    downloadRepository.getCurrentDownloads()
-        .first()
-        .toSingle()
-        .subscribe(downloads -> currentDownloadsSubject.onNext(downloads));
-  }
-
-  @NonNull @Override public Observable<Download> observeDownloadChanges(String downloadHash) {
+  @NonNull @Override
+  public Observable<Download> observeDownloadChanges(DownloadRequest downloadRequest) {
+    final String downloadHash = downloadRequest.getHashCode();
     return currentDownloadsSubject.asObservable()
         .flatMapIterable(list -> list)
-        .filter(download -> TextUtils.equals(download.getHashCode(), downloadHash));
+        .filter(download1 -> TextUtils.equals(download1.getHashCode(), downloadHash));
   }
 
   @Override public Observable<List<Download>> observeAllDownloadChanges() {
@@ -80,27 +72,31 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
    * @return true if there is at least 1 download in progress, false otherwise
    */
   @Override public Single<Boolean> isDownloading() {
-    return currentDownloadsSubject
-        .first()
+    return currentDownloadsSubject.first()
         .toSingle()
         .map(list -> list != null && list.size() > 0);
   }
 
-  @Override public void startDownload(Download download) throws IllegalArgumentException {
-    validate(download);
-    downloadRepository.saveIfNotExisting(download);
-
-    getDownloadStatus(download.getHashCode()).first()
-        .subscribe(status -> {
-          if (status != DownloadStatus.COMPLETED) {
-            downloadRepository.save(download);
-            startNewDownload(download);
+  @Override public void startDownload(DownloadRequest downloadRequest) {
+    validate(downloadRequest);
+    downloadRepository.get(downloadRequest.getHashCode())
+        .first()
+        .toSingle()
+        .subscribe(download -> {
+          if (download == null) {
+            downloadRepository.insertNew(downloadRequest.getHashCode(),
+                downloadRequest.getApplicationName(), downloadRequest.getApplicationIcon(),
+                downloadRequest.getDownloadAction()
+                    .getValue(), downloadRequest.getPackageName(), downloadRequest.getVersionCode(),
+                downloadRequest.getVersionName(), downloadRequest.getFilesToDownload());
           }
         });
   }
 
-  @Override public void removeDownload(String downloadHash) {
-    pauseDownload(downloadHash);
+  @Override public void removeDownload(DownloadRequest downloadRequest) {
+    validate(downloadRequest);
+    pauseDownload(downloadRequest);
+    final String downloadHash = downloadRequest.getHashCode();
     downloadRepository.get(downloadHash)
         .first(download -> download.getOverallDownloadStatus() == DownloadStatus.PAUSED)
         .subscribe(download -> {
@@ -114,7 +110,9 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         });
   }
 
-  @Override public void pauseDownload(String downloadHash) {
+  @Override public void pauseDownload(DownloadRequest downloadRequest) {
+    validate(downloadRequest);
+    final String downloadHash = downloadRequest.getHashCode();
     internalPause(downloadHash).subscribe();
   }
 
@@ -142,13 +140,13 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         .subscribe(download -> downloadRepository.delete(download.getHashCode()));
   }
 
-  private void validate(Download download) throws IllegalArgumentException {
-    if (TextUtils.isEmpty(download.getPackageName())) {
-      throw new IllegalArgumentException("Download does not have a package name");
-    }
-
+  private void validate(DownloadRequest download) throws IllegalArgumentException {
     if (TextUtils.isEmpty(download.getHashCode())) {
       throw new IllegalArgumentException("Download does not have an hash code");
+    }
+
+    if (TextUtils.isEmpty(download.getPackageName())) {
+      throw new IllegalArgumentException("Download does not have a package name");
     }
 
     final List<DownloadFile> filesToDownload = download.getFilesToDownload();
@@ -170,11 +168,6 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
       }
     }
     return downloadStatus;
-  }
-
-  public Observable<Download> getCurrentDownload() {
-    return getDownloads().flatMapIterable(downloads -> downloads)
-        .filter(downloads -> downloads.getOverallDownloadStatus() == DownloadStatus.PROGRESS);
   }
 
   public Observable<List<Download>> getDownloads() {

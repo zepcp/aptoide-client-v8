@@ -24,9 +24,9 @@ import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
 import cm.aptoide.pt.download.DownloadEvent;
-import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.Constants;
 import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import cm.aptoide.pt.install.InstallFabricEvents;
 import cm.aptoide.pt.install.InstalledRepository;
@@ -64,7 +64,7 @@ public class InstallService extends Service {
 
   private static final int NOTIFICATION_ID = 8;
 
-  private AptoideDownloadManager downloadManager;
+  private DownloadManager downloadManager;
 
   private CompositeSubscription subscriptions;
   private Notification notification;
@@ -132,11 +132,6 @@ public class InstallService extends Service {
     return null;
   }
 
-  private Observable<Boolean> stopDownload(String md5) {
-    return downloadManager.pauseDownloadSync(md5)
-        .andThen(hasNextDownload());
-  }
-
   private void stopAllDownloads() {
     downloadManager.pauseAllDownloads();
     removeNotificationAndStop();
@@ -197,12 +192,6 @@ public class InstallService extends Service {
     if (downloadStatus == DownloadStatus.ERROR) {
       removeNotificationAndStop();
     }
-  }
-
-  private Observable<Boolean> hasNextDownload() {
-    return downloadManager.observeDownloadQueueChanges()
-        .first()
-        .map(downloads -> downloads != null && !downloads.isEmpty());
   }
 
   private void removeNotificationAndStop() {

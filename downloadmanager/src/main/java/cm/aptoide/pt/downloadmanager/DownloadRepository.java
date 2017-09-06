@@ -14,13 +14,14 @@ public interface DownloadRepository {
 
   void save(Download download);
 
-  void saveIfNotExisting(Download download);
-
   void save(List<Download> download);
 
   Observable<List<Download>> getCurrentDownloads();
 
-  Observable<List<Download>> getAllInQueue();
+  // Observable<List<Download>> getAllInQueue();
 
   Observable<Download> getNextDownloadInQueue();
+
+  Download insertNew(String downloadHashCode, String appName, String icon, int action,
+      String packageName, int versionCode, String versionName, List<DownloadFile> downloadFiles);
 }

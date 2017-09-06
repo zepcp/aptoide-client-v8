@@ -1,8 +1,12 @@
 package cm.aptoide.pt.download;
 
+import android.support.annotation.NonNull;
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
+import cm.aptoide.pt.database.realm.FileToDownload;
 import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.logger.Logger;
+import io.realm.RealmList;
 import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
@@ -42,10 +46,6 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     accessor.save(mapToDatabase(entity));
   }
 
-  @Override public void saveIfNotExisting(Download entity) {
-    accessor.saveIfNotExisting(mapToDatabase(entity));
-  }
-
   @Override public void save(List<Download> downloads) {
     List<cm.aptoide.pt.database.realm.Download> dbDownloads = new ArrayList<>(downloads.size());
     for (Download d : downloads) {
@@ -61,12 +61,12 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         .toList();
   }
 
-  @Override public Observable<List<Download>> getAllInQueue() {
-    return accessor.getDownloadsInQueue()
-        .flatMapIterable(list -> list)
-        .map(download -> mapFromDatabase(download))
-        .toList();
-  }
+  //@Override public Observable<List<Download>> getAllInQueue() {
+  //  return accessor.getDownloadsInQueue()
+  //      .flatMapIterable(list -> list)
+  //      .map(download -> mapFromDatabase(download))
+  //      .toList();
+  //}
 
   @Override public Observable<Download> getNextDownloadInQueue() {
     return accessor.getDownloadsInQueue()
@@ -79,19 +79,52 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         });
   }
 
-  //@Deprecated public Observable<List<Download>> getAsList(String md5) {
-  //  return accessor.getAsList(md5)
-  //      .observeOn(Schedulers.io())
-  //      .map(downloads -> {
-  //        if (downloads.isEmpty()) {
-  //          return null;
-  //        } else {
-  //          return downloads.get(0);
-  //        }
-  //      })
-  //      .map(download -> mapFromDatabase(download))
-  //      .toList();
-  //}
+  @Override public Download insertNew(String downloadHashCode,
+      String appName, String icon, int action, String packageName, int versionCode,
+      String versionName, List<DownloadFile> downloadFiles) {
+    cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
+    download.setMd5(downloadHashCode);
+    download.setAppName(appName);
+    download.setIcon(icon);
+    download.setAction(action);
+    download.setDownloadError(cm.aptoide.pt.database.realm.Download.NO_ERROR);
+    download.setDownloadSpeed(0);
+    download.setOverallDownloadStatus(cm.aptoide.pt.database.realm.Download.IN_QUEUE);
+    download.setOverallProgress(0);
+    download.setPackageName(packageName);
+    download.setScheduled(true);
+    download.setTimeStamp(System.currentTimeMillis());
+    download.setVersionCode(versionCode);
+    download.setVersionName(versionName);
+
+    RealmList<FileToDownload> listFilesToDownload = new RealmList<>();
+    for (DownloadFile downloadFile : downloadFiles) {
+      FileToDownload fileToDownload = getFileToDownload(downloadFile);
+      listFilesToDownload.add(fileToDownload);
+    }
+    download.setFilesToDownload(listFilesToDownload);
+
+    accessor.saveIfNotExisting(download);
+
+    return new DownloadAdapter(download);
+  }
+
+  @NonNull private FileToDownload getFileToDownload(DownloadFile downloadFile) {
+    FileToDownload fileToDownload = new FileToDownload();
+    fileToDownload.setAltLink(downloadFile.getAltLink());
+    fileToDownload.setDownloadId(downloadFile.getDownloadId());
+    fileToDownload.setFileName(downloadFile.getFileName());
+    fileToDownload.setFileType(downloadFile.getFileType()
+        .getValue());
+    fileToDownload.setLink(downloadFile.getLink());
+    fileToDownload.setMd5(downloadFile.getMd5());
+    fileToDownload.setPackageName(downloadFile.getPackageName());
+    fileToDownload.setPath(downloadFile.getPath());
+    fileToDownload.setProgress(downloadFile.getProgress());
+    fileToDownload.setStatus(downloadFile.getStatus()
+        .getValue());
+    return fileToDownload;
+  }
 
   private cm.aptoide.pt.database.realm.Download mapToDatabase(Download download) {
     if (DownloadAdapter.class.isAssignableFrom(download.getClass())) {

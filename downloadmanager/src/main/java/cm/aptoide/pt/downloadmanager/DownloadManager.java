@@ -7,18 +7,17 @@ import rx.Single;
 
 public interface DownloadManager {
 
-  @NonNull Observable<Download> observeDownloadChanges(String downloadHash);
+  @NonNull Observable<Download> observeDownloadChanges(DownloadRequest downloadRequest);
 
   @NonNull Observable<List<Download>> observeAllDownloadChanges();
 
   @NonNull Single<Boolean> isDownloading();
 
-  void startDownload(Download download)
-      throws IllegalArgumentException, IllegalAccessException;
+  void startDownload(DownloadRequest downloadRequest);
 
-  void removeDownload(String downloadHash);
+  void removeDownload(DownloadRequest downloadRequest);
 
-  void pauseDownload(String downloadHash);
+  void pauseDownload(DownloadRequest downloadRequest);
 
   void pauseAllDownloads();
 
