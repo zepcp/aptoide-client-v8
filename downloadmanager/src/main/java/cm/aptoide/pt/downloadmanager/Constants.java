@@ -3,7 +3,7 @@ package cm.aptoide.pt.downloadmanager;
 /**
  * Created by analara on 16/01/2017.
  */
-
+@Deprecated
 public class Constants {
   public static final String VERSION_CODE = "versioncode";
   public static final String PACKAGE = "package";

@@ -89,12 +89,12 @@ public class DownloadFileAdapter implements DownloadFile {
     downloadFile.setFileName(fileName);
   }
 
-  @Override public String getMd5() {
+  @Override public String getHashCode() {
     return downloadFile.getMd5();
   }
 
-  @Override public void setMd5(String md5) {
-    downloadFile.setMd5(md5);
+  @Override public void setHashCode(String hashCode) {
+    downloadFile.setMd5(hashCode);
   }
 
   @Override public int getVersionCode() {

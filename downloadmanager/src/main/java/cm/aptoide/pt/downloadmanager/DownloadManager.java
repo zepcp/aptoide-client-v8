@@ -1,23 +1,21 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
-import java.util.List;
 import rx.Observable;
-import rx.Single;
 
 public interface DownloadManager {
 
   @NonNull Observable<Download> observeDownloadChanges(DownloadRequest downloadRequest);
 
-  @NonNull Observable<List<Download>> observeAllDownloadChanges();
-
-  @NonNull Single<Boolean> isDownloading();
+  @NonNull Observable<Download> observeAllDownloadChanges();
 
   void startDownload(DownloadRequest downloadRequest);
 
   void removeDownload(DownloadRequest downloadRequest);
 
   void pauseDownload(DownloadRequest downloadRequest);
+
+  void removeAllDownloads();
 
   void pauseAllDownloads();
 }

@@ -21,4 +21,6 @@ public interface DownloadRepository {
   @NonNull <T extends List<DownloadFile>> Download insertNew(String hashCode, String appName,
       String icon, int action, String packageName, int versionCode, String versionName,
       T downloadFiles);
+
+  void deleteAll();
 }

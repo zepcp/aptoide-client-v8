@@ -7,14 +7,18 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import cm.aptoide.pt.crashreports.CrashLogger;
+import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
+import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloader;
+import java.io.File;
 import java.util.List;
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
+import rx.schedulers.Schedulers;
 import rx.subjects.BehaviorSubject;
 
 /**
@@ -23,6 +27,9 @@ import rx.subjects.BehaviorSubject;
 public class AptoideDownloadManager extends Service implements DownloadManager {
 
   private static final String TAG = AptoideDownloadManager.class.getSimpleName();
+
+  private static final int RETRY_TIMES = 3;
+  private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
 
   private final CrashLogger crashLogger;
   private final FilePaths filePaths;
@@ -62,7 +69,7 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         .filter(download1 -> TextUtils.equals(download1.getHashCode(), downloadHash));
   }
 
-  @Override public Observable<List<Download>> observeAllDownloadChanges() {
+  @Override public Observable<Download> observeAllDownloadChanges() {
     return currentDownloadsSubject.asObservable();
   }
 
@@ -170,22 +177,125 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
     return downloadStatus;
   }
 
+  void startDownload(Download download) {
+    final List<DownloadFile> filesToDownload = download.getFilesToDownload();
+    if (filesToDownload != null) {
+      DownloadFile fileToDownload;
+      for (int i = 0; i < filesToDownload.size(); i++) {
+
+        fileToDownload = filesToDownload.get(i);
+
+        if (TextUtils.isEmpty(fileToDownload.getLink())) {
+          throw new IllegalArgumentException("A link to download must be provided");
+        }
+        BaseDownloadTask baseDownloadTask = fileDownloader.create(fileToDownload.getLink())
+            .setAutoRetryTimes(RETRY_TIMES);
+        /*
+         * Aptoide - events 2 : download
+         * Get X-Mirror and add to the event
+         */
+        baseDownloadTask.addHeader(Constants.VERSION_CODE,
+            String.valueOf(download.getVersionCode()));
+        baseDownloadTask.addHeader(Constants.PACKAGE, download.getPackageName());
+        baseDownloadTask.addHeader(Constants.FILE_TYPE, String.valueOf(i));
+        /*
+         * end
+         */
+
+        baseDownloadTask.setTag(APTOIDE_DOWNLOAD_TASK_TAG_KEY, this);
+        if (fileToDownload.getFileName()
+            .endsWith(".temp")) {
+          fileToDownload.setFileName(fileToDownload.getFileName()
+              .replace(".temp", ""));
+        }
+        fileToDownload.setDownloadId(baseDownloadTask.setListener(this)
+            .setCallbackProgressTimes(Constants.PROGRESS_MAX_VALUE)
+            .setPath(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())
+            .asInQueueTask()
+            .enqueue());
+        fileToDownload.setPath(filePaths.getDownloadsStoragePath());
+        fileToDownload.setFileName(fileToDownload.getFileName() + ".temp");
+      }
+
+      fileDownloader.start(this, true);
+    }
+    saveDownloadInDb(download);
+  }
+
+  void saveDownloadInDb(Download download) {
+    Completable.fromAction(() -> downloadRepository.save(download))
+        .subscribeOn(Schedulers.io())
+        .subscribe(() -> {
+        }, err -> CrashReport.getInstance()
+            .log(err));
+  }
+
+  void setDownloadStatus(DownloadStatus status, Download download,
+      @Nullable BaseDownloadTask task) {
+    if (task != null) {
+      for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
+        if (fileToDownload.getDownloadId() == task.getId()) {
+          fileToDownload.setStatus(status);
+        }
+      }
+    }
+
+    download.setOverallDownloadStatus(status);
+    saveDownloadInDb(download);
+  }
+
   @Deprecated synchronized void currentDownloadFinished() {
-    getNextDownload().first()
-        .subscribe(download -> {
-          if (download != null) {
-            final AptoideDownloadTask downloadTask =
-                new AptoideDownloadTask(downloadRepository, download, fileUtils, analytics, this,
-                    filePaths, fileDownloader, crashLogger);
-            downloadTask.startDownload();
-            Logger.d(TAG, "Download with hash " + download.getHashCode() + " started");
-          } else {
-            cacheHelper.cleanCache()
-                .subscribe(cleanedSize -> Logger.d(TAG,
-                    "cleaned size: " + AptoideUtils.StringU.formatBytes(cleanedSize, false)),
-                    err -> crashLogger.log(err));
+    Download download = getNextDownload();
+    if (download != null) {
+      final AptoideDownloadTask downloadTask =
+          new AptoideDownloadTask(downloadRepository, download, analytics, this, filePaths,
+              fileDownloader, crashLogger);
+      startDownload(downloadTask);
+      Logger.d(TAG, "Download with hash " + download.getHashCode() + " started");
+    } else {
+      cacheHelper.cleanCache()
+          .subscribe(cleanedSize -> Logger.d(TAG,
+              "cleaned size: " + AptoideUtils.StringU.formatBytes(cleanedSize, false)),
+              err -> crashLogger.log(err));
+    }
+  }
+
+  Observable<Boolean> checkMd5AndMoveFileToRightPlace(Download download) {
+    return Observable.fromCallable(() -> {
+      for (final DownloadFile fileToDownload : download.getFilesToDownload()) {
+        fileToDownload.setFileName(fileToDownload.getFileName()
+            .replace(".temp", ""));
+        if (!TextUtils.isEmpty(fileToDownload.getHashCode())) {
+          if (!TextUtils.equals(AptoideUtils.AlgorithmU.computeMd5(
+              new File(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())),
+              fileToDownload.getHashCode())) {
+            return false;
           }
-        }, err -> crashLogger.log(err));
+        }
+        String newFilePath = getFilePathFromFileType(fileToDownload);
+        fileUtils.copyFile(filePaths.getDownloadsStoragePath(), newFilePath,
+            fileToDownload.getFileName());
+        fileToDownload.setPath(newFilePath);
+      }
+      return true;
+    });
+  }
+
+  @NonNull private String getFilePathFromFileType(DownloadFile fileToDownload) {
+    String path;
+    switch (fileToDownload.getFileType()) {
+      case APK:
+        path = filePaths.getApkPath();
+        break;
+      case OBB:
+        path = filePaths.getObbPath() + fileToDownload.getPackageName() + "/";
+        break;
+      case GENERIC:
+      default:
+        path = filePaths.getDownloadsStoragePath();
+        break;
+    }
+    return path;
   }
 
   void deleteDownloadedFiles(Download download) {

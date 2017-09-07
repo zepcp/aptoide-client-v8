@@ -22,7 +22,7 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     this.accessor = downloadAccessor;
   }
 
-  public Observable<? extends Collection<Download>> getAll() {
+  public Observable<? extends List<Download>> getAll() {
     return accessor.getAll()
         .flatMapIterable(list -> list)
         .map(download -> mapFromDatabase(download))
@@ -57,29 +57,12 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         .toList();
   }
 
-  @Override public Observable<Download> getNextDownloadInQueue() {
-    return accessor.getDownloadsInQueue()
-        .first()
-        .map(downloads -> {
-          if (downloads != null && !downloads.isEmpty()) {
-            return mapFromDatabase(downloads.get(0));
-          }
-          return null;
-        });
-  }
-
-  //@Override public Observable<List<Download>> getAllInQueue() {
-  //  return accessor.getDownloadsInQueue()
-  //      .flatMapIterable(list -> list)
-  //      .map(download -> mapFromDatabase(download))
-  //      .toList();
-  //}
-
-  @Override public <T extends Collection<DownloadFile>> Download insertNew(String downloadHashCode,
-      String appName, String icon, int action, String packageName, int versionCode,
-      String versionName, T downloadFiles) {
+  @NonNull @Override
+  public <T extends List<DownloadFile>> Download insertNew(String hashCode, String appName,
+      String icon, int action, String packageName, int versionCode, String versionName,
+      T downloadFiles) {
     cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
-    download.setMd5(downloadHashCode);
+    download.setMd5(hashCode);
     download.setAppName(appName);
     download.setIcon(icon);
     download.setAction(action);
@@ -105,6 +88,10 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     return new DownloadAdapter(download);
   }
 
+  @Override public void deleteAll() {
+    accessor.removeAll();
+  }
+
   @Deprecated public Observable<Download> get(long downloadId) {
     return accessor.get(downloadId)
         .map(download -> mapFromDatabase(download));
@@ -118,7 +105,7 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     fileToDownload.setFileType(downloadFile.getFileType()
         .getValue());
     fileToDownload.setLink(downloadFile.getLink());
-    fileToDownload.setMd5(downloadFile.getMd5());
+    fileToDownload.setMd5(downloadFile.getHashCode());
     fileToDownload.setPackageName(downloadFile.getPackageName());
     fileToDownload.setPath(downloadFile.getPath());
     fileToDownload.setProgress(downloadFile.getProgress());

@@ -39,9 +39,9 @@ public interface DownloadFile {
 
   void setFileName(String fileName);
 
-  String getMd5();
+  String getHashCode();
 
-  void setMd5(String md5);
+  void setHashCode(String hashCode);
 
   int getVersionCode();
 }
