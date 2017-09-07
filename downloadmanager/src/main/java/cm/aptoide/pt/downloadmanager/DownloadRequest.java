@@ -1,21 +1,22 @@
 package cm.aptoide.pt.downloadmanager;
 
+import android.support.annotation.NonNull;
 import java.util.List;
 
 public interface DownloadRequest {
-  String getHashCode();
+  @NonNull String getHashCode();
 
-  String getPackageName();
+  @NonNull String getPackageName();
 
-  List<DownloadFile> getFilesToDownload();
+  @NonNull List<DownloadFile> getFilesToDownload();
 
-  String getApplicationName();
+  @NonNull String getApplicationName();
 
-  DownloadAction getDownloadAction();
+  @NonNull DownloadAction getDownloadAction();
 
-  String getApplicationIcon();
+  @NonNull String getApplicationIcon();
 
   int getVersionCode();
 
-  String getVersionName();
+  @NonNull String getVersionName();
 }

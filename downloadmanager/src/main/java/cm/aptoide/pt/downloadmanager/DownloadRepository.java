@@ -1,27 +1,24 @@
 package cm.aptoide.pt.downloadmanager;
 
+import android.support.annotation.NonNull;
+import java.util.Collection;
 import java.util.List;
 import rx.Observable;
 
 public interface DownloadRepository {
-  Observable<List<Download>> getAll();
+  @NonNull Observable<? extends List<Download>> getAll();
 
-  Observable<Download> get(long downloadId);
+  @NonNull Observable<Download> get(@NonNull String hashCode);
 
-  Observable<Download> get(String md5);
+  void delete(@NonNull String hashCode);
 
-  void delete(String md5);
+  void save(@NonNull Download download);
 
-  void save(Download download);
+  <T extends Collection<Download>> void save(@NonNull T download);
 
-  void save(List<Download> download);
+  @NonNull Observable<? extends List<Download>> getCurrentDownloads();
 
-  Observable<List<Download>> getCurrentDownloads();
-
-  // Observable<List<Download>> getAllInQueue();
-
-  Observable<Download> getNextDownloadInQueue();
-
-  Download insertNew(String downloadHashCode, String appName, String icon, int action,
-      String packageName, int versionCode, String versionName, List<DownloadFile> downloadFiles);
+  @NonNull <T extends List<DownloadFile>> Download insertNew(String hashCode, String appName,
+      String icon, int action, String packageName, int versionCode, String versionName,
+      T downloadFiles);
 }

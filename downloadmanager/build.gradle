@@ -65,7 +65,9 @@ dependencies {
   // And ProGuard rules for RxJava!
   compile "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
   compile "com.squareup.retrofit2:retrofit:${RETROFIT_VERSION}"
+  // kotlin
   compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+  compile "io.reactivex:rxkotlin:$rx_kotlin_version"
 }
 repositories {
   mavenCentral()

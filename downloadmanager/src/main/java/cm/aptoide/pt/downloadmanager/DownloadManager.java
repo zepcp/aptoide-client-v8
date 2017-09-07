@@ -20,6 +20,4 @@ public interface DownloadManager {
   void pauseDownload(DownloadRequest downloadRequest);
 
   void pauseAllDownloads();
-
-  void clearAllDownloads();
 }

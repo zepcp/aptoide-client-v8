@@ -1,7 +1,7 @@
 package cm.aptoide.pt.downloadmanager;
 
 public enum DownloadAction {
-  INSTALL(0), UPDATE(1), DOWNGRADE(2), NOTHING(3);
+  INSTALL(0), UPDATE(1), DOWNGRADE(2), NOTHING(3), DOWNLOAD_ONLY(4);
 
   private final int value;
 

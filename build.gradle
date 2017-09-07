@@ -1,9 +1,12 @@
 buildscript {
+
   ext.kotlin_version = '1.1.4-3'
+
   repositories {
     jcenter()
     mavenLocal()
   }
+
   dependencies {
     classpath 'com.android.tools.build:gradle:2.3.3'
     classpath 'me.tatarka.retrolambda.projectlombok:lombok.ast:0.2.3.a2'
@@ -115,6 +118,8 @@ ext {
 
   BRAINTREE_VERSION = '2.5.4'
   BRAINTREE_CARD_FORM_VERSION = '3.0.6'
+
+  rx_kotlin_version = '1.0.0'
 }
 
 // see 'Multi-module reports' in https://developer.android.com/studio/test/command-line.html

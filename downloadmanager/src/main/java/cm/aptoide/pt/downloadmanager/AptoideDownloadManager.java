@@ -133,25 +133,25 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         }));
   }
 
-  public void clearAllDownloads() {
-    getDownloads().first()
-        .flatMapIterable(downloads -> downloads)
-        .filter(download -> getStateIfFileExists(download) == DownloadStatus.FILE_MISSING)
-        .subscribe(download -> downloadRepository.delete(download.getHashCode()));
-  }
-
   private void validate(DownloadRequest download) throws IllegalArgumentException {
-    if (TextUtils.isEmpty(download.getHashCode())) {
-      throw new IllegalArgumentException("Download does not have an hash code");
+    if (download.getHashCode() == null || download.getHashCode()
+        .trim()
+        .equals("")) {
+      throw new IllegalArgumentException(
+          String.format("%s does not have an hash code", DownloadRequest.class.getSimpleName()));
     }
 
-    if (TextUtils.isEmpty(download.getPackageName())) {
-      throw new IllegalArgumentException("Download does not have a package name");
+    if (download.getPackageName() == null || download.getPackageName()
+        .trim()
+        .equals("")) {
+      throw new IllegalArgumentException(
+          String.format("%s does not have a package name", DownloadRequest.class.getSimpleName()));
     }
 
     final List<DownloadFile> filesToDownload = download.getFilesToDownload();
     if (filesToDownload.isEmpty()) {
-      throw new IllegalArgumentException("Download does not have files");
+      throw new IllegalArgumentException(
+          String.format("%s does not have files", DownloadRequest.class.getSimpleName()));
     }
   }
 
@@ -170,15 +170,7 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
     return downloadStatus;
   }
 
-  public Observable<List<Download>> getDownloads() {
-    return downloadRepository.getAll();
-  }
-
   @Deprecated synchronized void currentDownloadFinished() {
-    startNextDownload();
-  }
-
-  @Deprecated private synchronized void startNextDownload() {
     getNextDownload().first()
         .subscribe(download -> {
           if (download != null) {
@@ -194,10 +186,6 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
                     err -> crashLogger.log(err));
           }
         }, err -> crashLogger.log(err));
-  }
-
-  private Observable<Download> getNextDownload() {
-    return downloadRepository.getNextDownloadInQueue();
   }
 
   void deleteDownloadedFiles(Download download) {

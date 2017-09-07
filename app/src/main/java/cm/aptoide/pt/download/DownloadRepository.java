@@ -8,6 +8,7 @@ import cm.aptoide.pt.downloadmanager.DownloadFile;
 import cm.aptoide.pt.logger.Logger;
 import io.realm.RealmList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import rx.Observable;
 
@@ -21,16 +22,11 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     this.accessor = downloadAccessor;
   }
 
-  public Observable<List<Download>> getAll() {
+  public Observable<? extends Collection<Download>> getAll() {
     return accessor.getAll()
         .flatMapIterable(list -> list)
         .map(download -> mapFromDatabase(download))
         .toList();
-  }
-
-  @Override public Observable<Download> get(long downloadId) {
-    return accessor.get(downloadId)
-        .map(download -> mapFromDatabase(download));
   }
 
   public Observable<Download> get(String md5) {
@@ -46,7 +42,7 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     accessor.save(mapToDatabase(entity));
   }
 
-  @Override public void save(List<Download> downloads) {
+  @Override public <T extends Collection<Download>> void save(T downloads) {
     List<cm.aptoide.pt.database.realm.Download> dbDownloads = new ArrayList<>(downloads.size());
     for (Download d : downloads) {
       dbDownloads.add(mapToDatabase(d));
@@ -61,13 +57,6 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         .toList();
   }
 
-  //@Override public Observable<List<Download>> getAllInQueue() {
-  //  return accessor.getDownloadsInQueue()
-  //      .flatMapIterable(list -> list)
-  //      .map(download -> mapFromDatabase(download))
-  //      .toList();
-  //}
-
   @Override public Observable<Download> getNextDownloadInQueue() {
     return accessor.getDownloadsInQueue()
         .first()
@@ -79,9 +68,16 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
         });
   }
 
-  @Override public Download insertNew(String downloadHashCode,
+  //@Override public Observable<List<Download>> getAllInQueue() {
+  //  return accessor.getDownloadsInQueue()
+  //      .flatMapIterable(list -> list)
+  //      .map(download -> mapFromDatabase(download))
+  //      .toList();
+  //}
+
+  @Override public <T extends Collection<DownloadFile>> Download insertNew(String downloadHashCode,
       String appName, String icon, int action, String packageName, int versionCode,
-      String versionName, List<DownloadFile> downloadFiles) {
+      String versionName, T downloadFiles) {
     cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setMd5(downloadHashCode);
     download.setAppName(appName);
@@ -107,6 +103,11 @@ public class DownloadRepository implements cm.aptoide.pt.downloadmanager.Downloa
     accessor.saveIfNotExisting(download);
 
     return new DownloadAdapter(download);
+  }
+
+  @Deprecated public Observable<Download> get(long downloadId) {
+    return accessor.get(downloadId)
+        .map(download -> mapFromDatabase(download));
   }
 
   @NonNull private FileToDownload getFileToDownload(DownloadFile downloadFile) {

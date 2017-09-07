@@ -41,15 +41,14 @@ class AptoideDownloadTask extends FileDownloadLargeFileListener {
   private final FileUtils fileUtils;
   private final AptoideDownloadManager downloadManager;
   private final FilePaths filePaths;
-
+  private final CrashLogger crashLogger;
   private ConnectableObservable<Download> observable;
   private Analytics analytics;
   private FileDownloader fileDownloader;
-  private final CrashLogger crashLogger;
 
   AptoideDownloadTask(DownloadRepository downloadRepository, Download download, FileUtils fileUtils,
-      Analytics analytics, AptoideDownloadManager downloadManager, FilePaths filePaths, FileDownloader fileDownloader,
-      CrashLogger crashLogger) {
+      Analytics analytics, AptoideDownloadManager downloadManager, FilePaths filePaths,
+      FileDownloader fileDownloader, CrashLogger crashLogger) {
     this.analytics = analytics;
     this.download = download;
     this.downloadRepository = downloadRepository;
@@ -100,7 +99,8 @@ class AptoideDownloadTask extends FileDownloadLargeFileListener {
     download.setOverallProgress((int) Math.floor((float) progress / download.getFilesToDownload()
         .size()));
     saveDownloadInDb(download);
-    Logger.d(TAG, "Download: " + download.getHashCode() + " Progress: " + download.getOverallProgress());
+    Logger.d(TAG,
+        "Download: " + download.getHashCode() + " Progress: " + download.getOverallProgress());
     return download;
   }
 
@@ -319,13 +319,7 @@ class AptoideDownloadTask extends FileDownloadLargeFileListener {
         fileToDownload.setFileName(fileToDownload.getFileName() + ".temp");
       }
 
-      //if (isSerial) {
-        // To form a queue with the same queueTarget and execute them linearly
-        fileDownloader.start(this, true);
-      //} else {
-      //  // To form a queue with the same queueTarget and execute them in parallel
-      //  fileDownloader.start(this, false);
-      //}
+      fileDownloader.start(this, true);
     }
     saveDownloadInDb(download);
   }
@@ -337,12 +331,14 @@ class AptoideDownloadTask extends FileDownloadLargeFileListener {
             .replace(".temp", ""));
         if (!TextUtils.isEmpty(fileToDownload.getMd5())) {
           if (!TextUtils.equals(AptoideUtils.AlgorithmU.computeMd5(
-              new File(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())), fileToDownload.getMd5())) {
+              new File(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())),
+              fileToDownload.getMd5())) {
             return false;
           }
         }
         String newFilePath = getFilePathFromFileType(fileToDownload);
-        fileUtils.copyFile(filePaths.getDownloadsStoragePath(), newFilePath, fileToDownload.getFileName());
+        fileUtils.copyFile(filePaths.getDownloadsStoragePath(), newFilePath,
+            fileToDownload.getFileName());
         fileToDownload.setPath(newFilePath);
       }
       return true;
