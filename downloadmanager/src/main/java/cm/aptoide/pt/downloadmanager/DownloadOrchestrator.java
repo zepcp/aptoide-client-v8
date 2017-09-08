@@ -5,6 +5,7 @@ import android.support.v4.util.Pair;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +25,14 @@ public class DownloadOrchestrator {
   private final Map<DownloadRequest, Pair<Download, DownloadStatusListener>> downloadsMap;
   private final FileDownloader fileDownloader;
   private final FilePaths filePaths;
+  private final FileSystemOperations fsOperations;
 
   public DownloadOrchestrator(short maxRetryTimes, FileDownloader fileDownloader,
-      FilePaths filePaths) {
+      FilePaths filePaths, FileSystemOperations fsOperations) {
     this.maxRetryTimes = maxRetryTimes;
     this.fileDownloader = fileDownloader;
     this.filePaths = filePaths;
+    this.fsOperations = fsOperations;
     downloadsMap = new HashMap<>();
   }
 
@@ -58,7 +61,7 @@ public class DownloadOrchestrator {
       downloadFile.setDownloadId(baseDownloadTask.asInQueueTask()
           .enqueue());
       downloadFile.setPath(filePaths.getDownloadsStoragePath());
-      downloadFile.setFileName(downloadFile.getFileName() + ".temp");
+      downloadFile.setFileName(downloadFile.getFileName());
       fileIndex++;
     }
 
@@ -115,11 +118,27 @@ public class DownloadOrchestrator {
   }
 
   public void removeAll() {
-    downloadsMap.clear();
     fileDownloader.clearAllTaskData();
+
+    for (Pair<Download, DownloadStatusListener> pair : downloadsMap.values()) {
+      for (DownloadFile file : pair.first.getFilesToDownload()) {
+        fsOperations.deleteFile(file.getFilePath() + File.pathSeparator + file.getFileName());
+      }
+    }
+
+    downloadsMap.clear();
   }
 
   public void pauseAll() {
     fileDownloader.pauseAll();
+  }
+
+  public void remove(DownloadRequest downloadRequest) {
+    final Pair<Download, DownloadStatusListener> pair = downloadsMap.get(downloadRequest);
+    if (pair == null) {
+      throw new IllegalArgumentException(
+          String.format("Illegal %s passed", DownloadRequest.class.getSimpleName()));
+    }
+    fileDownloader.pause(pair.second);
   }
 }

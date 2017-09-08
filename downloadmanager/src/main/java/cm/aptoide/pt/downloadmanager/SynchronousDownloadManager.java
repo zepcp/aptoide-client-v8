@@ -47,10 +47,8 @@ public class SynchronousDownloadManager implements DownloadManager {
   }
 
   @Override public void removeDownload(DownloadRequest downloadRequest) {
-    // delete from: download library, database and download file(s) from filesystem
-    downloadOrchestrator.pause(downloadRequest);
+    downloadOrchestrator.remove(downloadRequest);
     downloadRepository.delete(downloadRequest.getHashCode());
-    // TODO remove download file from FS
   }
 
   @Override public void pauseDownload(DownloadRequest downloadRequest) {
@@ -58,10 +56,8 @@ public class SynchronousDownloadManager implements DownloadManager {
   }
 
   @Override public void removeAllDownloads() {
-    // delete from: download library, database and clean all download files from filesystem
     downloadOrchestrator.removeAll();
     downloadRepository.deleteAll();
-    // TODO remove all download files from FS
   }
 
   @Override public void pauseAllDownloads() {

@@ -252,7 +252,7 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
       final AptoideDownloadTask downloadTask =
           new AptoideDownloadTask(downloadRepository, download, analytics, this, filePaths,
               fileDownloader, crashLogger);
-      //startDownload(downloadTask);
+      startDownload(downloadTask);
       Logger.d(TAG, "Download with hash " + download.getHashCode() + " started");
     } else {
       cacheHelper.cleanCache()

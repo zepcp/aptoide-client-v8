@@ -56,7 +56,7 @@ class DownloadStateChangeTest {
 
     downloadManager?.startDownload(downloadRequest)
 
-    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<List<Download>>()
+    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<Download>()
     val isDownloadingTestSubscriber = rx.observers.TestSubscriber<Boolean>()
 
     observableDownload?.subscribe(listDownloadsTestSubscriber)
@@ -68,90 +68,20 @@ class DownloadStateChangeTest {
     assertTrue(isDownloadingResult[0])
 
     val downloads = listDownloadsTestSubscriber.onNextEvents
-    assertEquals(1, downloads[0].size)
-    assertEquals("abcd", downloads[0][0].hashCode)
+    assertEquals(1, downloads[0])
+    assertEquals("abcd", downloads[0].hashCode)
   }
 
   @Test
   fun formStartedToPaused() {
-    // prepare
-//    val downloadRequest = downloadRequestsCreator?.createDownloadRequest()
-//
-//    // execute
-//    val observableDownload = downloadManager?.observeAllDownloadChanges()
-//
-//    downloadManager?.startDownload(downloadRequest)
-//
-//    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<List<Download>>()
-//    val isDownloadingTestSubscriber = rx.observers.TestSubscriber<Boolean>()
-//
-//    observableDownload?.subscribe(listDownloadsTestSubscriber)
-//    downloadManager?.isDownloading?.subscribe(isDownloadingTestSubscriber)
-//
-//    // assert
-//    val isDownloadingResult = isDownloadingTestSubscriber.onNextEvents
-//    assertEquals(1, isDownloadingResult.size)
-//    assertTrue(isDownloadingResult[0])
-//
-//    val downloads = listDownloadsTestSubscriber.onNextEvents
-//    assertEquals(1, downloads[0].size)
-//    assertEquals(DownloadStatus.STARTED, downloads[0][0].overallDownloadStatus)
   }
 
   @Test
   fun formPausedToStarted() {
-    // prepare
-//    val downloadRequest = downloadRequestsCreator?.createDownloadRequest()
-//
-//    // execute
-//    val observableDownload = downloadManager?.observeAllDownloadChanges()
-//
-//    downloadManager?.startDownload(downloadRequest)
-//
-//    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<List<Download>>()
-//    val isDownloadingTestSubscriber = rx.observers.TestSubscriber<Boolean>()
-//
-//    observableDownload?.subscribe(listDownloadsTestSubscriber)
-//    downloadManager?.isDownloading?.subscribe(isDownloadingTestSubscriber)
-//
-//    // assert
-//    val isDownloadingResult = isDownloadingTestSubscriber.onNextEvents
-//    assertEquals(1, isDownloadingResult.size)
-//    assertTrue(isDownloadingResult[0])
-//
-//    val downloads = listDownloadsTestSubscriber.onNextEvents
-//    assertEquals(1, downloads[0].size)
-//    assertEquals(DownloadStatus.STARTED, downloads[0][0].overallDownloadStatus)
   }
 
   @Test
   fun formStartedToFinished() {
-    // prepare
-//    val downloadRequest = downloadRequestsCreator?.createDownloadRequest()
-//
-//    // execute
-//    val observableDownload = downloadManager?.observeAllDownloadChanges()
-//
-//    downloadManager?.startDownload(downloadRequest)
-//
-//    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<List<Download>>()
-//    val isDownloadingTestSubscriber = rx.observers.TestSubscriber<Boolean>()
-//
-//    observableDownload?.subscribe(listDownloadsTestSubscriber)
-//    downloadManager?.isDownloading?.subscribe(isDownloadingTestSubscriber)
-//
-//    // assert
-//    val isDownloadingResult = isDownloadingTestSubscriber.onNextEvents
-//    assertEquals(1, isDownloadingResult.size)
-//    assertTrue(isDownloadingResult[0])
-//
-//    val downloads = listDownloadsTestSubscriber.onNextEvents
-//    assertEquals(1, downloads[0].size)
-//    assertEquals(DownloadStatus.STARTED, downloads[0][0].overallDownloadStatus)
-//
-//    val downloadsPart2 = listDownloadsTestSubscriber.onNextEvents
-//    assertEquals(1, downloads[0].size)
-//    assertEquals(DownloadStatus.STARTED, downloadsPart2[0][0].overallDownloadStatus)
   }
 
   @Test
