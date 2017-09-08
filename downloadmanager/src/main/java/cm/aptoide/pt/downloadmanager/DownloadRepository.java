@@ -6,7 +6,7 @@ import java.util.List;
 import rx.Observable;
 
 public interface DownloadRepository {
-  @NonNull Observable<? extends List<Download>> getAll();
+  @NonNull Observable<? extends Collection<Download>> getAll();
 
   @NonNull Observable<Download> get(@NonNull String hashCode);
 
@@ -16,7 +16,7 @@ public interface DownloadRepository {
 
   <T extends Collection<Download>> void save(@NonNull T download);
 
-  @NonNull Observable<? extends List<Download>> getCurrentDownloads();
+  @NonNull Observable<? extends Collection<Download>> getCurrentDownloads();
 
   @NonNull <T extends List<DownloadFile>> Download insertNew(String hashCode, String appName,
       String icon, int action, String packageName, int versionCode, String versionName,

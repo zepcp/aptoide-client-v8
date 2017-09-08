@@ -8,9 +8,9 @@ import rx.subjects.PublishSubject
 class DownloadRepositoryStub : DownloadRepository {
 
   private var downloads: MutableMap<String, Download> = mutableMapOf()
-  private var downloadPublisher: PublishSubject<MutableCollection<Download>> = PublishSubject.create()
+  private var downloadPublisher: PublishSubject<Collection<Download>> = PublishSubject.create()
 
-  override fun getAll(): Observable<MutableCollection<Download>> = downloadPublisher.asObservable()
+  override fun getAll(): Observable<Collection<Download>> = downloadPublisher.asObservable()
 
   override fun get(md5: String): Observable<Download> {
     return downloadPublisher.asObservable().flatMapIterable { list -> list }.filter(
@@ -21,6 +21,11 @@ class DownloadRepositoryStub : DownloadRepository {
     if (downloads.remove(hashCode) != null) {
       notifyChanges()
     }
+  }
+
+  override fun deleteAll() {
+    downloads.clear()
+    notifyChanges()
   }
 
   private fun notifyChanges() {
@@ -39,18 +44,19 @@ class DownloadRepositoryStub : DownloadRepository {
     notifyChanges()
   }
 
-  override fun <T : Collection<DownloadFile>> insertNew(hashCode: String?, appName: String?,
-                                                        icon: String?, action: Int,
-                                                        packageName: String?, versionCode: Int,
-                                                        versionName: String?,
-                                                        downloadFiles: T): Download {
+  override fun <T : MutableList<DownloadFile>> insertNew(hashCode: String?, appName: String?,
+                                                         icon: String?, action: Int,
+                                                         packageName: String?, versionCode: Int,
+                                                         versionName: String?,
+                                                         downloadFiles: T): Download {
+
     val download = DownloadRequestsCreator().createDownload(hashCode, appName, icon, action,
         packageName, versionCode, versionName, downloadFiles)
     save(download)
     return download
   }
 
-  override fun getCurrentDownloads(): Observable<Collection<Download>> {
+  override fun getCurrentDownloads(): Observable<List<Download>> {
     return downloadPublisher.asObservable().flatMapIterable { list -> list }.filter({ download ->
       isDownloading(download)
     }).toList().map { list -> list }

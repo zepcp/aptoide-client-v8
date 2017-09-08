@@ -12,6 +12,7 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
 import com.liulishuo.filedownloader.BaseDownloadTask;
+import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
 import java.io.File;
 import java.util.List;
@@ -69,19 +70,8 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         .filter(download1 -> TextUtils.equals(download1.getHashCode(), downloadHash));
   }
 
-  @Override public Observable<Download> observeAllDownloadChanges() {
-    return currentDownloadsSubject.asObservable();
-  }
-
-  /**
-   * check if there is any download in progress
-   *
-   * @return true if there is at least 1 download in progress, false otherwise
-   */
-  @Override public Single<Boolean> isDownloading() {
-    return currentDownloadsSubject.first()
-        .toSingle()
-        .map(list -> list != null && list.size() > 0);
+  @NonNull @Override public Observable<Download> observeAllDownloadChanges() {
+    return null;
   }
 
   @Override public void startDownload(DownloadRequest downloadRequest) {
@@ -123,6 +113,10 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
     internalPause(downloadHash).subscribe();
   }
 
+  @Override public void removeAllDownloads() {
+
+  }
+
   /**
    * Pause all the downloads
    */
@@ -138,6 +132,12 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
           }
           downloadRepository.save(downloads);
         }));
+  }
+
+  public Single<Boolean> isDownloading() {
+    return currentDownloadsSubject.first()
+        .toSingle()
+        .map(list -> list != null && list.size() > 0);
   }
 
   private void validate(DownloadRequest download) throws IllegalArgumentException {
@@ -181,6 +181,7 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
     final List<DownloadFile> filesToDownload = download.getFilesToDownload();
     if (filesToDownload != null) {
       DownloadFile fileToDownload;
+      FileDownloadListener listener = null; // FIXME
       for (int i = 0; i < filesToDownload.size(); i++) {
 
         fileToDownload = filesToDownload.get(i);
@@ -208,7 +209,8 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
           fileToDownload.setFileName(fileToDownload.getFileName()
               .replace(".temp", ""));
         }
-        fileToDownload.setDownloadId(baseDownloadTask.setListener(this)
+
+        fileToDownload.setDownloadId(baseDownloadTask.setListener(listener)
             .setCallbackProgressTimes(Constants.PROGRESS_MAX_VALUE)
             .setPath(filePaths.getDownloadsStoragePath() + fileToDownload.getFileName())
             .asInQueueTask()
@@ -217,7 +219,7 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
         fileToDownload.setFileName(fileToDownload.getFileName() + ".temp");
       }
 
-      fileDownloader.start(this, true);
+      fileDownloader.start(listener, true);
     }
     saveDownloadInDb(download);
   }
@@ -245,12 +247,12 @@ public class AptoideDownloadManager extends Service implements DownloadManager {
   }
 
   @Deprecated synchronized void currentDownloadFinished() {
-    Download download = getNextDownload();
+    Download download = null; // FIXME
     if (download != null) {
       final AptoideDownloadTask downloadTask =
           new AptoideDownloadTask(downloadRepository, download, analytics, this, filePaths,
               fileDownloader, crashLogger);
-      startDownload(downloadTask);
+      //startDownload(downloadTask);
       Logger.d(TAG, "Download with hash " + download.getHashCode() + " started");
     } else {
       cacheHelper.cleanCache()

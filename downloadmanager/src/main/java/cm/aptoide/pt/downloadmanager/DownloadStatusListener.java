@@ -19,14 +19,14 @@ public class DownloadStatusListener extends FileDownloadLargeFileListener {
       long totalBytesToTransfer) {
     currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
         (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX), bytesTransferredSoFar,
-        totalBytesToTransfer, DownloadStatus.PENDING));
+        totalBytesToTransfer, baseDownloadTask.getSpeed(), DownloadStatus.PENDING));
   }
 
   @Override protected void progress(BaseDownloadTask baseDownloadTask, long bytesTransferredSoFar,
       long totalBytesToTransfer) {
     currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
         (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX), bytesTransferredSoFar,
-        totalBytesToTransfer, DownloadStatus.PROGRESS));
+        totalBytesToTransfer, baseDownloadTask.getSpeed(), DownloadStatus.PROGRESS));
   }
 
   @Override protected void paused(BaseDownloadTask baseDownloadTask, long bytesTransferredSoFar,
@@ -34,7 +34,7 @@ public class DownloadStatusListener extends FileDownloadLargeFileListener {
 
     currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
         (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX), bytesTransferredSoFar,
-        totalBytesToTransfer, DownloadStatus.PAUSED));
+        totalBytesToTransfer, baseDownloadTask.getSpeed(), DownloadStatus.PAUSED));
   }
 
   @Override protected void completed(BaseDownloadTask baseDownloadTask) {

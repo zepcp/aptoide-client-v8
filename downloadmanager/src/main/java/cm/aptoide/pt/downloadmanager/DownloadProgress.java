@@ -7,15 +7,17 @@ public class DownloadProgress {
   private final int fileIndex;
   private final long bytesTransferredSoFar;
   private final long totalBytesToTransfer;
+  private final int speedInBytesPerSecond;
   private final DownloadStatus status;
   private final Throwable error;
 
   public DownloadProgress(String applicationHashCode, int fileIndex, long bytesTransferredSoFar,
-      long totalBytesToTransfer, DownloadStatus status) {
+      long totalBytesToTransfer, int speedInBytesPerSecond, DownloadStatus status) {
     this.applicationHashCode = applicationHashCode;
     this.fileIndex = fileIndex;
     this.bytesTransferredSoFar = bytesTransferredSoFar;
     this.totalBytesToTransfer = totalBytesToTransfer;
+    this.speedInBytesPerSecond = speedInBytesPerSecond;
     this.status = status;
     this.error = null;
   }
@@ -25,6 +27,7 @@ public class DownloadProgress {
     this.fileIndex = fileIndex;
     this.bytesTransferredSoFar = Long.MIN_VALUE;
     this.totalBytesToTransfer = Long.MIN_VALUE;
+    this.speedInBytesPerSecond = 0;
     this.status = status;
     this.error = null;
   }
@@ -34,8 +37,13 @@ public class DownloadProgress {
     this.fileIndex = fileIndex;
     this.bytesTransferredSoFar = Long.MIN_VALUE;
     this.totalBytesToTransfer = Long.MIN_VALUE;
+    this.speedInBytesPerSecond = 0;
     this.status = status;
     this.error = error;
+  }
+
+  public int getSpeedInBytesPerSecond() {
+    return speedInBytesPerSecond;
   }
 
   public int getFileIndex() {

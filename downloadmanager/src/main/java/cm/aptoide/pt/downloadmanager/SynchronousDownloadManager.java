@@ -46,28 +46,6 @@ public class SynchronousDownloadManager implements DownloadManager {
     downloadOrchestrator.start(downloadRequest, download, currentDownloadsSubject);
   }
 
-  private void validate(DownloadRequest download) throws IllegalArgumentException {
-    if (download.getHashCode() == null || download.getHashCode()
-        .trim()
-        .equals("")) {
-      throw new IllegalArgumentException(
-          String.format("%s does not have an hash code", DownloadRequest.class.getSimpleName()));
-    }
-
-    if (download.getPackageName() == null || download.getPackageName()
-        .trim()
-        .equals("")) {
-      throw new IllegalArgumentException(
-          String.format("%s does not have a package name", DownloadRequest.class.getSimpleName()));
-    }
-
-    final List<DownloadFile> filesToDownload = download.getFilesToDownload();
-    if (filesToDownload.isEmpty()) {
-      throw new IllegalArgumentException(
-          String.format("%s does not have files", DownloadRequest.class.getSimpleName()));
-    }
-  }
-
   @Override public void removeDownload(DownloadRequest downloadRequest) {
     // delete from: download library, database and download file(s) from filesystem
     downloadOrchestrator.pause(downloadRequest);
@@ -90,6 +68,28 @@ public class SynchronousDownloadManager implements DownloadManager {
     downloadOrchestrator.pauseAll();
   }
 
+  private void validate(DownloadRequest download) throws IllegalArgumentException {
+    if (download.getHashCode() == null || download.getHashCode()
+        .trim()
+        .equals("")) {
+      throw new IllegalArgumentException(
+          String.format("%s does not have an hash code", DownloadRequest.class.getSimpleName()));
+    }
+
+    if (download.getPackageName() == null || download.getPackageName()
+        .trim()
+        .equals("")) {
+      throw new IllegalArgumentException(
+          String.format("%s does not have a package name", DownloadRequest.class.getSimpleName()));
+    }
+
+    final List<DownloadFile> filesToDownload = download.getFilesToDownload();
+    if (filesToDownload.isEmpty()) {
+      throw new IllegalArgumentException(
+          String.format("%s does not have files", DownloadRequest.class.getSimpleName()));
+    }
+  }
+
   private Observable<Download> getDownloadFromProgress(DownloadProgress downloadProgress) {
     return Observable.just(downloadProgress)
         .flatMap(progress -> {
@@ -99,7 +99,9 @@ public class SynchronousDownloadManager implements DownloadManager {
                     progress.getError()));
           }
           return downloadRepository.get(downloadProgress.getApplicationHashCode())
-              .map(download -> calculateProgress(download, downloadProgress));
+              .doOnNext(download -> calculateProgress(download, downloadProgress))
+              .doOnNext(download -> download.setDownloadSpeed(
+                  downloadProgress.getSpeedInBytesPerSecond() * 1024));
         })
         .doOnNext(download -> updateDownloadInDatabase(download));
   }
@@ -108,7 +110,7 @@ public class SynchronousDownloadManager implements DownloadManager {
     downloadRepository.save(download);
   }
 
-  private Download calculateProgress(Download download, DownloadProgress downloadProgress) {
+  private void calculateProgress(Download download, DownloadProgress downloadProgress) {
 
     int progressPercentage = getProgressPercentage(downloadProgress.getTotalBytesToTransfer(),
         downloadProgress.getBytesTransferredSoFar());
@@ -127,8 +129,6 @@ public class SynchronousDownloadManager implements DownloadManager {
     } else {
       download.setOverallProgress(progressPercentage);
     }
-
-    return download;
   }
 
   private int getProgressPercentage(long totalBytesToTransfer, long bytesTransferredSoFar) {

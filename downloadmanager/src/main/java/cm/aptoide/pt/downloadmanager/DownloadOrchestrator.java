@@ -41,20 +41,20 @@ public class DownloadOrchestrator {
 
     downloadsMap.put(downloadRequest, Pair.create(download, listener));
 
-    startInternal(downloadRequest.getFilesToDownload(), downloadRequest.getHashCode(),
-        downloadRequest.getVersionCode(), downloadRequest.getPackageName(), listener);
+    startInternal(downloadRequest.getFilesToDownload(), downloadRequest.getVersionCode(),
+        downloadRequest.getPackageName(), listener);
   }
 
-  private void startInternal(List<DownloadFile> filesToDownload, String applicationHashCode,
-      int versionCode, String packageName, FileDownloadListener listener) {
+  private void startInternal(List<DownloadFile> filesToDownload, int versionCode,
+      String packageName, FileDownloadListener listener) {
 
     int fileIndex = 0;
     for (DownloadFile downloadFile : filesToDownload) {
       final String fileDownloadLink = getFileDownloadLink(downloadFile);
       final String downloadPath = getDownloadPath(downloadFile);
       BaseDownloadTask baseDownloadTask =
-          getDownloadTask(fileDownloadLink, versionCode, applicationHashCode, packageName,
-              fileIndex, listener, downloadPath);
+          getDownloadTask(fileDownloadLink, versionCode, packageName, fileIndex, listener,
+              downloadPath);
       downloadFile.setDownloadId(baseDownloadTask.asInQueueTask()
           .enqueue());
       downloadFile.setPath(filePaths.getDownloadsStoragePath());
@@ -84,8 +84,7 @@ public class DownloadOrchestrator {
   }
 
   private BaseDownloadTask getDownloadTask(String fileDownloadLink, int versionCode,
-      String applicationHashCode, String packageName, int fileIndex, FileDownloadListener listener,
-      String downloadPath) {
+      String packageName, int fileIndex, FileDownloadListener listener, String downloadPath) {
     BaseDownloadTask baseDownloadTask = fileDownloader.create(fileDownloadLink);
     baseDownloadTask.setAutoRetryTimes(maxRetryTimes);
         /*
