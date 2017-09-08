@@ -13,7 +13,7 @@ import lombok.Getter;
 /**
  * Created by neuro on 28-08-2017.
  */
-@Getter class LanguageFilterHelper {
+@Getter public class LanguageFilterHelper {
 
   private final LanguageFilter all;
   private final LanguageFilter currentLanguageFirst;
@@ -21,8 +21,8 @@ import lombok.Getter;
 
   private final String currentCountryCode;
 
-  LanguageFilterHelper(Resources resources) {
-    all = new LanguageFilter(R.string.comments_filter_comments_by_language_all,
+  public LanguageFilterHelper(Resources resources) {
+    all = new LanguageFilter(R.string.reviewappview_short_comments_by_language_all,
         Collections.emptyList());
     currentCountryCode = AptoideUtils.SystemU.getCountryCode(resources);
 
@@ -34,13 +34,30 @@ import lombok.Getter;
     }
 
     currentLanguageFirst =
-        new LanguageFilter(R.string.comments_filter_comments_by_language_current_language_first,
+        new LanguageFilter(R.string.reviewappview_short_comments_by_language_current_language_first,
             countryCodes);
-    english = new LanguageFilter(R.string.comments_filter_comments_by_language_english,
+    english = new LanguageFilter(R.string.reviewappview_short_comments_by_language_english,
         LanguageCode.en_GB.toString());
   }
 
-  @Getter static class LanguageFilter {
+  List<LanguageFilter> getLanguageFilterList() {
+    List<LanguageFilter> languageFilterList = new LinkedList<>();
+
+    languageFilterList.add(all);
+    languageFilterList.add(currentLanguageFirst);
+
+    if (!currentCountryCode.startsWith("en")) {
+      languageFilterList.add(english);
+    }
+
+    return languageFilterList;
+  }
+
+  public enum LanguageCode {
+    en_GB,
+  }
+
+  @Getter public static class LanguageFilter {
 
     @StringRes private final int stringId;
     private final List<String> countryCodes;
@@ -79,22 +96,5 @@ import lombok.Getter;
     public boolean hasMoreCountryCodes() {
       return countryCodes.size() > position + 1;
     }
-  }
-
-  List<LanguageFilter> getLanguageFilterList() {
-    List<LanguageFilter> languageFilterList = new LinkedList<>();
-
-    languageFilterList.add(all);
-    languageFilterList.add(currentLanguageFirst);
-
-    if (!currentCountryCode.startsWith("en")) {
-      languageFilterList.add(english);
-    }
-
-    return languageFilterList;
-  }
-
-  public enum LanguageCode {
-    en_GB,
   }
 }
