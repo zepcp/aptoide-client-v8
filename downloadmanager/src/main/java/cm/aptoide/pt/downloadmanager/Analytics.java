@@ -5,7 +5,8 @@ package cm.aptoide.pt.downloadmanager;
  */
 
 public interface Analytics {
-  void onError(Download download, Throwable throwable);
 
-  void onDownloadComplete(Download download);
+  void onError(String packageName, int versionCode, Throwable throwable);
+
+  void onDownloadComplete(String applicationHashCode);
 }

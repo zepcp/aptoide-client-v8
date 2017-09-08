@@ -1,5 +1,6 @@
 package cm.aptoide.pt.downloadmanager
 
+import cm.aptoide.pt.downloadmanager.stub.DownloadFileStub
 import cm.aptoide.pt.downloadmanager.stub.DownloadRequestStub
 import cm.aptoide.pt.downloadmanager.stub.DownloadStub
 
@@ -15,9 +16,11 @@ class DownloadRequestsCreator {
   }
 
   fun createDownloadRequest(): DownloadRequest {
+    val downloadFile = DownloadFileStub("http://www.aptoide.com/robots.txt")
     return DownloadRequestStub(appName = "mock app", versionCode = 1, versionName = "first",
         hashCode = "abcd", currentAction = DownloadAction.DOWNLOAD_ONLY,
-        packageName = "com.unit.test.mock", downloadFileParts = mutableListOf(), appIcon = "none")
+        packageName = "com.unit.test.mock", downloadFileParts = mutableListOf(downloadFile),
+        appIcon = "none")
   }
 
   fun createInvalidDownloadRequest(): DownloadRequest {

@@ -26,13 +26,15 @@ public class DownloadOrchestrator {
   private final FileDownloader fileDownloader;
   private final FilePaths filePaths;
   private final FileSystemOperations fsOperations;
+  private final Analytics analytics;
 
   public DownloadOrchestrator(short maxRetryTimes, FileDownloader fileDownloader,
-      FilePaths filePaths, FileSystemOperations fsOperations) {
+      FilePaths filePaths, FileSystemOperations fsOperations, Analytics analytics) {
     this.maxRetryTimes = maxRetryTimes;
     this.fileDownloader = fileDownloader;
     this.filePaths = filePaths;
     this.fsOperations = fsOperations;
+    this.analytics = analytics;
     downloadsMap = new HashMap<>();
   }
 
@@ -40,7 +42,8 @@ public class DownloadOrchestrator {
       BehaviorSubject<DownloadProgress> currentDownloadsSubject) {
 
     final DownloadStatusListener listener =
-        new DownloadStatusListener(downloadRequest.getHashCode(), currentDownloadsSubject);
+        new DownloadStatusListener(downloadRequest.getHashCode(), downloadRequest.getPackageName(),
+            downloadRequest.getVersionCode(), analytics, currentDownloadsSubject);
 
     downloadsMap.put(downloadRequest, Pair.create(download, listener));
 
@@ -69,7 +72,17 @@ public class DownloadOrchestrator {
   }
 
   @NonNull private String getDownloadPath(DownloadFile downloadFile) {
-    return filePaths.getDownloadsStoragePath() + downloadFile.getFileName();
+    switch (downloadFile.getFileType()) {
+      default:
+      case GENERIC:
+        return filePaths.getDownloadsStoragePath() + downloadFile.getFileName();
+
+      case APK:
+        return filePaths.getApkPath() + downloadFile.getFileName();
+
+      case OBB:
+        return filePaths.getObbPath() + downloadFile.getFileName();
+    }
   }
 
   private String getFileDownloadLink(DownloadFile fileToDownload) {

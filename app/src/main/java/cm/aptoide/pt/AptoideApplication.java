@@ -591,7 +591,8 @@ public abstract class AptoideApplication extends Application {
   public DownloadManager getDownloadManager() {
     if (downloadManager == null) {
 
-      final String apkPath = getCachePath() + "apks/";
+      final String genericPath = getCachePath() + "generic/";
+      final String apkPath = getCachePath() + "apk/";
       final String obbPath = getCachePath() + "obb/";
       final OkHttpClient.Builder httpClientBuilder =
           new OkHttpClient.Builder().addInterceptor(getUserAgentInterceptor())
@@ -601,6 +602,7 @@ public abstract class AptoideApplication extends Application {
               .writeTimeout(20, TimeUnit.SECONDS)
               .readTimeout(20, TimeUnit.SECONDS);
 
+      FileUtils.createDir(genericPath);
       FileUtils.createDir(apkPath);
       FileUtils.createDir(obbPath);
       FileDownloader.init(this, new DownloadMgrInitialParams.InitCustomMaker().connectionCreator(
@@ -609,7 +611,7 @@ public abstract class AptoideApplication extends Application {
       final DownloadRepository downloadRepository =
           RepositoryFactory.getDownloadRepository(getApplicationContext());
 
-      AptoideFilePaths filePaths = new AptoideFilePaths(getCachePath(), apkPath, obbPath);
+      AptoideFilePaths filePaths = new AptoideFilePaths(genericPath, apkPath, obbPath);
 
       downloadManager = new AptoideDownloadManager(downloadRepository, getCacheHelper(),
           new FileUtils(action -> Analytics.File.moveFile(action)),

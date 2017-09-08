@@ -3,7 +3,7 @@ package cm.aptoide.pt.filemanager;
 import cm.aptoide.pt.dataprovider.cache.L2Cache;
 import cm.aptoide.pt.downloadmanager.DownloadManager;
 import cm.aptoide.pt.utils.FileUtils;
-import rx.Observable;
+import rx.Single;
 
 /**
  * Created by trinkes on 11/16/16.
@@ -29,24 +29,20 @@ public class FileManager {
   /**
    * deletes expired cache files
    */
-  public Observable<Long> purgeCache() {
-    return cacheHelper.cleanCache()
-        .flatMap(cleaned -> downloadManager.clearAllDownloads()
-            .map(success -> cleaned));
+  public Single<Long> purgeCache() {
+    return cacheHelper.observeCleanCache()
+        .doOnSuccess(__ -> downloadManager.removeAllDownloads());
   }
 
-  public Observable<Long> deleteCache() {
+  public Single<Long> deleteCache() {
     return fileUtils.deleteFolder(cacheFolders)
-        .flatMap(deletedSize -> {
+        .flatMapSingle(deletedSize -> {
           if (deletedSize > 0) {
-            return downloadManager.clearAllDownloads()
-                .map(success -> deletedSize);
-          } else {
-            return Observable.just(deletedSize);
+            downloadManager.removeAllDownloads();
           }
+          return Single.just(deletedSize);
         })
-        .doOnNext(aVoid -> {
-          httpClientCache.clean();
-        });
+        .doOnNext(__ -> httpClientCache.clean())
+        .toSingle();
   }
 }

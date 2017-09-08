@@ -52,7 +52,13 @@ dependencies {
   compile fileTree(dir: 'libs', include: ['*.jar'])
 
   testCompile "junit:junit:${JUNIT_VERSION}"
-  testCompile "org.mockito:mockito-core:${MOCKITO_CORE_VERSION}"
+  //testCompile "org.mockito:mockito-core:${MOCKITO_CORE_VERSION}"
+  testCompile "org.mockito:mockito-inline:${MOCKITO_CORE_VERSION}"
+  testCompile("com.nhaarman:mockito-kotlin:${MOCKITO_KOTLIN_VERSION}") {
+    exclude group: 'org.jetbrains.kotlin'
+    exclude group: 'org.mockito'
+  }
+  testCompile "org.robolectric:robolectric:${ROBOT_ELECTRIC_VERSION}"
 
   //noinspection GradleDependency
   compile "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
@@ -65,6 +71,7 @@ dependencies {
   // And ProGuard rules for RxJava!
   compile "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
   compile "com.squareup.retrofit2:retrofit:${RETROFIT_VERSION}"
+
   // kotlin
   compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
   compile "io.reactivex:rxkotlin:$rx_kotlin_version"

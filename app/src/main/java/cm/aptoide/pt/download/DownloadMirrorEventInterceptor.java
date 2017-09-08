@@ -1,7 +1,6 @@
 package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.analytics.Analytics;
-import cm.aptoide.pt.downloadmanager.Constants;
 import java.io.IOException;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -13,6 +12,10 @@ import okhttp3.Response;
  */
 public class DownloadMirrorEventInterceptor implements Interceptor {
 
+  private static final String VERSION_CODE = "versioncode";
+  private static final String PACKAGE = "package";
+  private static final String FILE_TYPE = "fileType";
+
   private final Analytics analytics;
 
   public DownloadMirrorEventInterceptor(Analytics analytics) {
@@ -22,14 +25,14 @@ public class DownloadMirrorEventInterceptor implements Interceptor {
   @Override public Response intercept(Chain chain) throws IOException {
 
     final Request request = chain.request();
-    String versionCode = request.header(Constants.VERSION_CODE);
-    String packageName = request.header(Constants.PACKAGE);
-    int fileType = Integer.parseInt(request.header(Constants.FILE_TYPE));
+    String versionCode = request.header(VERSION_CODE);
+    String packageName = request.header(PACKAGE);
+    int fileType = Integer.parseInt(request.header(FILE_TYPE));
 
     final Response response = chain.proceed(request.newBuilder()
-        .removeHeader(Constants.VERSION_CODE)
-        .removeHeader(Constants.PACKAGE)
-        .removeHeader(Constants.FILE_TYPE)
+        .removeHeader(VERSION_CODE)
+        .removeHeader(PACKAGE)
+        .removeHeader(FILE_TYPE)
         .build());
 
     if (response != null) {

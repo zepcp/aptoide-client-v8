@@ -48,6 +48,9 @@ import rx.subscriptions.CompositeSubscription;
 
 public class InstallService extends Service {
 
+  private static final String FILE_MD5_EXTRA = "APTOIDE_APPID_EXTRA";
+  private static final int PROGRESS_MAX_VALUE = 100;
+
   public static final String TAG = "InstallService";
 
   public static final String ACTION_OPEN_DOWNLOAD_MANAGER = "OPEN_DOWNLOAD_MANAGER";
@@ -280,7 +283,7 @@ public class InstallService extends Service {
 
   @NonNull private NotificationCompat.Action getPauseAction(int requestCode, String md5) {
     Bundle appIdExtras = new Bundle();
-    appIdExtras.putString(Constants.FILE_MD5_EXTRA, md5);
+    appIdExtras.putString(FILE_MD5_EXTRA, md5);
     return getAction(cm.aptoide.pt.downloadmanager.R.drawable.media_pause,
         getString(cm.aptoide.pt.downloadmanager.R.string.pause_download), requestCode,
         ACTION_STOP_INSTALL, md5);
@@ -288,7 +291,7 @@ public class InstallService extends Service {
 
   @NonNull private NotificationCompat.Action getDownloadManagerAction(int requestCode, String md5) {
     Bundle appIdExtras = new Bundle();
-    appIdExtras.putString(Constants.FILE_MD5_EXTRA, md5);
+    appIdExtras.putString(FILE_MD5_EXTRA, md5);
     return getAction(R.drawable.ic_manager, getString(R.string.open_apps_manager), requestCode,
         ACTION_OPEN_DOWNLOAD_MANAGER, md5);
   }
@@ -305,7 +308,7 @@ public class InstallService extends Service {
             .append(" - ")
             .append(getString(cm.aptoide.pt.database.R.string.download_progress)))
         .setContentIntent(contentIntent)
-        .setProgress(Constants.PROGRESS_MAX_VALUE, installation.getProgress(),
+        .setProgress(PROGRESS_MAX_VALUE, installation.getProgress(),
             installation.isIndeterminate())
         .addAction(pauseAction)
         .addAction(openDownloadManager);

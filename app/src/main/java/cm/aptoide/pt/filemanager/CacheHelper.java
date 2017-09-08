@@ -6,20 +6,20 @@
 package cm.aptoide.pt.filemanager;
 
 import android.text.format.DateUtils;
-import cm.aptoide.pt.downloadmanager.CacheManager;
+import cm.aptoide.pt.downloadmanager.FileSystemOperations;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
 import java.io.File;
 import java.util.List;
 import lombok.Data;
-import rx.Observable;
+import rx.Single;
 import rx.schedulers.Schedulers;
 
 /**
  * Created by trinkes on 7/7/16.
  */
-public class CacheHelper implements CacheManager {
+public class CacheHelper implements FileSystemOperations {
   public static final long MONTH_CACHE_TIME = DateUtils.DAY_IN_MILLIS * 30;
   public static final int VALUE_TO_CONVERT_MB_TO_BYTES = 1024 * 1024;
   public static String TAG = CacheHelper.class.getSimpleName();
@@ -37,23 +37,36 @@ public class CacheHelper implements CacheManager {
     this.fileUtils = fileUtils;
   }
 
-  public Observable<Long> cleanCache() {
+  @Override public boolean deleteFile(String filePath) {
+    if (filePath != null
+        && filePath.trim()
+        .length() > 0) {
+      File file = new File(filePath);
+      if (file.exists()) {
+        return file.delete();
+      }
+    }
+    return false;
+  }
+
+  public long cleanCache() {
     long now = System.currentTimeMillis();
-    return Observable.just(foldersToCleanPath)
-        .filter(folderToManages -> shouldClean(folderToManages, maxCacheSize))
-        .flatMapIterable(folders -> folders)
-        .filter(folder -> folder.getFolder()
-            .exists())
-        .map(folder -> removeOldFiles(folder.getFolder(), folder.getCacheTime(), now))
-        .toList()
-        .map(sizes -> {
-          long size = 0;
-          for (int i = 0; i < sizes.size(); i++) {
-            size += sizes.get(i);
-          }
-          Logger.d(TAG, "Cache cleaned: " + AptoideUtils.StringU.formatBytes(size, false));
-          return size;
-        })
+    long sizeCleaned = 0L;
+    if (shouldClean(foldersToCleanPath, maxCacheSize)) {
+      for (FolderToManage folderToManage : foldersToCleanPath) {
+        if (folderToManage.getFolder()
+            .exists()) {
+          sizeCleaned +=
+              removeOldFiles(folderToManage.getFolder(), folderToManage.getCacheTime(), now);
+        }
+      }
+    }
+    Logger.v(TAG, "Cache cleaned: " + AptoideUtils.StringU.formatBytes(sizeCleaned, false));
+    return sizeCleaned;
+  }
+
+  public Single<Long> observeCleanCache() {
+    return Single.fromCallable(() -> cleanCache())
         .subscribeOn(Schedulers.io());
   }
 

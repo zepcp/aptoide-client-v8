@@ -31,6 +31,8 @@ public interface DownloadFile {
 
   String getFilePath();
 
+  void setFilePath(String filePath);
+
   String getPath();
 
   void setPath(String path);
