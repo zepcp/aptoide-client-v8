@@ -63,7 +63,7 @@ public class DownloadOrchestrator {
               downloadPath);
       downloadFile.setDownloadId(baseDownloadTask.asInQueueTask()
           .enqueue());
-      downloadFile.setPath(filePaths.getDownloadsStoragePath());
+      downloadFile.setPath(downloadPath);
       downloadFile.setFileName(downloadFile.getFileName());
       fileIndex++;
     }
@@ -91,10 +91,9 @@ public class DownloadOrchestrator {
         .isEmpty()) {
       throw new IllegalArgumentException("A link to download must be provided");
     }
-    if (fileToDownload.getFileName()
-        .endsWith(".temp")) {
-      fileToDownload.setFileName(fileToDownload.getFileName()
-          .replace(".temp", ""));
+    final String fileName = fileToDownload.getFileName();
+    if (fileName.endsWith(".temp")) {
+      fileToDownload.setFileName(fileName.replace(".temp", ""));
     }
     return fileDownloadLink;
   }
@@ -103,17 +102,12 @@ public class DownloadOrchestrator {
       String packageName, int fileIndex, FileDownloadListener listener, String downloadPath) {
     BaseDownloadTask baseDownloadTask = fileDownloader.create(fileDownloadLink);
     baseDownloadTask.setAutoRetryTimes(maxRetryTimes);
-        /*
-         * Aptoide - events 2 : download
-         * Get X-Mirror and add to the event
-         */
+    // Aptoide - events 2 : download
+    // Get X-Mirror and add to the event
     baseDownloadTask.addHeader(VERSION_CODE, Integer.toString(versionCode));
     baseDownloadTask.addHeader(PACKAGE, packageName);
     baseDownloadTask.addHeader(FILE_TYPE, Integer.toString(fileIndex));
-        /*
-         * end
-         */
-
+    // end
     baseDownloadTask.setTag(DownloadProgress.APPLICATION_FILE_INDEX, fileIndex);
     baseDownloadTask.setListener(listener);
     baseDownloadTask.setCallbackProgressTimes(PROGRESS_MAX_VALUE);

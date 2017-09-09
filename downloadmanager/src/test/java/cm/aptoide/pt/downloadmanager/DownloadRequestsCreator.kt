@@ -16,10 +16,13 @@ class DownloadRequestsCreator {
   }
 
   fun createDownloadRequest(): DownloadRequest {
-    val downloadFile = DownloadFileStub("http://www.aptoide.com/robots.txt")
-    return DownloadRequestStub(appName = "mock app", versionCode = 1, versionName = "first",
-        hashCode = "abcd", currentAction = DownloadAction.DOWNLOAD_ONLY,
-        packageName = "com.unit.test.mock", downloadFileParts = mutableListOf(downloadFile),
+    val downloadFile = DownloadFileStub(appPackageName = "com.whatsapp",
+        fileHash = "d9466f81de6b77711ad5584176f84187",
+        downloadLink = "http://pool.apk.aptoide.com/mark8/com-whatsapp-451996-32005517-d9466f81de6b77711ad5584176f84187.apk")
+
+    return DownloadRequestStub(appName = "com.whatsapp", versionCode = 1, versionName = "first",
+        hashCode = "d9466f81de6b77711ad5584176f84187", currentAction = DownloadAction.DOWNLOAD_ONLY,
+        packageName = "com.whatsapp", downloadFileParts = mutableListOf(downloadFile),
         appIcon = "none")
   }
 
@@ -28,20 +31,5 @@ class DownloadRequestsCreator {
         hashCode = "", currentAction = DownloadAction.DOWNLOAD_ONLY,
         packageName = "com.unit.test.mock", downloadFileParts = mutableListOf(), appIcon = "none")
 
-  }
-
-  fun createDownload(hashCode: String?, appName: String?, icon: String?, action: Int,
-                     packageName: String?, versionCode: Int, versionName: String?,
-                     downloadFiles: Collection<DownloadFile>): Download {
-    var download = DownloadStub()
-    download.action = DownloadAction.fromValue(action)
-    download.hashCode = hashCode
-    download.appName = appName
-    download.icon = icon
-    download.packageName = packageName
-    download.versionCode = versionCode
-    download.versionName = versionName
-    download.filesToDownload = downloadFiles.toMutableList()
-    return download
   }
 }

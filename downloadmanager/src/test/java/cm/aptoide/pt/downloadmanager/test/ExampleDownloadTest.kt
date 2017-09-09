@@ -1,13 +1,14 @@
-/*
- * modified at 2017
- */
-
 package cm.aptoide.pt.downloadmanager.test
 
+import cm.aptoide.pt.downloadmanager.BuildConfig
 import cm.aptoide.pt.downloadmanager.Download
 import cm.aptoide.pt.downloadmanager.DownloadRequestsCreator
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-
+@RunWith(RobolectricTestRunner::class)
+@Config(constants = BuildConfig::class)
 class ExampleDownloadTest {
 
   private var downloadRepository: cm.aptoide.pt.downloadmanager.DownloadRepository? = null

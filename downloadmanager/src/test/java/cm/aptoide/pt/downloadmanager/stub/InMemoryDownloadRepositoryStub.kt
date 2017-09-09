@@ -4,8 +4,7 @@ import cm.aptoide.pt.downloadmanager.*
 import rx.Observable
 import rx.subjects.PublishSubject
 
-
-class DownloadRepositoryStub : DownloadRepository {
+class InMemoryDownloadRepositoryStub : DownloadRepository {
 
   private var downloads: MutableMap<String, Download> = mutableMapOf()
   private var downloadPublisher: PublishSubject<Collection<Download>> = PublishSubject.create()
@@ -50,8 +49,8 @@ class DownloadRepositoryStub : DownloadRepository {
                                                          versionName: String?,
                                                          downloadFiles: T): Download {
 
-    val download = DownloadRequestsCreator().createDownload(hashCode, appName, icon, action,
-        packageName, versionCode, versionName, downloadFiles)
+    val download = createDownload(hashCode, appName, icon, action, packageName, versionCode,
+        versionName, downloadFiles)
     save(download)
     return download
   }
@@ -69,6 +68,21 @@ class DownloadRepositoryStub : DownloadRepository {
     if (download.overallDownloadStatus == DownloadStatus.PENDING) return true
     if (download.overallDownloadStatus == DownloadStatus.STARTED) return true
     return false
+  }
+
+  private fun createDownload(hashCode: String?, appName: String?, icon: String?, action: Int,
+                             packageName: String?, versionCode: Int, versionName: String?,
+                             downloadFiles: Collection<DownloadFile>): Download {
+    var download = DownloadStub()
+    download.action = DownloadAction.fromValue(action)
+    download.hashCode = hashCode
+    download.appName = appName
+    download.icon = icon
+    download.packageName = packageName
+    download.versionCode = versionCode
+    download.versionName = versionName
+    download.filesToDownload = downloadFiles.toMutableList()
+    return download
   }
 
 }
