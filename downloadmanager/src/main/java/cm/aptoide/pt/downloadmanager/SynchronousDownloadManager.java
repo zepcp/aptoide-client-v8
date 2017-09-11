@@ -1,6 +1,8 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
+import com.liulishuo.filedownloader.FileDownloadQueueSet;
+import com.liulishuo.filedownloader.FileDownloader;
 import java.util.List;
 import rx.Observable;
 import rx.subjects.BehaviorSubject;
@@ -11,11 +13,17 @@ public class SynchronousDownloadManager implements DownloadManager {
   private final DownloadOrchestrator downloadOrchestrator;
   private final DownloadRepository downloadRepository;
 
-  public SynchronousDownloadManager(DownloadOrchestrator downloadOrchestrator,
-      DownloadRepository downloadRepository) {
-    this.downloadOrchestrator = downloadOrchestrator;
+  public SynchronousDownloadManager(DownloadRepository downloadRepository, Analytics analytics,
+      FileDownloader fileDownloader, FilePaths paths, FileSystemOperations fsOperations) {
     this.downloadRepository = downloadRepository;
     currentDownloadsSubject = BehaviorSubject.create();
+
+    DownloadStatusListener downloadListener =
+        new DownloadStatusListener(analytics, currentDownloadsSubject);
+    FileDownloadQueueSet downloadQueue = new FileDownloadQueueSet(downloadListener);
+
+    downloadOrchestrator =
+        new DownloadOrchestrator(3, fileDownloader, paths, fsOperations, downloadQueue);
   }
 
   @NonNull @Override
@@ -38,12 +46,12 @@ public class SynchronousDownloadManager implements DownloadManager {
 
   @Override public void startDownload(DownloadRequest downloadRequest) {
     validate(downloadRequest);
-    final Download download = downloadRepository.insertNew(downloadRequest.getHashCode(),
+    downloadOrchestrator.startAndUpdateDownloadFileIds(downloadRequest);
+    downloadRepository.insertNew(downloadRequest.getHashCode(),
         downloadRequest.getApplicationName(), downloadRequest.getApplicationIcon(),
         downloadRequest.getDownloadAction()
             .getValue(), downloadRequest.getPackageName(), downloadRequest.getVersionCode(),
         downloadRequest.getVersionName(), downloadRequest.getFilesToDownload());
-    downloadOrchestrator.start(downloadRequest, download, currentDownloadsSubject);
   }
 
   @Override public void removeDownload(DownloadRequest downloadRequest) {

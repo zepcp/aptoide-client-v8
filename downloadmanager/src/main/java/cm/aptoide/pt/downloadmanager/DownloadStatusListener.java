@@ -6,63 +6,64 @@ import rx.subjects.BehaviorSubject;
 
 public class DownloadStatusListener extends FileDownloadLargeFileListener {
 
-  private final String downloadHashCode;
-  private final String packageName;
-  private final int versionCode;
   private final Analytics analytics;
   private final BehaviorSubject<DownloadProgress> currentDownloadsSubject;
 
-  public DownloadStatusListener(String downloadHashCode, String packageName, int versionCode,
-      Analytics analytics, BehaviorSubject<DownloadProgress> currentDownloadsSubject) {
-    this.downloadHashCode = downloadHashCode;
-    this.packageName = packageName;
-    this.versionCode = versionCode;
+  public DownloadStatusListener(Analytics analytics,
+      BehaviorSubject<DownloadProgress> currentDownloadsSubject) {
     this.analytics = analytics;
     this.currentDownloadsSubject = currentDownloadsSubject;
   }
 
   @Override protected void pending(BaseDownloadTask baseDownloadTask, long bytesTransferredSoFar,
       long totalBytesToTransfer) {
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX),
-        bytesTransferredSoFar, totalBytesToTransfer, baseDownloadTask.getSpeed(),
-        DownloadStatus.PENDING));
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, bytesTransferredSoFar, totalBytesToTransfer,
+            baseDownloadTask.getSpeed(), DownloadStatus.PENDING));
   }
 
   @Override protected void progress(BaseDownloadTask baseDownloadTask, long bytesTransferredSoFar,
       long totalBytesToTransfer) {
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX),
-        bytesTransferredSoFar, totalBytesToTransfer, baseDownloadTask.getSpeed(),
-        DownloadStatus.PROGRESS));
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, bytesTransferredSoFar, totalBytesToTransfer,
+            baseDownloadTask.getSpeed(), DownloadStatus.PROGRESS));
   }
 
   @Override protected void paused(BaseDownloadTask baseDownloadTask, long bytesTransferredSoFar,
       long totalBytesToTransfer) {
-
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX),
-        bytesTransferredSoFar, totalBytesToTransfer, baseDownloadTask.getSpeed(),
-        DownloadStatus.PAUSED));
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, bytesTransferredSoFar, totalBytesToTransfer,
+            baseDownloadTask.getSpeed(), DownloadStatus.PAUSED));
   }
 
   @Override protected void completed(BaseDownloadTask baseDownloadTask) {
-    analytics.onDownloadComplete(downloadHashCode);
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX),
-        DownloadStatus.COMPLETED));
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, DownloadStatus.COMPLETED));
+    analytics.onDownloadComplete(hashCode);
   }
 
   @Override protected void error(BaseDownloadTask baseDownloadTask, Throwable throwable) {
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    final String packageName = (String) baseDownloadTask.getTag(DownloadProgress.PACKAGE_NAME);
+    final int versionCode = (int) baseDownloadTask.getTag(DownloadProgress.VERSION_CODE);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, throwable, DownloadStatus.ERROR));
     analytics.onError(packageName, versionCode, throwable);
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX), throwable,
-        DownloadStatus.ERROR));
   }
 
   @Override protected void warn(BaseDownloadTask baseDownloadTask) {
-    currentDownloadsSubject.onNext(new DownloadProgress(downloadHashCode,
-        (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX),
-        DownloadStatus.WARNING));
+    final String hashCode = (String) baseDownloadTask.getTag(DownloadProgress.DOWNLOAD_HASH_CODE);
+    final int fileIndex = (int) baseDownloadTask.getTag(DownloadProgress.APPLICATION_FILE_INDEX);
+    currentDownloadsSubject.onNext(
+        new DownloadProgress(hashCode, fileIndex, DownloadStatus.WARNING));
   }
 }

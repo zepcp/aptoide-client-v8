@@ -2,7 +2,10 @@ package cm.aptoide.pt.downloadmanager;
 
 public class DownloadProgress {
 
-  public static final int APPLICATION_FILE_INDEX = 12;
+  public static final int DOWNLOAD_HASH_CODE = 12;
+  public static final int APPLICATION_FILE_INDEX = 13;
+  public static final int PACKAGE_NAME = 14;
+  public static final int VERSION_CODE = 15;
   private final String applicationHashCode;
   private final int fileIndex;
   private final long bytesTransferredSoFar;

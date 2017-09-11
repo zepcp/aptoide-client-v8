@@ -1,15 +1,13 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
-import android.support.v4.util.Pair;
 import com.liulishuo.filedownloader.BaseDownloadTask;
-import com.liulishuo.filedownloader.FileDownloadListener;
+import com.liulishuo.filedownloader.FileDownloadQueueSet;
 import com.liulishuo.filedownloader.FileDownloader;
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import rx.subjects.BehaviorSubject;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadOrchestrator {
 
@@ -21,54 +19,43 @@ public class DownloadOrchestrator {
   // private static final short RETRY_TIMES = 3;
   // private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
 
-  private final short maxRetryTimes;
-  private final Map<DownloadRequest, Pair<Download, DownloadStatusListener>> downloadsMap;
+  private final int maxRetryTimes;
+
+  private final FileDownloadQueueSet downloadQueue;
+  private final Map<DownloadRequest, List<DownloadFile>> downloadsMap;
+
   private final FileDownloader fileDownloader;
   private final FilePaths filePaths;
   private final FileSystemOperations fsOperations;
-  private final Analytics analytics;
 
-  public DownloadOrchestrator(short maxRetryTimes, FileDownloader fileDownloader,
-      FilePaths filePaths, FileSystemOperations fsOperations, Analytics analytics) {
+  public DownloadOrchestrator(int maxRetryTimes, FileDownloader fileDownloader, FilePaths filePaths,
+      FileSystemOperations fsOperations, FileDownloadQueueSet downloadQueue) {
     this.maxRetryTimes = maxRetryTimes;
     this.fileDownloader = fileDownloader;
     this.filePaths = filePaths;
     this.fsOperations = fsOperations;
-    this.analytics = analytics;
-    downloadsMap = new HashMap<>();
+    this.downloadQueue = downloadQueue;
+    downloadsMap = new ConcurrentHashMap<>();
   }
 
-  public void start(DownloadRequest downloadRequest, Download download,
-      BehaviorSubject<DownloadProgress> currentDownloadsSubject) {
-
-    final DownloadStatusListener listener =
-        new DownloadStatusListener(downloadRequest.getHashCode(), downloadRequest.getPackageName(),
-            downloadRequest.getVersionCode(), analytics, currentDownloadsSubject);
-
-    downloadsMap.put(downloadRequest, Pair.create(download, listener));
-
-    startInternal(downloadRequest.getFilesToDownload(), downloadRequest.getVersionCode(),
-        downloadRequest.getPackageName(), listener);
-  }
-
-  private void startInternal(List<DownloadFile> filesToDownload, int versionCode,
-      String packageName, FileDownloadListener listener) {
-
+  public void startAndUpdateDownloadFileIds(DownloadRequest downloadRequest) {
     int fileIndex = 0;
-    for (DownloadFile downloadFile : filesToDownload) {
+
+    for (DownloadFile downloadFile : downloadRequest.getFilesToDownload()) {
       final String fileDownloadLink = getFileDownloadLink(downloadFile);
       final String downloadPath = getDownloadPath(downloadFile);
-      BaseDownloadTask baseDownloadTask =
-          getDownloadTask(fileDownloadLink, versionCode, packageName, fileIndex, listener,
-              downloadPath);
-      downloadFile.setDownloadId(baseDownloadTask.asInQueueTask()
-          .enqueue());
+      BaseDownloadTask downloadTask =
+          getDownloadTask(fileDownloadLink, downloadRequest.getVersionCode(),
+              downloadRequest.getPackageName(), fileIndex, downloadPath,
+              downloadRequest.getHashCode());
+
       downloadFile.setPath(downloadPath);
       downloadFile.setFileName(downloadFile.getFileName());
+      downloadFile.setDownloadId(downloadTask.getId());
       fileIndex++;
+      downloadQueue.downloadSequentially(downloadTask);
     }
-
-    fileDownloader.start(listener, true);
+    downloadsMap.put(downloadRequest, downloadRequest.getFilesToDownload());
   }
 
   @NonNull private String getDownloadPath(DownloadFile downloadFile) {
@@ -99,7 +86,7 @@ public class DownloadOrchestrator {
   }
 
   private BaseDownloadTask getDownloadTask(String fileDownloadLink, int versionCode,
-      String packageName, int fileIndex, FileDownloadListener listener, String downloadPath) {
+      String packageName, int fileIndex, String downloadPath, String downloadHashCode) {
     BaseDownloadTask baseDownloadTask = fileDownloader.create(fileDownloadLink);
     baseDownloadTask.setAutoRetryTimes(maxRetryTimes);
     // Aptoide - events 2 : download
@@ -109,26 +96,30 @@ public class DownloadOrchestrator {
     baseDownloadTask.addHeader(FILE_TYPE, Integer.toString(fileIndex));
     // end
     baseDownloadTask.setTag(DownloadProgress.APPLICATION_FILE_INDEX, fileIndex);
-    baseDownloadTask.setListener(listener);
+    baseDownloadTask.setTag(DownloadProgress.DOWNLOAD_HASH_CODE, downloadHashCode);
+    baseDownloadTask.setTag(DownloadProgress.VERSION_CODE, versionCode);
+    baseDownloadTask.setTag(DownloadProgress.PACKAGE_NAME, packageName);
     baseDownloadTask.setCallbackProgressTimes(PROGRESS_MAX_VALUE);
     baseDownloadTask.setPath(downloadPath);
     return baseDownloadTask;
   }
 
   public void pause(DownloadRequest downloadRequest) {
-    final Pair<Download, DownloadStatusListener> pair = downloadsMap.get(downloadRequest);
-    if (pair == null) {
+    List<DownloadFile> downloadTaskIds = downloadsMap.get(downloadRequest);
+    if (downloadTaskIds == null || downloadTaskIds.isEmpty()) {
       throw new IllegalArgumentException(
           String.format("Illegal %s passed", DownloadRequest.class.getSimpleName()));
     }
-    fileDownloader.pause(pair.second);
+    for (DownloadFile downloadFile : downloadTaskIds) {
+      fileDownloader.pause(downloadFile.getDownloadId());
+    }
   }
 
   public void removeAll() {
     fileDownloader.clearAllTaskData();
 
-    for (Pair<Download, DownloadStatusListener> pair : downloadsMap.values()) {
-      for (DownloadFile file : pair.first.getFilesToDownload()) {
+    for (List<DownloadFile> fileList : downloadsMap.values()) {
+      for (DownloadFile file : fileList) {
         fsOperations.deleteFile(file.getFilePath() + File.pathSeparator + file.getFileName());
       }
     }
@@ -141,11 +132,14 @@ public class DownloadOrchestrator {
   }
 
   public void remove(DownloadRequest downloadRequest) {
-    final Pair<Download, DownloadStatusListener> pair = downloadsMap.get(downloadRequest);
-    if (pair == null) {
+    List<DownloadFile> downloadFiles = downloadsMap.get(downloadRequest);
+    if (downloadFiles == null || downloadFiles.isEmpty()) {
       throw new IllegalArgumentException(
           String.format("Illegal %s passed", DownloadRequest.class.getSimpleName()));
     }
-    fileDownloader.pause(pair.second);
+
+    for (DownloadFile downloadFile : downloadFiles) {
+      fileDownloader.pause(downloadFile.getDownloadId());
+    }
   }
 }
