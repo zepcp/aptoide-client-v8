@@ -16,7 +16,7 @@ import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.accessors.UpdateAccessor;
 import cm.aptoide.pt.database.realm.Update;
 import cm.aptoide.pt.download.DownloadFactory;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.updates.UpdatesAnalytics;
 import cm.aptoide.pt.view.navigator.SimpleTabNavigation;

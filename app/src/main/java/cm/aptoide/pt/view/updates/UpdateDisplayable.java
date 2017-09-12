@@ -20,7 +20,7 @@ import cm.aptoide.pt.download.DownloadFactory;
 import cm.aptoide.pt.download.DownloadInstallBaseEvent;
 import cm.aptoide.pt.download.InstallEvent;
 import cm.aptoide.pt.download.InstallEventConverter;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;

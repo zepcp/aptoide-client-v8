@@ -6,7 +6,7 @@
 package cm.aptoide.pt.filemanager;
 
 import android.text.format.DateUtils;
-import cm.aptoide.pt.downloadmanager.FileSystemOperations;
+import cm.aptoide.pt.downloadmanager.external.FileSystemOperations;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;

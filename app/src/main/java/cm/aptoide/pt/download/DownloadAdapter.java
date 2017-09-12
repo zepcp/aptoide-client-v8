@@ -2,10 +2,10 @@ package cm.aptoide.pt.download;
 
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.downloadmanager.DownloadError;
-import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import io.realm.RealmList;
 import java.util.LinkedList;

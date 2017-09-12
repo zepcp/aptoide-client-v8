@@ -35,7 +35,8 @@ public class DownloadProgress {
     this.error = null;
   }
 
-  public DownloadProgress(String applicationHashCode, int fileIndex, Throwable error, DownloadStatus status) {
+  public DownloadProgress(String applicationHashCode, int fileIndex, Throwable error,
+      DownloadStatus status) {
     this.applicationHashCode = applicationHashCode;
     this.fileIndex = fileIndex;
     this.bytesTransferredSoFar = Long.MIN_VALUE;

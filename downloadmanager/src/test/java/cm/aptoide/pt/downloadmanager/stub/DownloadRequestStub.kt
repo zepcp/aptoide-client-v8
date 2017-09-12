@@ -1,8 +1,8 @@
 package cm.aptoide.pt.downloadmanager.stub
 
 import cm.aptoide.pt.downloadmanager.DownloadAction
-import cm.aptoide.pt.downloadmanager.DownloadFile
-import cm.aptoide.pt.downloadmanager.DownloadRequest
+import cm.aptoide.pt.downloadmanager.base.DownloadFile
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest
 
 
 class DownloadRequestStub(private var appName: String,
@@ -10,7 +10,8 @@ class DownloadRequestStub(private var appName: String,
                           private var appIcon: String, private var versionCode: Int,
                           private var packageName: String,
                           private var currentAction: DownloadAction, private var hashCode: String,
-                          private var versionName: String) : DownloadRequest {
+                          private var versionName: String) :
+    DownloadRequest {
 
 
   override fun getFilesToDownload(): MutableList<DownloadFile> = downloadFileParts

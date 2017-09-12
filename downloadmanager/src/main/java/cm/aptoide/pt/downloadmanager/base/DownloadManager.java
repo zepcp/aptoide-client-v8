@@ -1,4 +1,4 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.base;
 
 import android.support.annotation.NonNull;
 import rx.Observable;

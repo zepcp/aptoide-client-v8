@@ -1,12 +1,13 @@
 package cm.aptoide.pt.downloadmanager.stub
 
-import cm.aptoide.pt.downloadmanager.DownloadFile
+import cm.aptoide.pt.downloadmanager.base.DownloadFile
 import cm.aptoide.pt.downloadmanager.DownloadFileType
 import cm.aptoide.pt.downloadmanager.DownloadStatus
 
 
 class DownloadFileStub(private var downloadLink: String, private var appPackageName: String,
-                       private var fileHash: String) : DownloadFile {
+                       private var fileHash: String) :
+    DownloadFile {
 
   private var alternativeLink: String = ""
   private var status: DownloadStatus = DownloadStatus.INVALID_STATUS

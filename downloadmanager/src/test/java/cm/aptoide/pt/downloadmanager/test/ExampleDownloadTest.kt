@@ -1,19 +1,20 @@
 package cm.aptoide.pt.downloadmanager.test
 
-import cm.aptoide.pt.downloadmanager.Download
+import cm.aptoide.pt.downloadmanager.base.Download
 import cm.aptoide.pt.downloadmanager.DownloadRequestsCreator
+import cm.aptoide.pt.downloadmanager.external.DownloadRepository
 import org.junit.Test
 import org.mockito.Mockito
 
 class ExampleDownloadTest {
 
-  private var downloadRepository: cm.aptoide.pt.downloadmanager.DownloadRepository? = null
+  private var downloadRepository: DownloadRepository? = null
   private var downloadRequestsCreator: DownloadRequestsCreator? = null
 
   @org.junit.Before
   fun preparationBeforeEachMethod() {
-    downloadRepository = Mockito.mock<cm.aptoide.pt.downloadmanager.DownloadRepository>(
-        cm.aptoide.pt.downloadmanager.DownloadRepository::class.java)
+    downloadRepository = Mockito.mock<DownloadRepository>(
+        DownloadRepository::class.java)
     downloadRequestsCreator = DownloadRequestsCreator()
   }
 

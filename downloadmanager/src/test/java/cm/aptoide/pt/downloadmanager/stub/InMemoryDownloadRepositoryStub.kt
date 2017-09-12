@@ -1,6 +1,9 @@
 package cm.aptoide.pt.downloadmanager.stub
 
 import cm.aptoide.pt.downloadmanager.*
+import cm.aptoide.pt.downloadmanager.base.Download
+import cm.aptoide.pt.downloadmanager.base.DownloadFile
+import cm.aptoide.pt.downloadmanager.external.DownloadRepository
 import rx.Observable
 import rx.subjects.PublishSubject
 

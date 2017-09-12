@@ -1,5 +1,7 @@
 package cm.aptoide.pt.downloadmanager
 
+import cm.aptoide.pt.downloadmanager.base.Download
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest
 import cm.aptoide.pt.downloadmanager.stub.DownloadFileStub
 import cm.aptoide.pt.downloadmanager.stub.DownloadRequestStub
 import cm.aptoide.pt.downloadmanager.stub.DownloadStub

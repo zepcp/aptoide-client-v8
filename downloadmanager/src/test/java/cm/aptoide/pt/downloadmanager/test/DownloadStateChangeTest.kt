@@ -5,13 +5,19 @@
 package cm.aptoide.pt.downloadmanager.test
 
 import cm.aptoide.pt.downloadmanager.*
+import cm.aptoide.pt.downloadmanager.base.Download
+import cm.aptoide.pt.downloadmanager.base.DownloadManager
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest
+import cm.aptoide.pt.downloadmanager.external.DownloadRepository
 import cm.aptoide.pt.downloadmanager.stub.InMemoryDownloadRepositoryStub
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import rx.subjects.BehaviorSubject
 import java.lang.IllegalArgumentException
+import java.util.concurrent.TimeUnit
 import org.mockito.Mockito.`when` as whenever
 
 class DownloadStateChangeTest {
@@ -40,19 +46,7 @@ class DownloadStateChangeTest {
     //        downloadQueue, ConcurrentHashMap())
 
     downloadOrchestrator = Mockito.mock(DownloadOrchestrator::class.java)
-    whenever(downloadOrchestrator?.startAndUpdateDownloadFileIds(Mockito.any())).then { _ ->
-      {
-        downloadBehaviourSubject.onNext(
-            DownloadProgress(validDownloadRequest!!.hashCode, 0, DownloadStatus.STARTED))
-
-//        downloadBehaviourSubject.onNext(
-//            DownloadProgress(validDownloadRequest!!.hashCode, 0, 1L, 10L, 100,
-//                DownloadStatus.PROGRESS))
-      }
-    }
-
     downloadRepository = InMemoryDownloadRepositoryStub()
-
     downloadManager = SynchronousDownloadManager(downloadRepository, downloadOrchestrator,
         downloadBehaviourSubject.asObservable())
   }
@@ -64,7 +58,6 @@ class DownloadStateChangeTest {
 
   @Test
   fun fromIdleToStarted() {
-
     val listDownloadsTestSubscriber = rx.observers.TestSubscriber<Download>()
     val observableDownload = downloadManager?.observeAllDownloadChanges()
     observableDownload?.subscribe(listDownloadsTestSubscriber)
@@ -75,18 +68,11 @@ class DownloadStateChangeTest {
     Mockito.verify(downloadOrchestrator!!, Mockito.times(1)).startAndUpdateDownloadFileIds(
         Mockito.any())
 
-    //assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
+    assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
     var downloads = listDownloadsTestSubscriber.onNextEvents
     assertEquals(1, downloads[0])
     assertEquals(validDownloadRequest!!.hashCode, downloads[0].hashCode)
     assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
-
-    //assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
-    downloads = listDownloadsTestSubscriber.onNextEvents
-    assertEquals(1, downloads[0])
-    assertEquals(validDownloadRequest!!.hashCode, downloads[0].hashCode)
-    assertEquals(DownloadStatus.PROGRESS, downloads[0].overallDownloadStatus)
-
   }
 
   @Test

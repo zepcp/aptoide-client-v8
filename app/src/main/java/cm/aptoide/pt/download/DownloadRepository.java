@@ -3,8 +3,8 @@ package cm.aptoide.pt.download;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.database.accessors.DownloadAccessor;
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.Download;
-import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.Download;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import cm.aptoide.pt.logger.Logger;
 import io.realm.RealmList;
 import java.util.ArrayList;
@@ -12,7 +12,8 @@ import java.util.Collection;
 import java.util.List;
 import rx.Observable;
 
-public class DownloadRepository implements cm.aptoide.pt.downloadmanager.DownloadRepository {
+public class DownloadRepository implements
+    cm.aptoide.pt.downloadmanager.external.DownloadRepository {
 
   private static final String TAG = DownloadRepository.class.getName();
 

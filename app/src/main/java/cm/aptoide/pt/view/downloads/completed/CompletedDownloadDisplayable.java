@@ -12,7 +12,7 @@ import cm.aptoide.pt.download.DownloadEventConverter;
 import cm.aptoide.pt.download.DownloadInstallBaseEvent;
 import cm.aptoide.pt.download.InstallEvent;
 import cm.aptoide.pt.download.InstallEventConverter;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import rx.Observable;

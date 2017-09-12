@@ -1,6 +1,8 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.external;
 
 import android.support.annotation.NonNull;
+import cm.aptoide.pt.downloadmanager.base.Download;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import java.util.Collection;
 import java.util.List;
 import rx.Observable;

@@ -1,12 +1,13 @@
 package cm.aptoide.pt.downloadmanager.stub
 
-import cm.aptoide.pt.downloadmanager.FilePaths
-import cm.aptoide.pt.downloadmanager.FileSystemOperations
+import cm.aptoide.pt.downloadmanager.external.FilePaths
+import cm.aptoide.pt.downloadmanager.external.FileSystemOperations
 import java.io.File
 import java.util.*
 
 
-class FileSystemOperationsStub(private var filePaths: FilePaths) : FileSystemOperations {
+class FileSystemOperationsStub(private var filePaths: FilePaths) :
+    FileSystemOperations {
 
   override fun deleteFile(path: String): Boolean {
     val file = File(path)

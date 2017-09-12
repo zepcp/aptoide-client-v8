@@ -16,7 +16,7 @@ import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.download.DownloadInstallationProvider;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
-import cm.aptoide.pt.downloadmanager.DownloadRepository;
+import cm.aptoide.pt.downloadmanager.external.DownloadRepository;
 import cm.aptoide.pt.install.installer.DefaultInstaller;
 import cm.aptoide.pt.install.installer.RollbackInstaller;
 import cm.aptoide.pt.install.rollback.RollbackFactory;

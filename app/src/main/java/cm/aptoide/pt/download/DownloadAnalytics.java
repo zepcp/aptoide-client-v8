@@ -8,7 +8,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
  * Created by trinkes on 04/01/2017.
  */
 
-public class DownloadAnalytics implements cm.aptoide.pt.downloadmanager.Analytics {
+public class DownloadAnalytics implements cm.aptoide.pt.downloadmanager.external.Analytics {
   private Analytics analytics;
   private DownloadCompleteAnalytics downloadCompleteAnalytics;
 

@@ -1,41 +1,36 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
-import com.liulishuo.filedownloader.BaseDownloadTask;
-import com.liulishuo.filedownloader.FileDownloadQueueSet;
-import com.liulishuo.filedownloader.FileDownloader;
+import cm.aptoide.pt.downloadmanager.base.DownloadClient;
+import cm.aptoide.pt.downloadmanager.base.DownloadFactory;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
+import cm.aptoide.pt.downloadmanager.base.DownloadTask;
+import cm.aptoide.pt.downloadmanager.base.FileDownloadQueue;
+import cm.aptoide.pt.downloadmanager.external.FilePaths;
+import cm.aptoide.pt.downloadmanager.external.FileSystemOperations;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 public class DownloadOrchestrator {
 
-  private static final String VERSION_CODE = "versioncode";
-  private static final String PACKAGE = "package";
-  private static final String FILE_TYPE = "fileType";
-  private static final int PROGRESS_MAX_VALUE = 100;
-
-  // private static final short RETRY_TIMES = 3;
-  // private static final int APTOIDE_DOWNLOAD_TASK_TAG_KEY = 888;
-
-  private final int maxRetryTimes;
-
-  private final FileDownloadQueueSet downloadQueue;
+  private final FileDownloadQueue downloadQueue;
   private final Map<DownloadRequest, List<DownloadFile>> downloadsMap;
-
-  private final FileDownloader fileDownloader;
+  private final DownloadFactory downloadFactory;
+  private final DownloadClient downloadClient;
   private final FilePaths filePaths;
   private final FileSystemOperations fsOperations;
 
-  public DownloadOrchestrator(int maxRetryTimes, FileDownloader fileDownloader, FilePaths filePaths,
-      FileSystemOperations fsOperations, FileDownloadQueueSet downloadQueue,
-      Map<DownloadRequest, List<DownloadFile>> downloadsMap) {
-    this.maxRetryTimes = maxRetryTimes;
-    this.fileDownloader = fileDownloader;
+  public DownloadOrchestrator(DownloadClient downloadClient, FilePaths filePaths,
+      FileSystemOperations fsOperations, FileDownloadQueue downloadQueue,
+      Map<DownloadRequest, List<DownloadFile>> downloadsMap, DownloadFactory downloadFactory) {
+    this.downloadClient = downloadClient;
     this.filePaths = filePaths;
     this.fsOperations = fsOperations;
     this.downloadQueue = downloadQueue;
     this.downloadsMap = downloadsMap;
+    this.downloadFactory = downloadFactory;
   }
 
   public void startAndUpdateDownloadFileIds(DownloadRequest downloadRequest) {
@@ -45,16 +40,16 @@ public class DownloadOrchestrator {
       final String fileDownloadLink = getFileDownloadLink(downloadFile);
       final String downloadPath = getDownloadPath(downloadFile);
 
-      BaseDownloadTask downloadTask =
-          getDownloadTask(fileDownloadLink, downloadRequest.getVersionCode(),
+      DownloadTask downloadTask =
+          downloadFactory.create(fileDownloadLink, downloadRequest.getVersionCode(),
               downloadRequest.getPackageName(), fileIndex, downloadPath,
               downloadRequest.getHashCode());
 
       downloadFile.setPath(downloadPath);
       downloadFile.setFileName(downloadFile.getFileName());
-      downloadFile.setDownloadId(downloadTask.getId());
+      downloadFile.setDownloadId(downloadTask.getDownloadId());
       fileIndex++;
-      downloadQueue.downloadSequentially(downloadTask);
+      downloadQueue.enqueue(downloadTask);
     }
     downloadsMap.put(downloadRequest, downloadRequest.getFilesToDownload());
   }
@@ -86,25 +81,6 @@ public class DownloadOrchestrator {
     return fileDownloadLink;
   }
 
-  private BaseDownloadTask getDownloadTask(String fileDownloadLink, int versionCode,
-      String packageName, int fileIndex, String downloadPath, String downloadHashCode) {
-    BaseDownloadTask baseDownloadTask = fileDownloader.create(fileDownloadLink);
-    baseDownloadTask.setAutoRetryTimes(maxRetryTimes);
-    // Aptoide - events 2 : download
-    // Get X-Mirror and add to the event
-    baseDownloadTask.addHeader(VERSION_CODE, Integer.toString(versionCode));
-    baseDownloadTask.addHeader(PACKAGE, packageName);
-    baseDownloadTask.addHeader(FILE_TYPE, Integer.toString(fileIndex));
-    // end
-    baseDownloadTask.setTag(DownloadProgress.APPLICATION_FILE_INDEX, fileIndex);
-    baseDownloadTask.setTag(DownloadProgress.DOWNLOAD_HASH_CODE, downloadHashCode);
-    baseDownloadTask.setTag(DownloadProgress.VERSION_CODE, versionCode);
-    baseDownloadTask.setTag(DownloadProgress.PACKAGE_NAME, packageName);
-    baseDownloadTask.setCallbackProgressTimes(PROGRESS_MAX_VALUE);
-    baseDownloadTask.setPath(downloadPath);
-    return baseDownloadTask;
-  }
-
   public void pause(DownloadRequest downloadRequest) {
     List<DownloadFile> downloadTaskIds = downloadsMap.get(downloadRequest);
     if (downloadTaskIds == null || downloadTaskIds.isEmpty()) {
@@ -112,12 +88,12 @@ public class DownloadOrchestrator {
           String.format("Illegal %s passed", DownloadRequest.class.getSimpleName()));
     }
     for (DownloadFile downloadFile : downloadTaskIds) {
-      fileDownloader.pause(downloadFile.getDownloadId());
+      downloadClient.pauseDownload(downloadFile.getDownloadId());
     }
   }
 
   public void removeAll() {
-    fileDownloader.clearAllTaskData();
+    downloadClient.clearAllDownloads();
 
     for (List<DownloadFile> fileList : downloadsMap.values()) {
       for (DownloadFile file : fileList) {
@@ -129,7 +105,7 @@ public class DownloadOrchestrator {
   }
 
   public void pauseAll() {
-    fileDownloader.pauseAll();
+    downloadClient.pauseAllDownloads();
   }
 
   public void remove(DownloadRequest downloadRequest) {
@@ -140,7 +116,7 @@ public class DownloadOrchestrator {
     }
 
     for (DownloadFile downloadFile : downloadFiles) {
-      fileDownloader.pause(downloadFile.getDownloadId());
+      downloadClient.pauseDownload(downloadFile.getDownloadId());
     }
   }
 }

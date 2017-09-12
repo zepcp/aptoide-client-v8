@@ -1,4 +1,4 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.exception;
 
 public class DownloadErrorWrapper extends Throwable {
   private final String downloadHashCode;

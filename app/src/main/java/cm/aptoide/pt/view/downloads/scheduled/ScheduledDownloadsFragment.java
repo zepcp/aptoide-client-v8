@@ -36,7 +36,7 @@ import cm.aptoide.pt.download.DownloadInstallBaseEvent;
 import cm.aptoide.pt.download.InstallEvent;
 import cm.aptoide.pt.download.InstallEventConverter;
 import cm.aptoide.pt.download.ScheduledDownloadRepository;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.repository.RepositoryFactory;

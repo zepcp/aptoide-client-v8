@@ -1,6 +1,6 @@
 package cm.aptoide.pt.filemanager;
 
-import cm.aptoide.pt.downloadmanager.FilePaths;
+import cm.aptoide.pt.downloadmanager.external.FilePaths;
 
 public class AptoideFilePaths implements FilePaths {
   private final String downloadsStoragePath;

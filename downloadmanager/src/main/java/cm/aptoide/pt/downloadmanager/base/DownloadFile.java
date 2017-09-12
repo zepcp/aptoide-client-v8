@@ -1,4 +1,7 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.base;
+
+import cm.aptoide.pt.downloadmanager.DownloadFileType;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 
 public interface DownloadFile {
   String getAltLink();

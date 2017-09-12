@@ -112,7 +112,7 @@ import cm.aptoide.pt.download.DownloadMirrorEventInterceptor;
 import cm.aptoide.pt.download.DownloadRepository;
 import cm.aptoide.pt.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
-import cm.aptoide.pt.downloadmanager.DownloadManager;
+import cm.aptoide.pt.downloadmanager.base.DownloadManager;
 import cm.aptoide.pt.filemanager.AptoideFilePaths;
 import cm.aptoide.pt.filemanager.CacheHelper;
 import cm.aptoide.pt.filemanager.FileManager;

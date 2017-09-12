@@ -10,8 +10,8 @@ import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.DownloadInstallAnalyticsBa
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Obb;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.ResultError;
-import cm.aptoide.pt.downloadmanager.Download;
-import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.Download;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import cm.aptoide.pt.utils.AptoideUtils;
 import java.util.LinkedList;
 import java.util.List;

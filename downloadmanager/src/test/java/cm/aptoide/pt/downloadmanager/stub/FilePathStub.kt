@@ -1,6 +1,6 @@
 package cm.aptoide.pt.downloadmanager.stub
 
-import cm.aptoide.pt.downloadmanager.FilePaths
+import cm.aptoide.pt.downloadmanager.external.FilePaths
 
 
 class FilePathStub(private val base: String) : FilePaths {

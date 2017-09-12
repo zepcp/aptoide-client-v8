@@ -1,5 +1,6 @@
 package cm.aptoide.pt.downloadmanager;
 
+import cm.aptoide.pt.downloadmanager.external.Analytics;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadLargeFileListener;
 import rx.subjects.BehaviorSubject;

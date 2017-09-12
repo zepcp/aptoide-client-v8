@@ -1,7 +1,7 @@
 package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadFileType;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
 

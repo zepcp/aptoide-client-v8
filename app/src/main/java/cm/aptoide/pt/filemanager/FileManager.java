@@ -1,7 +1,7 @@
 package cm.aptoide.pt.filemanager;
 
 import cm.aptoide.pt.dataprovider.cache.L2Cache;
-import cm.aptoide.pt.downloadmanager.DownloadManager;
+import cm.aptoide.pt.downloadmanager.base.DownloadManager;
 import cm.aptoide.pt.utils.FileUtils;
 import rx.Single;
 

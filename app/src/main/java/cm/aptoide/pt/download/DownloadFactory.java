@@ -16,7 +16,7 @@ import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.dataprovider.model.v7.Obb;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.File;
-import cm.aptoide.pt.downloadmanager.Download;
+import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.install.AppAction;
 import cm.aptoide.pt.social.data.AppUpdate;
@@ -308,7 +308,7 @@ public class DownloadFactory {
     return new DownloadAdapter(download);
   }
 
-  public cm.aptoide.pt.downloadmanager.Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
+  public Download create(AutoUpdate.AutoUpdateInfo autoUpdateInfo) {
     cm.aptoide.pt.database.realm.Download download = new cm.aptoide.pt.database.realm.Download();
     download.setAppName(marketName);
     download.setMd5(autoUpdateInfo.md5);

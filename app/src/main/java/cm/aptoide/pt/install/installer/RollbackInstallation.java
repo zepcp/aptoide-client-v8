@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.install.installer;
 
-import cm.aptoide.pt.downloadmanager.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import java.util.List;
 
 /**

@@ -1,6 +1,9 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.base;
 
 import android.support.annotation.NonNull;
+import cm.aptoide.pt.downloadmanager.DownloadAction;
+import cm.aptoide.pt.downloadmanager.DownloadError;
+import cm.aptoide.pt.downloadmanager.DownloadStatus;
 import java.util.List;
 
 public interface Download {

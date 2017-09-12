@@ -1,4 +1,4 @@
-package cm.aptoide.pt.downloadmanager;
+package cm.aptoide.pt.downloadmanager.external;
 
 public interface FileSystemOperations {
   boolean deleteFile(String path);

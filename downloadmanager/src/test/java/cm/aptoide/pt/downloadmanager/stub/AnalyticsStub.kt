@@ -1,7 +1,7 @@
 package cm.aptoide.pt.downloadmanager.stub
 
 import android.util.Log
-import cm.aptoide.pt.downloadmanager.Analytics
+import cm.aptoide.pt.downloadmanager.external.Analytics
 
 
 class AnalyticsStub : Analytics {

@@ -1,6 +1,12 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
+import cm.aptoide.pt.downloadmanager.base.Download;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadManager;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
+import cm.aptoide.pt.downloadmanager.exception.DownloadErrorWrapper;
+import cm.aptoide.pt.downloadmanager.external.DownloadRepository;
 import java.util.List;
 import rx.Observable;
 
