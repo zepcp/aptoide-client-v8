@@ -4,79 +4,89 @@
 
 package cm.aptoide.pt.downloadmanager.test
 
-import android.app.Application
-import android.support.v4.content.PermissionChecker
 import cm.aptoide.pt.downloadmanager.*
-import cm.aptoide.pt.downloadmanager.stub.AnalyticsStub
-import cm.aptoide.pt.downloadmanager.stub.FilePathStub
-import cm.aptoide.pt.downloadmanager.stub.FileSystemOperationsStub
 import cm.aptoide.pt.downloadmanager.stub.InMemoryDownloadRepositoryStub
-import com.liulishuo.filedownloader.FileDownloader
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment.application
-import org.robolectric.annotation.Config
+import rx.subjects.BehaviorSubject
 import java.lang.IllegalArgumentException
-import java.util.concurrent.TimeUnit
 import org.mockito.Mockito.`when` as whenever
 
-
-@RunWith(RobolectricTestRunner::class)
-@Config(constants = BuildConfig::class)
 class DownloadStateChangeTest {
 
   private var downloadManager: DownloadManager? = null
-  private var downloadRequestsCreator: DownloadRequestsCreator? = null
-  private var spiedApplication: Application? = null
+  private var downloadOrchestrator: DownloadOrchestrator? = null
+  private var validDownloadRequest: DownloadRequest? = null
+  private var invalidDownloadRequest: DownloadRequest? = null
+  private var downloadRepository: DownloadRepository? = null
 
   @Before
   fun preparationBeforeEachMethod() {
-    downloadRequestsCreator = DownloadRequestsCreator()
+    validDownloadRequest = DownloadRequestsCreator().createDownloadRequest()
+    invalidDownloadRequest = DownloadRequestsCreator().createInvalidDownloadRequest()
 
-    spiedApplication = Mockito.spy(application)
-    whenever(spiedApplication!!.checkPermission(Mockito.anyString(), Mockito.anyInt(),
-        Mockito.anyInt())).thenReturn(PermissionChecker.PERMISSION_GRANTED)
+    val downloadBehaviourSubject: BehaviorSubject<DownloadProgress> = BehaviorSubject.create()
 
-    val downloadRepository = InMemoryDownloadRepositoryStub()
-    val analytics = AnalyticsStub()
-    val paths = FilePathStub(spiedApplication!!.cacheDir.absolutePath)
-    val fsOperations = FileSystemOperationsStub(paths)
+    //    val analytics = AnalyticsStub()
+    //    val downloadListener = DownloadStatusListener(analytics, downloadBehaviourSubject)
+    //    val downloadQueue = FileDownloadQueueSet(downloadListener)
 
-    FileDownloader.setup(spiedApplication)
-    val fileDownloader = FileDownloader.getImpl()
+    //    val paths = FilePathStub("downloads")
+    //    val fsOperations = FileSystemOperationsStub(paths)
+    //    val fileDownloader = Mockito.mock(FileDownloader::class.java)
+    //    val downloadOrchestrator = DownloadOrchestrator(3, fileDownloader, paths, fsOperations,
+    //        downloadQueue, ConcurrentHashMap())
 
-    downloadManager = SynchronousDownloadManager(downloadRepository, analytics, fileDownloader,
-        paths, fsOperations)
+    downloadOrchestrator = Mockito.mock(DownloadOrchestrator::class.java)
+    whenever(downloadOrchestrator?.startAndUpdateDownloadFileIds(Mockito.any())).then { _ ->
+      {
+        downloadBehaviourSubject.onNext(
+            DownloadProgress(validDownloadRequest!!.hashCode, 0, DownloadStatus.STARTED))
+
+//        downloadBehaviourSubject.onNext(
+//            DownloadProgress(validDownloadRequest!!.hashCode, 0, 1L, 10L, 100,
+//                DownloadStatus.PROGRESS))
+      }
+    }
+
+    downloadRepository = InMemoryDownloadRepositoryStub()
+
+    downloadManager = SynchronousDownloadManager(downloadRepository, downloadOrchestrator,
+        downloadBehaviourSubject.asObservable())
   }
 
   @Test(expected = IllegalArgumentException::class)
   fun startingInvalidRequest() {
-    val downloadRequest = downloadRequestsCreator?.createInvalidDownloadRequest()
-    downloadManager?.startDownload(downloadRequest)
+    downloadManager?.startDownload(invalidDownloadRequest)
   }
 
   @Test
   fun fromIdleToStarted() {
-    // prepare
-    val downloadRequest = downloadRequestsCreator?.createDownloadRequest()
 
-    // execute
     val listDownloadsTestSubscriber = rx.observers.TestSubscriber<Download>()
     val observableDownload = downloadManager?.observeAllDownloadChanges()
     observableDownload?.subscribe(listDownloadsTestSubscriber)
 
-    downloadManager?.startDownload(downloadRequest)
+    downloadManager?.startDownload(validDownloadRequest)
 
     // assert
-    assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
-    val downloads = listDownloadsTestSubscriber.onNextEvents
+    Mockito.verify(downloadOrchestrator!!, Mockito.times(1)).startAndUpdateDownloadFileIds(
+        Mockito.any())
+
+    //assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
+    var downloads = listDownloadsTestSubscriber.onNextEvents
     assertEquals(1, downloads[0])
-    assertEquals("d9466f81de6b77711ad5584176f84187", downloads[0].hashCode)
+    assertEquals(validDownloadRequest!!.hashCode, downloads[0].hashCode)
+    assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
+
+    //assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
+    downloads = listDownloadsTestSubscriber.onNextEvents
+    assertEquals(1, downloads[0])
+    assertEquals(validDownloadRequest!!.hashCode, downloads[0].hashCode)
+    assertEquals(DownloadStatus.PROGRESS, downloads[0].overallDownloadStatus)
+
   }
 
   @Test

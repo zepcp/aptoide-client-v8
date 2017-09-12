@@ -1,29 +1,21 @@
 package cm.aptoide.pt.downloadmanager;
 
 import android.support.annotation.NonNull;
-import com.liulishuo.filedownloader.FileDownloadQueueSet;
-import com.liulishuo.filedownloader.FileDownloader;
 import java.util.List;
 import rx.Observable;
-import rx.subjects.BehaviorSubject;
 
 public class SynchronousDownloadManager implements DownloadManager {
 
-  private final BehaviorSubject<DownloadProgress> currentDownloadsSubject;
+  private final Observable<DownloadProgress> currentDownloadsSubject;
   private final DownloadOrchestrator downloadOrchestrator;
   private final DownloadRepository downloadRepository;
 
-  public SynchronousDownloadManager(DownloadRepository downloadRepository, Analytics analytics,
-      FileDownloader fileDownloader, FilePaths paths, FileSystemOperations fsOperations) {
+  public SynchronousDownloadManager(DownloadRepository downloadRepository,
+      DownloadOrchestrator downloadOrchestrator,
+      Observable<DownloadProgress> currentDownloadsSubject) {
     this.downloadRepository = downloadRepository;
-    currentDownloadsSubject = BehaviorSubject.create();
-
-    DownloadStatusListener downloadListener =
-        new DownloadStatusListener(analytics, currentDownloadsSubject);
-    FileDownloadQueueSet downloadQueue = new FileDownloadQueueSet(downloadListener);
-
-    downloadOrchestrator =
-        new DownloadOrchestrator(3, fileDownloader, paths, fsOperations, downloadQueue);
+    this.currentDownloadsSubject = currentDownloadsSubject;
+    this.downloadOrchestrator = downloadOrchestrator;
   }
 
   @NonNull @Override
@@ -34,14 +26,14 @@ public class SynchronousDownloadManager implements DownloadManager {
       throw new IllegalArgumentException(
           String.format("%s has an invalid hash code", DownloadRequest.class.getSimpleName()));
     }
-    return currentDownloadsSubject.asObservable()
-        .filter(download1 -> downloadHash.equals(download1.getApplicationHashCode()))
+    return currentDownloadsSubject.filter(
+        download1 -> downloadHash.equals(download1.getApplicationHashCode()))
         .flatMap(downloadProgress -> getDownloadFromProgress(downloadProgress));
   }
 
   @Override public Observable<Download> observeAllDownloadChanges() {
-    return currentDownloadsSubject.asObservable()
-        .flatMap(downloadProgress -> getDownloadFromProgress(downloadProgress));
+    return currentDownloadsSubject.flatMap(
+        downloadProgress -> getDownloadFromProgress(downloadProgress));
   }
 
   @Override public void startDownload(DownloadRequest downloadRequest) {

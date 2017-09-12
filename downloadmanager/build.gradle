@@ -58,7 +58,6 @@ dependencies {
     exclude group: 'org.jetbrains.kotlin'
     exclude group: 'org.mockito'
   }
-  testCompile "org.robolectric:robolectric:${ROBOT_ELECTRIC_VERSION}"
 
   //noinspection GradleDependency
   compile "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"

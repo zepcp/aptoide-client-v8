@@ -7,7 +7,6 @@ import com.liulishuo.filedownloader.FileDownloader;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadOrchestrator {
 
@@ -29,13 +28,14 @@ public class DownloadOrchestrator {
   private final FileSystemOperations fsOperations;
 
   public DownloadOrchestrator(int maxRetryTimes, FileDownloader fileDownloader, FilePaths filePaths,
-      FileSystemOperations fsOperations, FileDownloadQueueSet downloadQueue) {
+      FileSystemOperations fsOperations, FileDownloadQueueSet downloadQueue,
+      Map<DownloadRequest, List<DownloadFile>> downloadsMap) {
     this.maxRetryTimes = maxRetryTimes;
     this.fileDownloader = fileDownloader;
     this.filePaths = filePaths;
     this.fsOperations = fsOperations;
     this.downloadQueue = downloadQueue;
-    downloadsMap = new ConcurrentHashMap<>();
+    this.downloadsMap = downloadsMap;
   }
 
   public void startAndUpdateDownloadFileIds(DownloadRequest downloadRequest) {
@@ -44,6 +44,7 @@ public class DownloadOrchestrator {
     for (DownloadFile downloadFile : downloadRequest.getFilesToDownload()) {
       final String fileDownloadLink = getFileDownloadLink(downloadFile);
       final String downloadPath = getDownloadPath(downloadFile);
+
       BaseDownloadTask downloadTask =
           getDownloadTask(fileDownloadLink, downloadRequest.getVersionCode(),
               downloadRequest.getPackageName(), fileIndex, downloadPath,

@@ -1,14 +1,10 @@
 package cm.aptoide.pt.downloadmanager.test
 
-import cm.aptoide.pt.downloadmanager.BuildConfig
 import cm.aptoide.pt.downloadmanager.Download
 import cm.aptoide.pt.downloadmanager.DownloadRequestsCreator
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.Test
+import org.mockito.Mockito
 
-@RunWith(RobolectricTestRunner::class)
-@Config(constants = BuildConfig::class)
 class ExampleDownloadTest {
 
   private var downloadRepository: cm.aptoide.pt.downloadmanager.DownloadRepository? = null
@@ -16,15 +12,15 @@ class ExampleDownloadTest {
 
   @org.junit.Before
   fun preparationBeforeEachMethod() {
-    downloadRepository = org.mockito.Mockito.mock<cm.aptoide.pt.downloadmanager.DownloadRepository>(
+    downloadRepository = Mockito.mock<cm.aptoide.pt.downloadmanager.DownloadRepository>(
         cm.aptoide.pt.downloadmanager.DownloadRepository::class.java)
     downloadRequestsCreator = DownloadRequestsCreator()
   }
 
-  @org.junit.Test
+  @Test
   fun sampleDownloadCreation() {
     val downloadHashCode = "abcd"
-    org.mockito.Mockito.`when`(downloadRepository?.get(downloadHashCode)).thenReturn(
+    Mockito.`when`(downloadRepository?.get(downloadHashCode)).thenReturn(
         downloadRequestsCreator?.createObservableDownload())
     val testSubscriber = rx.observers.TestSubscriber<Download>()
     val observableDownload = downloadRepository?.get(downloadHashCode)
