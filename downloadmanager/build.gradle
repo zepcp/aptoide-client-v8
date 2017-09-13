@@ -77,7 +77,7 @@ dependencies {
   compile "cn.dreamtobe.filedownloader:filedownloader-okhttp3-connection:${FILE_DOWNLOADER_OKHTTP_IMP_VERSION}"
 
   // download lib 2 (Fetch)
-  compile "com.tonyodev.fetch:fetch:${FETCH_VERSION}"
+  //compile "com.tonyodev.fetch:fetch:${FETCH_VERSION}"
 }
 repositories {
   mavenCentral()
