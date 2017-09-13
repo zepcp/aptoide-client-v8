@@ -5,7 +5,6 @@ import cm.aptoide.pt.downloadmanager.external.FileSystemOperations
 import java.io.File
 import java.util.*
 
-
 class FileSystemOperationsStub(private var filePaths: FilePaths) :
     FileSystemOperations {
 
