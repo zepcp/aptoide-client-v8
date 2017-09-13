@@ -174,7 +174,6 @@ import cm.aptoide.pt.view.account.store.StoreManager;
 import cm.aptoide.pt.view.configuration.ActivityProvider;
 import cm.aptoide.pt.view.configuration.FragmentProvider;
 import cm.aptoide.pt.view.configuration.implementation.ActivityProviderImpl;
-import cm.aptoide.pt.view.configuration.implementation.FragmentProviderImpl;
 import cm.aptoide.pt.view.entry.EntryActivity;
 import cm.aptoide.pt.view.entry.EntryPointChooser;
 import cm.aptoide.pt.view.recycler.DisplayableWidgetMapping;
@@ -1007,10 +1006,6 @@ public abstract class AptoideApplication extends Application {
     });
   }
 
-  protected FragmentProvider createFragmentProvider() {
-    return new FragmentProviderImpl();
-  }
-
   protected ActivityProvider createActivityProvider() {
     return new ActivityProviderImpl();
   }
@@ -1318,5 +1313,7 @@ public abstract class AptoideApplication extends Application {
   public abstract String getDefaultTheme();
 
   public abstract boolean isCreateStoreUserPrivacyEnabled();
+
+  public abstract FragmentProvider createFragmentProvider();
 }
 

@@ -102,6 +102,7 @@ import cm.aptoide.pt.view.app.displayable.AppViewSuggestedAppsDisplayable;
 import cm.aptoide.pt.view.dialog.DialogBadgeV7;
 import cm.aptoide.pt.view.fragment.AptoideBaseFragment;
 import cm.aptoide.pt.view.install.remote.RemoteInstallDialog;
+import cm.aptoide.pt.view.navigator.NavigateFragment;
 import cm.aptoide.pt.view.recycler.BaseAdapter;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.view.share.ShareAppHelper;
@@ -129,10 +130,10 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     implements Scrollable, AppMenuOptions {
 
   public static final int VIEW_ID = R.layout.fragment_app_view;
+  public static final int LOGIN_REQUEST_CODE = 13;
 
   private static final String TAG = AppViewFragment.class.getSimpleName();
   private static final int PAY_APP_REQUEST_CODE = 12;
-
   private final String key_appId = "appId";
   private final String key_packageName = "packageName";
   private final String key_uname = "uname";
@@ -182,6 +183,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private BillingIdResolver billingIdResolver;
   private String marketName;
   private String defaultTheme;
+  private long storeId;
   private CrashReport crashReport;
 
   public static AppViewFragment newInstanceUname(String uname) {
@@ -230,6 +232,19 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     bundle.putLong(BundleKeys.APP_ID.name(), minimalAd.getAppId());
     bundle.putString(BundleKeys.PACKAGE_NAME.name(), minimalAd.getPackageName());
     bundle.putParcelable(BundleKeys.MINIMAL_AD.name(), minimalAd);
+
+    AppViewFragment fragment = new AppViewFragment();
+    fragment.setArguments(bundle);
+
+    return fragment;
+  }
+
+  public static AppViewFragment newInstance(MinimalAd minimalAd, String storeTheme) {
+    Bundle bundle = new Bundle();
+    bundle.putLong(BundleKeys.APP_ID.name(), minimalAd.getAppId());
+    bundle.putString(BundleKeys.PACKAGE_NAME.name(), minimalAd.getPackageName());
+    bundle.putParcelable(BundleKeys.MINIMAL_AD.name(), minimalAd);
+    bundle.putString(StoreFragment.BundleCons.STORE_THEME, storeTheme);
 
     AppViewFragment fragment = new AppViewFragment();
     fragment.setArguments(bundle);
@@ -299,6 +314,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
     final TokenInvalidator tokenInvalidator =
         ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
+    httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
+    converterFactory = WebService.getDefaultConverter();
 
     timelineAnalytics = new TimelineAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()), bodyInterceptor,
@@ -307,8 +324,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
     appRepository = RepositoryFactory.getAppRepository(getContext(),
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
-    httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
-    converterFactory = WebService.getDefaultConverter();
     adsRepository = ((AptoideApplication) getContext().getApplicationContext()).getAdsRepository();
     installedRepository =
         RepositoryFactory.getInstalledRepository(getContext().getApplicationContext());
@@ -385,6 +400,14 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    getLifecycle().filter(lifecycleEvent -> lifecycleEvent.equals(LifecycleEvent.CREATE))
+        .flatMap(viewCreated -> getFragmentNavigator().results(LOGIN_REQUEST_CODE)
+            .filter(result -> result.getResultCode() == NavigateFragment.RESULT_OK)
+            .doOnNext(result -> socialRepository.share(packageName, storeId, "app")))
+        .compose(bindUntilEvent(LifecycleEvent.DESTROY))
+        .subscribe(result -> {
+        }, throwable -> CrashReport.getInstance()
+            .log(throwable));
   }
 
   @Override public void load(boolean create, boolean refresh, Bundle savedInstanceState) {
@@ -738,9 +761,13 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     packageName = app.getPackageName();
     storeName = app.getStore()
         .getName();
-    storeTheme = app.getStore()
-        .getAppearance()
-        .getTheme();
+    storeId = app.getStore()
+        .getId();
+    if(storeTheme == null) {
+      storeTheme = app.getStore()
+          .getAppearance()
+          .getTheme();
+    }
     md5 = app.getMd5();
     appName = app.getName();
   }

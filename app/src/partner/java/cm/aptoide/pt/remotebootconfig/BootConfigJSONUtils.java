@@ -108,14 +108,26 @@ public class BootConfigJSONUtils {
    *
    * if email is null or empty, will be replaced by the default value
    * @param feedbackEmail
+   *
    * @return true if boot config is valid
    */
   private static boolean isRemoteBootConfigValid(RemoteBootConfig newRemoteBootConfig,
       RemoteBootConfig oldRemoteBootConfig, String feedbackEmail) {
-    if (newRemoteBootConfig.getData().getPartner().getUid() == null
-        || newRemoteBootConfig.getData().getPartner().getStore().getName() == null
-        || newRemoteBootConfig.getData().getPartner().getStore().getLabel() == null
-        || newRemoteBootConfig.getData().getPartner().getAppearance().getTheme() == null) {
+    if (newRemoteBootConfig.getData()
+        .getPartner()
+        .getUid() == null
+        || newRemoteBootConfig.getData()
+        .getPartner()
+        .getStore()
+        .getName() == null
+        || newRemoteBootConfig.getData()
+        .getPartner()
+        .getStore()
+        .getLabel() == null
+        || newRemoteBootConfig.getData()
+        .getPartner()
+        .getAppearance()
+        .getTheme() == null) {
       CrashReport.getInstance()
           .log(new JSONException(
               "Remote boot config response returning null: Uid/storeName/Label/Theme"));
@@ -169,9 +181,18 @@ public class BootConfigJSONUtils {
                   + " the new boot config will not be saved on the device"));
       return false;
     }
-    if (newRemoteBootConfig.getData().getPartner().getFeedback().getEmail() == null
-        || newRemoteBootConfig.getData().getPartner().getFeedback().getEmail().isEmpty()) {
-      newRemoteBootConfig.getData().getPartner().getFeedback().setEmail(feedbackEmail);
+    if (newRemoteBootConfig.getData()
+        .getPartner()
+        .getFeedback()
+        .getEmail() == null || newRemoteBootConfig.getData()
+        .getPartner()
+        .getFeedback()
+        .getEmail()
+        .isEmpty()) {
+      newRemoteBootConfig.getData()
+          .getPartner()
+          .getFeedback()
+          .setEmail(feedbackEmail);
     }
     return true;
   }
