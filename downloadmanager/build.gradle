@@ -62,9 +62,6 @@ dependencies {
   //noinspection GradleDependency
   compile "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
 
-  compile "com.liulishuo.filedownloader:library:${FILE_DOWNLOADER_VERSION}"
-  compile "cn.dreamtobe.filedownloader:filedownloader-okhttp3-connection:${FILE_DOWNLOADER_OKHTTP_IMP_VERSION}"
-
   compile "io.reactivex:rxjava:${RXJAVA_VERSION}"
   compile "nl.littlerobots.rxlint:rxlint:${Rx_lint_version}"
   // And ProGuard rules for RxJava!
@@ -74,6 +71,13 @@ dependencies {
   // kotlin
   compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
   compile "io.reactivex:rxkotlin:$rx_kotlin_version"
+
+  // download lib 1 (LingoChamp)
+  compile "com.liulishuo.filedownloader:library:${FILE_DOWNLOADER_VERSION}"
+  compile "cn.dreamtobe.filedownloader:filedownloader-okhttp3-connection:${FILE_DOWNLOADER_OKHTTP_IMP_VERSION}"
+
+  // download lib 2 (Fetch)
+  compile "com.tonyodev.fetch:fetch:${FETCH_VERSION}"
 }
 repositories {
   mavenCentral()
