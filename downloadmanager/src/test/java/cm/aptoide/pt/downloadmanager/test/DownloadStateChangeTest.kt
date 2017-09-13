@@ -34,17 +34,7 @@ class DownloadStateChangeTest {
     invalidDownloadRequest = DownloadRequestsCreator().createInvalidDownloadRequest()
 
     val downloadBehaviourSubject: BehaviorSubject<DownloadProgress> = BehaviorSubject.create()
-
-    //    val analytics = AnalyticsStub()
-    //    val downloadListener = DownloadStatusListener(analytics, downloadBehaviourSubject)
-    //    val downloadQueue = FileDownloadQueueSet(downloadListener)
-
-    //    val paths = FilePathStub("downloads")
-    //    val fsOperations = FileSystemOperationsStub(paths)
-    //    val fileDownloader = Mockito.mock(FileDownloader::class.java)
-    //    val downloadOrchestrator = DownloadOrchestrator(3, fileDownloader, paths, fsOperations,
-    //        downloadQueue, ConcurrentHashMap())
-
+      
     downloadOrchestrator = Mockito.mock(DownloadOrchestrator::class.java)
     downloadRepository = InMemoryDownloadRepositoryStub()
     downloadManager = SynchronousDownloadManager(downloadRepository, downloadOrchestrator,
