@@ -11,23 +11,23 @@ class DownloadRequestStub(private var appName: String,
                           private var packageName: String,
                           private var currentAction: DownloadAction, private var hashCode: String,
                           private var versionName: String) :
-    DownloadRequest {
+        DownloadRequest {
 
 
-  override fun getFilesToDownload(): MutableList<DownloadFile> = downloadFileParts
+    override fun getFilesToDownload(): MutableList<DownloadFile> = downloadFileParts
 
-  override fun getVersionCode(): Int = versionCode
+    override fun getVersionCode(): Int = versionCode
 
-  override fun getPackageName(): String = packageName
+    override fun getPackageName(): String = packageName
 
-  override fun getHashCode(): String = hashCode
+    override fun getHashCode(): String = hashCode
 
-  override fun getVersionName(): String = versionName
+    override fun getVersionName(): String = versionName
 
-  override fun getApplicationName(): String = appName
+    override fun getApplicationName(): String = appName
 
-  override fun getDownloadAction(): DownloadAction = currentAction
+    override fun getDownloadAction(): DownloadAction = currentAction
 
-  override fun getApplicationIcon(): String = appIcon
+    override fun getApplicationIcon(): String = appIcon
 
 }

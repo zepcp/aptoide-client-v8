@@ -77,4 +77,13 @@ public class DownloadProgress {
   public DownloadStatus getStatus() {
     return status;
   }
+
+  public int getProgressPercentage() {
+    // totalBytesToTransfer -> 100%
+    // bytesTransferredSoFar -> X
+    // X = ((bytesTransferredSoFar * 100) / totalBytesToTransfer
+    int totalKbToTransfer = (int) (totalBytesToTransfer / 1024L);
+    int KbTransferredSoFar = (int) (bytesTransferredSoFar / 1024L);
+    return ((KbTransferredSoFar * 100) / totalKbToTransfer);
+  }
 }

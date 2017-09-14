@@ -113,10 +113,7 @@ public class SynchronousDownloadManager implements DownloadManager {
   }
 
   private void calculateProgress(Download download, DownloadProgress downloadProgress) {
-
-    int progressPercentage = getProgressPercentage(downloadProgress.getTotalBytesToTransfer(),
-        downloadProgress.getBytesTransferredSoFar());
-
+    int progressPercentage = downloadProgress.getProgressPercentage();
     final List<DownloadFile> filesToDownload = download.getFilesToDownload();
     final int applicationFileCount = filesToDownload.size();
     if (applicationFileCount > 1) {
@@ -131,14 +128,5 @@ public class SynchronousDownloadManager implements DownloadManager {
     } else {
       download.setOverallProgress(progressPercentage);
     }
-  }
-
-  private int getProgressPercentage(long totalBytesToTransfer, long bytesTransferredSoFar) {
-    // totalBytesToTransfer -> 100%
-    // bytesTransferredSoFar -> X
-    // X = ((bytesTransferredSoFar * 100) / totalBytesToTransfer
-    int totalKbToTransfer = (int) (totalBytesToTransfer / 1024L);
-    int KbTransferredSoFar = (int) (bytesTransferredSoFar / 1024L);
-    return ((KbTransferredSoFar * 100) / totalKbToTransfer);
   }
 }

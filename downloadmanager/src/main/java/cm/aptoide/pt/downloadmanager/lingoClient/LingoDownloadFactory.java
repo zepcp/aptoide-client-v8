@@ -1,7 +1,7 @@
 package cm.aptoide.pt.downloadmanager.lingoClient;
 
-import cm.aptoide.pt.downloadmanager.base.DownloadFactory;
 import cm.aptoide.pt.downloadmanager.DownloadProgress;
+import cm.aptoide.pt.downloadmanager.base.DownloadFactory;
 import cm.aptoide.pt.downloadmanager.base.DownloadTask;
 
 public class LingoDownloadFactory implements DownloadFactory {

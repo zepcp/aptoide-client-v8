@@ -22,79 +22,81 @@ import org.mockito.Mockito.`when` as whenever
 
 class DownloadStateChangeTest {
 
-  private var downloadManager: DownloadManager? = null
-  private var downloadOrchestrator: DownloadOrchestrator? = null
-  private var validDownloadRequest: DownloadRequest? = null
-  private var invalidDownloadRequest: DownloadRequest? = null
-  private var downloadRepository: DownloadRepository? = null
+    private var downloadManager: DownloadManager? = null
+    private var downloadOrchestrator: DownloadOrchestrator? = null
+    private var validDownloadRequest: DownloadRequest? = null
+    private var invalidDownloadRequest: DownloadRequest? = null
+    private var downloadRepository: DownloadRepository? = null
 
-  @Before
-  fun preparationBeforeEachMethod() {
-    validDownloadRequest = DownloadRequestsCreator().createDownloadRequest()
-    invalidDownloadRequest = DownloadRequestsCreator().createInvalidDownloadRequest()
+    @Before
+    fun preparationBeforeEachMethod() {
+        validDownloadRequest = DownloadRequestsCreator().createDownloadRequest()
+        invalidDownloadRequest = DownloadRequestsCreator().createInvalidDownloadRequest()
 
-    val downloadBehaviourSubject: BehaviorSubject<DownloadProgress> = BehaviorSubject.create()
-      
-    downloadOrchestrator = Mockito.mock(DownloadOrchestrator::class.java)
-    downloadRepository = InMemoryDownloadRepositoryStub()
-    downloadManager = SynchronousDownloadManager(downloadRepository, downloadOrchestrator,
-        downloadBehaviourSubject.asObservable())
-  }
+        val downloadBehaviourSubject: BehaviorSubject<DownloadProgress> = BehaviorSubject.create()
 
-  @Test(expected = IllegalArgumentException::class)
-  fun startingInvalidRequest() {
-    downloadManager?.startDownload(invalidDownloadRequest)
-  }
+        downloadOrchestrator = Mockito.mock(DownloadOrchestrator::class.java)
+        downloadRepository = InMemoryDownloadRepositoryStub()
+        downloadManager = SynchronousDownloadManager(downloadRepository, downloadOrchestrator,
+                downloadBehaviourSubject.asObservable())
+    }
 
-  @Test
-  fun fromIdleToStarted() {
-    val listDownloadsTestSubscriber = rx.observers.TestSubscriber<Download>()
-    val observableDownload = downloadManager?.observeAllDownloadChanges()
-    observableDownload?.subscribe(listDownloadsTestSubscriber)
+    @Test(expected = IllegalArgumentException::class)
+    fun startingInvalidRequest() {
+        downloadManager?.startDownload(invalidDownloadRequest)
+    }
 
-    downloadManager?.startDownload(validDownloadRequest)
+    // @Ignore @Test
+    fun emittingEventWhenDownloadStarts() {
+        val listDownloadsTestSubscriber = rx.observers.TestSubscriber<Download>()
+        val observableDownload = downloadManager?.observeAllDownloadChanges()
+        observableDownload?.subscribe(listDownloadsTestSubscriber)
+    }
 
-    // assert
-    Mockito.verify(downloadOrchestrator!!, Mockito.times(1)).startAndUpdateDownloadFileIds(
-        Mockito.any())
+    @Test
+    fun fromIdleToStarted() {
+        downloadManager?.startDownload(validDownloadRequest)
+        Mockito.verify(downloadOrchestrator!!, Mockito.times(1)).startAndUpdateDownloadFileIds(
+                validDownloadRequest)
+    }
 
-//    assertTrue(listDownloadsTestSubscriber.awaitValueCount(1, 10, TimeUnit.SECONDS))
-//    var downloads = listDownloadsTestSubscriber.onNextEvents
-//    assertEquals(1, downloads[0])
-//    assertEquals(validDownloadRequest!!.hashCode, downloads[0].hashCode)
-//    assertEquals(DownloadStatus.STARTED, downloads[0].overallDownloadStatus)
-  }
+    @Test
+    fun formStartedToPaused() {
+        downloadManager?.startDownload(validDownloadRequest)
+        downloadManager?.pauseDownload(validDownloadRequest)
+        Mockito.verify(downloadOrchestrator!!, Mockito.times(1)).pause(validDownloadRequest)
+    }
 
-  @Test
-  fun formStartedToPaused() {
+    @Test
+    fun formPausedToStarted() {
+        downloadManager?.startDownload(validDownloadRequest)
+        downloadManager?.pauseDownload(validDownloadRequest)
+        downloadManager?.startDownload(validDownloadRequest)
+        Mockito.verify(downloadOrchestrator!!, Mockito.times(2))
+                .startAndUpdateDownloadFileIds(validDownloadRequest)
+    }
 
-  }
+    @Test
+    fun formStartedToFinished() {
+    }
 
-  @Test
-  fun formPausedToStarted() {
-  }
+    @Test
+    fun fromStartedToErrorDownloading() {
+    }
 
-  @Test
-  fun formStartedToFinished() {
-  }
+    @Test
+    fun fromErrorToRetry() {
+    }
 
-  @Test
-  fun fromStartedToErrorDownloading() {
-  }
+    @Test
+    fun fromRetryToStarted() {
+    }
 
-  @Test
-  fun fromErrorToRetry() {
-  }
+    @Test
+    fun fromStartedToFileMissingError() {
+    }
 
-  @Test
-  fun fromRetryToStarted() {
-  }
-
-  @Test
-  fun fromStartedToFileMissingError() {
-  }
-
-  @Test
-  fun cancelWholeQueue() {
-  }
+    @Test
+    fun cancelWholeQueue() {
+    }
 }
