@@ -227,6 +227,8 @@ android {
       variant.buildConfigField "String", "PAYPAL_KEY", "\"" + project.PAYPAL_PRODUCTION_KEY + "\""
       variant.buildConfigField "String", "TWITTER_KEY", "\"" + project.TWITTER_KEY + "\""
       variant.buildConfigField "String", "TWITTER_SECRET", "\"" + project.TWITTER_SECRET + "\""
+
+      resValue "string", "TEST_FAIRY_TOKEN", "\"" + project.TEST_FAIRY_TOKEN + "\""
     }
 
     variant.outputs.each { output ->
@@ -406,6 +408,9 @@ dependencies {
   compile('com.mopub:mopub-sdk-native-static:4.11.0@aar') {
     transitive = true
   }
+
+  compile 'testfairy:testfairy-android-sdk:1.+@aar'
+
 }
 
 String getDate() {

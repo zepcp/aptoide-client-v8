@@ -39,6 +39,7 @@ import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.view.navigator.FragmentNavigator;
 import cm.aptoide.pt.view.navigator.TabNavigatorActivity;
 import com.jakewharton.rxrelay.PublishRelay;
+import com.testfairy.TestFairy;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Observable;
@@ -121,6 +122,11 @@ public class MainActivity extends TabNavigatorActivity
             fragmentNavigator, deepLinkManager,
             ((AptoideApplication) getApplicationContext()).getDefaultStore(), defaultTheme),
         savedInstanceState);
+
+    TestFairy.begin(this, getString(R.string.TEST_FAIRY_TOKEN));
+    TestFairy.setUserId(((AptoideApplication) getApplicationContext()).getIdsRepository()
+        .getUniqueIdentifier());
+
   }
 
   @Override public void showInstallationError(int numberOfErrors) {
