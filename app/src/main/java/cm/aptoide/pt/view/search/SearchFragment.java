@@ -33,16 +33,26 @@ import cm.aptoide.pt.search.SearchNavigator;
 import cm.aptoide.pt.store.StoreUtils;
 import cm.aptoide.pt.view.fragment.FragmentView;
 import cm.aptoide.pt.view.recycler.LinearLayoutManagerWithSmoothScroller;
+import cm.aptoide.pt.view.search.demo2.ChildView;
+import cm.aptoide.pt.view.search.demo2.SearchResultAdapter2;
+import cm.aptoide.pt.view.search.demo2.SearchViewItemEvent;
+import cm.aptoide.pt.view.search.demo2.SearchViewItemPresenterFactory;
+import cm.aptoide.pt.view.search.demo2.ViewItemBinder;
+import cm.aptoide.pt.view.search.demo2.ViewItemFactory;
+import cm.aptoide.pt.view.search.demo2.ViewItemPresenterFactory;
 import com.facebook.appevents.AppEventsLogger;
 import com.jakewharton.rxbinding.view.RxView;
+import com.jakewharton.rxrelay.PublishRelay;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import okhttp3.OkHttpClient;
 import org.parceler.Parcels;
 import retrofit2.Converter;
 import rx.Observable;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 /**
@@ -249,14 +259,29 @@ public class SearchFragment extends FragmentView implements SearchView {
             converterFactory, subscribedStoresAuthMap, subscribedStoresIds);
 
     final CrashReport crashReport = CrashReport.getInstance();
-    final Scheduler ioScheduler = Schedulers.io();
-    final Scheduler mainThreadScheduler = AndroidSchedulers.mainThread();
+    final Scheduler viewScheduler = AndroidSchedulers.mainThread();
 
     final SearchResultAdapter adapter = new SearchResultAdapter();
     resultList.setAdapter(adapter);
     resultList.setLayoutManager(new LinearLayoutManagerWithSmoothScroller(getContext()));
-    return new SearchPresenter(this, searchAnalytics, crashReport, mainThreadScheduler,
-        searchManager, adapter);
+    return new SearchPresenter(this, searchAnalytics, crashReport, viewScheduler, searchManager,
+        adapter);
+  }
+
+  private void createPresenter2() {
+
+    PublishRelay<SearchViewItemEvent> bus = PublishRelay.create();
+
+    ViewItemFactory viewItemFactory = new ViewItemFactory(bus, this);
+    ViewItemPresenterFactory presenterFactory = new SearchViewItemPresenterFactory();
+    Map<Object, ChildView> itemToView = new HashMap<>();
+    Map<ChildView, Presenter> childViewToPresenter = new HashMap<>();
+
+    ViewItemBinder binder =
+        new ViewItemBinder(viewItemFactory, presenterFactory, itemToView, childViewToPresenter);
+
+    SearchResultAdapter2 searchResultAdapter2 =
+        new SearchResultAdapter2(Collections.emptyList(), binder, bus);
   }
 
   @Nullable @Override
