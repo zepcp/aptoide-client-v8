@@ -4,11 +4,13 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.events.AptoideEvent;
 import cm.aptoide.pt.analytics.events.FacebookEvent;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.notification.NotificationAnalytics;
 import cm.aptoide.pt.social.data.AggregatedRecommendation;
 import cm.aptoide.pt.social.data.AppUpdate;
 import cm.aptoide.pt.social.data.AppUpdateCardTouchEvent;
@@ -53,6 +55,12 @@ public class TimelineAnalytics {
   private static final String OPEN_APP = "OPEN_APP";
   private static final String UPDATE_APP = "UPDATE_APP";
   private static final String FOLLOW_FRIENDS = "Apps_Timeline_Follow_Friends";
+  private static final String LIKE = "LIKE";
+  private static final String COMMENT = "COMMENT";
+  private static final String SHARE = "SHARE";
+  private static final String SHARE_SEND = "SHARE_SEND";
+  private static final String COMMENT_SEND = "COMMENT_SEND";
+  private static final String FAB = "FAB";
   private static final String TIMELINE_OPENED = "Apps_Timeline_Open";
   private static final String SOCIAL_CARD_PREVIEW = "Apps_Timeline_Social_Card_Preview";
   private static final String CARD_ACTION = "Apps_Timeline_Card_Action";
@@ -65,11 +73,14 @@ public class TimelineAnalytics {
   private final TokenInvalidator tokenInvalidator;
   private final String appId;
   private final SharedPreferences sharedPreferences;
+  private final NotificationAnalytics notificationAnalytics;
+  private final NavigationTracker navigationTracker;
 
   public TimelineAnalytics(Analytics analytics, AppEventsLogger facebook,
       BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator, String appId,
-      SharedPreferences sharedPreferences) {
+      SharedPreferences sharedPreferences, NotificationAnalytics notificationAnalytics,
+      NavigationTracker navigationTracker) {
     this.analytics = analytics;
     this.facebook = facebook;
     this.bodyInterceptor = bodyInterceptor;
@@ -78,6 +89,8 @@ public class TimelineAnalytics {
     this.tokenInvalidator = tokenInvalidator;
     this.appId = appId;
     this.sharedPreferences = sharedPreferences;
+    this.notificationAnalytics = notificationAnalytics;
+    this.navigationTracker = navigationTracker;
   }
 
   public void sendSocialCardPreviewActionEvent(String value) {
@@ -88,6 +101,10 @@ public class TimelineAnalytics {
   public void sendSocialActionEvent(TimelineSocialActionData timelineSocialActionData) {
     analytics.sendEvent(new FacebookEvent(facebook, CARD_ACTION,
         createSocialActionEventData(timelineSocialActionData)));
+  }
+
+  public void notificationShown(String url) {
+    notificationAnalytics.notificationShown(url);
   }
 
   private Bundle createSocialActionEventData(TimelineSocialActionData timelineSocialActionData) {
@@ -261,6 +278,11 @@ public class TimelineAnalytics {
 
   public void sendTimelineTabOpened() {
     analytics.sendEvent(new FacebookEvent(facebook, TIMELINE_OPENED));
+    Map<String, Object> map = new HashMap<>();
+    map.put("previous_context", navigationTracker.getPreviousViewName());
+    analytics.sendEvent(
+        new AptoideEvent(map, "OPEN_TIMELINE", "CLICK", "TIMELINE", bodyInterceptor, httpClient,
+            converterFactory, tokenInvalidator, appId, sharedPreferences));
   }
 
   public void sendFollowFriendsEvent() {
@@ -364,6 +386,13 @@ public class TimelineAnalytics {
     specific.put("url", url);
     specific.put("app", packageName);
     return createTimelineCardData(cardType, source, specific);
+  }
+
+  public void sendLikeEvent(int position, boolean success) {
+    HashMap<String, Object> data = new HashMap<>();
+    data.put("position", position);
+    data.put("status", success ? "success" : "fail");
+    analytics.sendEvent(createEvent(LIKE, data));
   }
 
   public void sendOpenBlogEvent(String cardType, String source, String url, String packageName) {
@@ -567,7 +596,8 @@ public class TimelineAnalytics {
               .getPrimaryName());
       sendOpenAppEvent(card.getType()
           .name(), TimelineAnalytics.SOURCE_APTOIDE, card.getPackageName());
-    } else if (postType.equals(CardType.AGGREGATED_SOCIAL_INSTALL)) {
+    } else if (postType.equals(CardType.AGGREGATED_SOCIAL_INSTALL) || postType.equals(
+        CardType.AGGREGATED_SOCIAL_APP)) {
       AggregatedRecommendation card = (AggregatedRecommendation) post;
       Analytics.AppsTimeline.clickOnCard(postType.name(), card.getPackageName(),
           Analytics.AppsTimeline.BLANK, Analytics.AppsTimeline.BLANK,
@@ -575,5 +605,49 @@ public class TimelineAnalytics {
       sendOpenAppEvent(card.getType()
           .name(), TimelineAnalytics.SOURCE_APTOIDE, card.getPackageName());
     }
+  }
+
+  public void sendPostPositionEvent(CardTouchEvent cardTouchEvent) {
+    analytics.sendEvent(
+        new AptoideEvent(createScrollingEventData(cardTouchEvent.getPosition()), "SCROLLING",
+            "SCROLL", "TIMELINE", bodyInterceptor, httpClient, converterFactory, tokenInvalidator,
+            appId, sharedPreferences));
+  }
+
+  private Map<String, Object> createScrollingEventData(int position) {
+    final Map<String, Object> eventMap = new HashMap<>();
+    eventMap.put("position", position);
+    return eventMap;
+  }
+
+  public void sendCommentEvent(int position, boolean success) {
+    HashMap<String, Object> data = new HashMap<>();
+    data.put("position", position);
+    data.put("status", success ? "success" : "fail");
+    analytics.sendEvent(createEvent(COMMENT, data));
+  }
+
+  public void sendShareEvent(int position, boolean success) {
+    HashMap<String, Object> data = new HashMap<>();
+    data.put("position", position);
+    data.put("status", success ? "success" : "fail");
+    analytics.sendEvent(createEvent(SHARE, data));
+  }
+
+  public void sendShareCompleted(boolean success) {
+    HashMap<String, Object> data = new HashMap<>();
+    data.put("status", success ? "success" : "fail");
+    analytics.sendEvent(createEvent(SHARE_SEND, data));
+  }
+
+  public void sendCommentCompleted(boolean success) {
+    HashMap<String, Object> data = new HashMap<>();
+    data.put("status", success ? "success" : "fail");
+    analytics.sendEvent(createEvent(COMMENT_SEND, data));
+  }
+
+  public void sendFabClicked() {
+    HashMap<String, Object> data = new HashMap<>();
+    analytics.sendEvent(createEvent(FAB, data));
   }
 }

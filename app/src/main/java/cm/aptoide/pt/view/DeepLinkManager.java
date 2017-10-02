@@ -8,7 +8,9 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.DeepLinkIntentReceiver;
+import cm.aptoide.pt.PageViewsAnalytics;
 import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.AptoideNavigationTracker;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.database.realm.Store;
@@ -48,11 +50,14 @@ public class DeepLinkManager {
   private final SharedPreferences sharedPreferences;
   private final StoreAccessor storeAccessor;
   private final String defaultTheme;
+  private AptoideNavigationTracker aptoideNavigationTracker;
+  private PageViewsAnalytics pageViewsAnalytics;
 
   public DeepLinkManager(StoreUtilsProxy storeUtilsProxy, StoreRepository storeRepository,
       FragmentNavigator fragmentNavigator, TabNavigator tabNavigator,
       DeepLinkMessages deepLinkMessages, SharedPreferences sharedPreferences,
-      StoreAccessor storeAccessor, String defaultTheme) {
+      StoreAccessor storeAccessor, String defaultTheme,
+      AptoideNavigationTracker aptoideNavigationTracker, PageViewsAnalytics pageViewsAnalytics) {
     this.storeUtilsProxy = storeUtilsProxy;
     this.storeRepository = storeRepository;
     this.fragmentNavigator = fragmentNavigator;
@@ -61,9 +66,12 @@ public class DeepLinkManager {
     this.sharedPreferences = sharedPreferences;
     this.storeAccessor = storeAccessor;
     this.defaultTheme = defaultTheme;
+    this.aptoideNavigationTracker = aptoideNavigationTracker;
+    this.pageViewsAnalytics = pageViewsAnalytics;
   }
 
   public boolean showDeepLink(Intent intent) {
+    String deeplinkOrNotification = "Deeplink";
     if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.APP_VIEW_FRAGMENT)) {
 
       if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksKeys.APP_MD5_KEY)) {
@@ -90,6 +98,7 @@ public class DeepLinkManager {
       downloadNotificationDeepLink();
     } else if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.TIMELINE_DEEPLINK)) {
       fromTimelineDeepLink(intent);
+      deeplinkOrNotification = "Notification";
     } else if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.NEW_UPDATES)) {
       newUpdatesDeepLink();
     } else if (intent.hasExtra(DeepLinkIntentReceiver.DeepLinksTargets.GENERIC_DEEPLINK)) {
@@ -101,35 +110,36 @@ public class DeepLinkManager {
       Analytics.ApplicationLaunch.launcher();
       return false;
     }
-
+    aptoideNavigationTracker.registerView(deeplinkOrNotification);
+    pageViewsAnalytics.sendPageViewedEvent();
     return true;
   }
 
   private void appViewDeepLinkUname(String uname) {
-    fragmentNavigator.navigateTo(AppViewFragment.newInstanceUname(uname));
+    fragmentNavigator.navigateTo(AppViewFragment.newInstanceUname(uname), true);
   }
 
   private void appViewDeepLink(String md5) {
-    fragmentNavigator.navigateTo(AppViewFragment.newInstance(md5));
+    fragmentNavigator.navigateTo(AppViewFragment.newInstance(md5), true);
   }
 
   private void appViewDeepLink(long appId, String packageName, boolean showPopup) {
     AppViewFragment.OpenType openType = showPopup ? AppViewFragment.OpenType.OPEN_WITH_INSTALL_POPUP
         : AppViewFragment.OpenType.OPEN_ONLY;
     fragmentNavigator.navigateTo(AptoideApplication.getFragmentProvider()
-        .newAppViewFragment(appId, packageName, openType));
+        .newAppViewFragment(appId, packageName, openType), true);
   }
 
   private void appViewDeepLink(String packageName, String storeName, boolean showPopup) {
     AppViewFragment.OpenType openType = showPopup ? AppViewFragment.OpenType.OPEN_WITH_INSTALL_POPUP
         : AppViewFragment.OpenType.OPEN_ONLY;
     fragmentNavigator.navigateTo(AptoideApplication.getFragmentProvider()
-        .newAppViewFragment(packageName, storeName, openType));
+        .newAppViewFragment(packageName, storeName, openType), true);
   }
 
   private void searchDeepLink(String query) {
     fragmentNavigator.navigateTo(AptoideApplication.getFragmentProvider()
-        .newSearchFragment(query));
+        .newSearchFragment(query), true);
   }
 
   private void newrepoDeepLink(Intent intent, ArrayList<String> repos,
@@ -179,7 +189,7 @@ public class DeepLinkManager {
   @NonNull private Completable openStore(Store store) {
     return Completable.fromAction(() -> fragmentNavigator.navigateTo(
         AptoideApplication.getFragmentProvider()
-            .newStoreFragment(store.getStoreName(), store.getTheme())));
+            .newStoreFragment(store.getStoreName(), store.getTheme()), true));
   }
 
   private void downloadNotificationDeepLink() {
@@ -218,7 +228,7 @@ public class DeepLinkManager {
             .newStoreTabGridRecyclerFragment(event,
                 uri.getQueryParameter(DeepLinkIntentReceiver.DeepLinksKeys.TITLE),
                 uri.getQueryParameter(DeepLinkIntentReceiver.DeepLinksKeys.STORE_THEME),
-                defaultTheme, StoreContext.home));
+                defaultTheme, StoreContext.home), true);
       } catch (UnsupportedEncodingException | IllegalArgumentException e) {
         e.printStackTrace();
       }
@@ -230,7 +240,8 @@ public class DeepLinkManager {
       String openMode = uri.getQueryParameter(DeepLinkIntentReceiver.DeepLinksKeys.OPEN_MODE);
       if (!TextUtils.isEmpty(openMode)) {
         fragmentNavigator.navigateTo(AptoideApplication.getFragmentProvider()
-            .newScheduledDownloadsFragment(ScheduledDownloadsFragment.OpenMode.valueOf(openMode)));
+                .newScheduledDownloadsFragment(ScheduledDownloadsFragment.OpenMode.valueOf(openMode)),
+            true);
       }
     }
   }

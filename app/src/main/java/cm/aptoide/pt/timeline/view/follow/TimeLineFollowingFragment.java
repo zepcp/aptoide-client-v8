@@ -45,6 +45,13 @@ public class TimeLineFollowingFragment extends TimeLineFollowFragment {
     return fragment;
   }
 
+  public static TimeLineFollowFragment newInstanceUsingUser(String storeTheme, String title) {
+    Bundle args = buildBundle(storeTheme, title);
+    TimeLineFollowingFragment fragment = new TimeLineFollowingFragment();
+    fragment.setArguments(args);
+    return fragment;
+  }
+
   @NonNull private static Bundle buildBundle(String storeTheme, String title) {
     Bundle args = new Bundle();
     args.putString(TITLE_KEY, title);
@@ -67,7 +74,7 @@ public class TimeLineFollowingFragment extends TimeLineFollowFragment {
     super.onCreate(savedInstanceState);
     defaultTheme = ((AptoideApplication) getContext().getApplicationContext()).getDefaultTheme();
     baseBodyInterceptor =
-        ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
     tokenInvalidator =

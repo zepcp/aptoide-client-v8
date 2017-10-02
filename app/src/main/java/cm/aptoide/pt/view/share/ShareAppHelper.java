@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.view.View;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.R;
+import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.install.InstalledRepository;
@@ -20,7 +21,6 @@ import cm.aptoide.pt.spotandshare.view.RadarActivity;
 import cm.aptoide.pt.timeline.SocialRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.view.account.AccountNavigator;
 import cm.aptoide.pt.view.dialog.SharePreviewDialog;
 import rx.Observable;
 import rx.subjects.PublishSubject;
@@ -105,7 +105,7 @@ public class ShareAppHelper {
         }, CrashReport.getInstance()::log);
   }
 
-  private void caseDefaultShare(String appName, String wUrl) {
+  public void caseDefaultShare(String appName, String wUrl) {
     if (wUrl != null) {
       Intent sharingIntent = new Intent(Intent.ACTION_SEND);
       sharingIntent.setType("text/plain");

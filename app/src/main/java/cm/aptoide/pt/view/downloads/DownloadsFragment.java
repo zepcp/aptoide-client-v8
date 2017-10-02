@@ -51,7 +51,7 @@ public class DownloadsFragment extends FragmentView implements DownloadsView {
     final OkHttpClient httpClient =
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
     final BodyInterceptor<BaseBody> baseBodyInterceptorV7 =
-        ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     final Converter.Factory converterFactory = WebService.getDefaultConverter();
     final TokenInvalidator tokenInvalidator =
         ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
@@ -60,13 +60,15 @@ public class DownloadsFragment extends FragmentView implements DownloadsView {
             tokenInvalidator, BuildConfig.APPLICATION_ID,
             ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker());
     downloadConverter =
         new DownloadEventConverter(baseBodyInterceptorV7, httpClient, converterFactory,
             tokenInvalidator, BuildConfig.APPLICATION_ID,
             ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker());
     installManager = ((AptoideApplication) getContext().getApplicationContext()).getInstallManager(
         InstallerFactory.ROLLBACK);
     analytics = Analytics.getInstance();

@@ -85,7 +85,7 @@ public class MainActivity extends TabNavigatorActivity
     final FragmentNavigator fragmentNavigator = getFragmentNavigator();
 
     final StoreUtilsProxy storeUtilsProxy = new StoreUtilsProxy(accountManager,
-        ((AptoideApplication) getApplicationContext()).getBaseBodyInterceptorV7Pool(),
+        ((AptoideApplication) getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7(),
         new StoreCredentialsProviderImpl(AccessorFactory.getAccessorFor(
             ((AptoideApplication) getApplicationContext().getApplicationContext()).getDatabase(),
             Store.class)), AccessorFactory.getAccessorFor(
@@ -99,7 +99,9 @@ public class MainActivity extends TabNavigatorActivity
         new DeepLinkManager(storeUtilsProxy, storeRepository, fragmentNavigator, this, this,
             sharedPreferences, AccessorFactory.getAccessorFor(
             ((AptoideApplication) getApplicationContext().getApplicationContext()).getDatabase(),
-            Store.class), defaultTheme);
+            Store.class), defaultTheme,
+            ((AptoideApplication) getApplicationContext()).getAptoideNavigationTracker(),
+            ((AptoideApplication) getApplicationContext()).getPageViewsAnalytics());
 
     final ApkFy apkFy = new ApkFy(this, getIntent(), securePreferences);
 

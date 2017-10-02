@@ -12,7 +12,6 @@ import android.net.ConnectivityManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
@@ -28,6 +27,7 @@ import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;
+import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
 import cm.aptoide.pt.analytics.Analytics;
@@ -52,6 +52,7 @@ import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.downloadmanager.DownloadAction;
 import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.logger.Logger;
+import cm.aptoide.pt.notification.NotificationAnalytics;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.timeline.SocialRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
@@ -60,12 +61,14 @@ import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.SimpleSubscriber;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.view.app.AppViewFragment;
+import cm.aptoide.pt.view.app.AppViewNavigator;
 import cm.aptoide.pt.view.app.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.view.dialog.SharePreviewDialog;
 import cm.aptoide.pt.view.install.InstallWarningDialog;
+import cm.aptoide.pt.view.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.view.recycler.widget.Widget;
-import cm.aptoide.pt.view.share.NotLoggedInShareFragment;
 import com.facebook.appevents.AppEventsLogger;
+import com.jakewharton.rxbinding.view.RxView;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.android.schedulers.AndroidSchedulers;
@@ -108,6 +111,8 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
   private String marketName;
   private boolean createStoreUserPrivacyEnabled;
   private SharedPreferences sharedPreferences;
+  private AccountNavigator accountNavigator;
+  private AppViewNavigator appViewNavigator;
   private CrashReport crashReport;
 
   public AppViewInstallWidget(View itemView) {
@@ -140,9 +145,9 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
   @Override public void bindView(AppViewInstallDisplayable displayable) {
     this.displayable = displayable;
-    crashReport = CrashReport.getInstance();
     this.displayable.setInstallButton(actionButton);
-
+    crashReport = CrashReport.getInstance();
+    accountNavigator = ((ActivityResultNavigator) getContext()).getAccountNavigator();
     createStoreUserPrivacyEnabled =
         ((AptoideApplication) getContext().getApplicationContext()).isCreateStoreUserPrivacyEnabled();
     marketName = ((AptoideApplication) getContext().getApplicationContext()).getMarketName();
@@ -156,19 +161,21 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
     installManager = ((AptoideApplication) getContext().getApplicationContext()).getInstallManager(
         InstallerFactory.ROLLBACK);
     BodyInterceptor<BaseBody> bodyInterceptor =
-        ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     final TokenInvalidator tokenInvalidator =
         ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
     downloadInstallEventConverter =
         new DownloadEventConverter(bodyInterceptor, httpClient, converterFactory, tokenInvalidator,
             BuildConfig.APPLICATION_ID, sharedPreferences,
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker());
     installConverter =
         new InstallEventConverter(bodyInterceptor, httpClient, converterFactory, tokenInvalidator,
             BuildConfig.APPLICATION_ID, sharedPreferences,
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker());
     analytics = Analytics.getInstance();
     downloadFactory = displayable.getDownloadFactory();
     socialRepository =
@@ -176,8 +183,12 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
             new TimelineAnalytics(analytics,
                 AppEventsLogger.newLogger(getContext().getApplicationContext()), bodyInterceptor,
                 httpClient, WebService.getDefaultConverter(), tokenInvalidator,
-                BuildConfig.APPLICATION_ID, sharedPreferences), tokenInvalidator,
-            sharedPreferences);
+                BuildConfig.APPLICATION_ID, sharedPreferences,
+                new NotificationAnalytics(httpClient, analytics),
+                ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker()),
+            tokenInvalidator, sharedPreferences);
+
+    appViewNavigator = getAppViewNavigator();
 
     GetApp getApp = this.displayable.getPojo();
     GetAppMeta.App currentApp = getApp.getNodes()
@@ -185,14 +196,14 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
         .getData();
     versionName.setText(currentApp.getFile()
         .getVername());
-    otherVersions.setOnClickListener(v -> {
-      displayable.getAppViewAnalytics()
-          .sendOtherVersionsEvent();
-      Fragment fragment = AptoideApplication.getFragmentProvider()
-          .newOtherVersionsFragment(currentApp.getName(), currentApp.getIcon(),
+
+    compositeSubscription.add(RxView.clicks(otherVersions)
+        .subscribe(__ -> {
+          displayable.getAppViewAnalytics()
+              .sendOtherVersionsEvent();
+          appViewNavigator.navigateToOtherVersions(currentApp.getName(), currentApp.getIcon(),
               currentApp.getPackageName());
-      getFragmentNavigator().navigateTo(fragment);
-    });
+        }, err -> crashReport.log(err)));
 
     //setup the ui
     compositeSubscription.add(displayable.getInstallState()
@@ -405,10 +416,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
   }
 
   private void buyApp(GetAppMeta.App app) {
-    Fragment fragment = getFragmentNavigator().peekLast();
-    if (fragment != null && AppViewFragment.class.isAssignableFrom(fragment.getClass())) {
-      ((AppViewFragment) fragment).buyApp(app);
-    }
+    appViewNavigator.buyApp(app);
   }
 
   private View.OnClickListener downgradeListener(final GetAppMeta.App app) {
@@ -521,7 +529,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                   .showSuggestedApps();
             }
             return installManager.install(download)
-                .doOnSubscribe(subcription -> setupEvents(download))
+                .doOnSubscribe(subscription -> setupEvents(download))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnCompleted(() -> {
                   if (accountManager.isLoggedIn() && ManagerPreferences.isShowPreviewDialog(
@@ -547,9 +555,8 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                   } else if (!accountManager.isLoggedIn()
                       && (ManagerPreferences.getNotLoggedInInstallClicks(sharedPreferences) == 2
                       || ManagerPreferences.getNotLoggedInInstallClicks(sharedPreferences) == 4)) {
-                    NotLoggedInShareFragment fragment = NotLoggedInShareFragment.newInstance(app);
-                    getFragmentNavigator().navigateForResult(fragment,
-                        AppViewFragment.LOGIN_REQUEST_CODE);
+                    accountNavigator.navigateToNotLoggedInViewForResult(
+                        AppViewFragment.LOGIN_REQUEST_CODE, app);
                   }
                   ShowMessage.asSnack(v, installOrUpgradeMsg);
                 });
@@ -567,18 +574,12 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
     findTrustedVersion(app, appVersions);
     final boolean hasTrustedVersion = trustedVersion != null;
 
-    final View.OnClickListener onSearchHandler = v -> {
-      Fragment fragment;
+    final View.OnClickListener onSearchTrustedAppHandler = v -> {
       if (hasTrustedVersion) {
-        // go to app view of the trusted version
-        fragment = AptoideApplication.getFragmentProvider()
-            .newAppViewFragment(trustedVersion.getId(), trustedVersion.getPackageName());
-      } else {
-        // search for a trusted version
-        fragment = AptoideApplication.getFragmentProvider()
-            .newSearchFragment(app.getName(), true);
+        appViewNavigator.navigateToAppView(trustedVersion.getId(), trustedVersion.getPackageName());
+        return;
       }
-      getFragmentNavigator().navigateTo(fragment);
+      appViewNavigator.navigateToSearch(app.getName(), true);
     };
 
     return v -> {
@@ -590,8 +591,8 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
         View alertView = LayoutInflater.from(context)
             .inflate(R.layout.dialog_install_warning, null);
         builder.setView(alertView);
-        new InstallWarningDialog(rank, hasTrustedVersion, context, installHandler, onSearchHandler,
-            marketName).getDialog()
+        new InstallWarningDialog(rank, hasTrustedVersion, context, installHandler,
+            onSearchTrustedAppHandler, marketName).getDialog()
             .show();
       } else {
         installHandler.onClick(v);
@@ -719,6 +720,10 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
               .getMd5sum());
     }
     return false;
+  }
+
+  private AppViewNavigator getAppViewNavigator() {
+    return new AppViewNavigator(getFragmentNavigator(), getActivityNavigator());
   }
 
   private void findTrustedVersion(GetAppMeta.App app, ListAppVersions appVersions) {

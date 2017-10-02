@@ -27,6 +27,7 @@ import cm.aptoide.pt.download.InstallEventConverter;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.logger.Logger;
+import cm.aptoide.pt.notification.NotificationAnalytics;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.repository.exception.RepositoryItemNotFoundException;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
@@ -155,7 +156,7 @@ public class UpdatesFragment extends GridRecyclerSwipeFragment {
     marketName = ((AptoideApplication) getContext().getApplicationContext()).getMarketName();
     crashReport = CrashReport.getInstance();
     bodyInterceptorV7 =
-        ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
     installManager = ((AptoideApplication) getContext().getApplicationContext()).getInstallManager(
@@ -168,13 +169,15 @@ public class UpdatesFragment extends GridRecyclerSwipeFragment {
             tokenInvalidator, BuildConfig.APPLICATION_ID,
             ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            ((AptoideApplication) getContext().getApplicationContext()).getAptoideNavigationTracker());
     installConverter =
         new InstallEventConverter(bodyInterceptorV7, httpClient, converterFactory, tokenInvalidator,
             BuildConfig.APPLICATION_ID,
             ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
             (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE),
-            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            navigationTracker);
     installedRepository =
         RepositoryFactory.getInstalledRepository(getContext().getApplicationContext());
     updateRepository = RepositoryFactory.getUpdateRepository(getContext(),
@@ -246,7 +249,8 @@ public class UpdatesFragment extends GridRecyclerSwipeFragment {
           new TimelineAnalytics(analytics, AppEventsLogger.newLogger(getContext()),
               bodyInterceptorV7, httpClient, converterFactory, tokenInvalidator,
               BuildConfig.APPLICATION_ID,
-              ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences()),
+              ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences(),
+              new NotificationAnalytics(httpClient, analytics), navigationTracker),
           installedRepository));
     }
     addDisplayables(installedDisplayablesList, false);

@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import cm.aptoide.pt.AptoideApplication;
+import cm.aptoide.pt.PageViewsAnalytics;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.database.AccessorFactory;
@@ -65,12 +66,14 @@ public class SearchFragment extends BasePagerToolbarFragment {
   private Converter.Factory converterFactory;
   private SearchAnalytics searchAnalytics;
   private TokenInvalidator tokenInvalidator;
+  private PageViewsAnalytics pageViewAnalytics;
 
   public static SearchFragment newInstance(String query) {
     return newInstance(query, false);
   }
 
-  public static SearchFragment newInstance(String query, boolean onlyTrustedApps, String storeName) {
+  public static SearchFragment newInstance(String query, boolean onlyTrustedApps,
+      String storeName) {
     Bundle args = new Bundle();
 
     args.putString(BundleCons.QUERY, query);
@@ -111,11 +114,14 @@ public class SearchFragment extends BasePagerToolbarFragment {
     tokenInvalidator =
         ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
     bodyInterceptor =
-        ((AptoideApplication) getContext().getApplicationContext()).getBaseBodyInterceptorV7Pool();
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
     searchAnalytics = new SearchAnalytics(Analytics.getInstance(),
         AppEventsLogger.newLogger(getContext().getApplicationContext()));
+    pageViewAnalytics =
+        new PageViewsAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
+            Analytics.getInstance(), navigationTracker);
   }
 
   @Override public void loadExtras(Bundle args) {
@@ -154,6 +160,8 @@ public class SearchFragment extends BasePagerToolbarFragment {
 
   @Override protected void setupViewPager() {
     viewPager.setPagingEnabled(false);
+    viewPager.setAptoideNavigationTracker(navigationTracker);
+    viewPager.setPageViewAnalytics(pageViewAnalytics);
 
     if (hasSubscribedResults || hasEverywhereResults) {
       super.setupViewPager();
@@ -168,7 +176,7 @@ public class SearchFragment extends BasePagerToolbarFragment {
 
         if (s.length() > 1) {
           getFragmentNavigator().navigateTo(AptoideApplication.getFragmentProvider()
-              .newSearchFragment(s, storeName));
+              .newSearchFragment(s, storeName), true);
         }
       });
     }

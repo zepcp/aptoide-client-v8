@@ -2,6 +2,7 @@ package cm.aptoide.pt.timeline.post;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
@@ -35,20 +36,26 @@ import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.dataprovider.WebService;
+import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
+import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.utils.design.ShowMessage;
 import cm.aptoide.pt.view.BackButtonActivity;
-import cm.aptoide.pt.view.account.AccountNavigator;
 import cm.aptoide.pt.view.custom.SimpleDividerItemDecoration;
 import cm.aptoide.pt.view.fragment.FragmentView;
+import cm.aptoide.pt.view.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.view.navigator.TabNavigator;
 import com.facebook.appevents.AppEventsLogger;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxrelay.PublishRelay;
 import java.util.List;
+import okhttp3.OkHttpClient;
+import retrofit2.Converter;
 import rx.Completable;
 import rx.Observable;
 
@@ -111,8 +118,20 @@ public class PostFragment extends FragmentView implements PostView {
     loginAction = PublishRelay.create();
     openUploaderButton = PublishRelay.create();
     backButton = PublishRelay.create();
+    SharedPreferences sharedPreferences =
+        ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences();
+    TokenInvalidator tokenInvalidator =
+        ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator();
+    BodyInterceptor<BaseBody> bodyInterceptor =
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
+    OkHttpClient okHttpClient =
+        ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
+    Converter.Factory converterFactory = WebService.getDefaultConverter();
+
     analytics = new PostAnalytics(Analytics.getInstance(),
-        AppEventsLogger.newLogger(getContext().getApplicationContext()));
+        AppEventsLogger.newLogger(getContext().getApplicationContext()), bodyInterceptor,
+        okHttpClient, converterFactory, tokenInvalidator, BuildConfig.APPLICATION_ID,
+        sharedPreferences);
     handleAnalytics();
   }
 
@@ -206,7 +225,7 @@ public class PostFragment extends FragmentView implements PostView {
 
     final PostRemoteAccessor postRemoteAccessor =
         new PostRemoteAccessor(aptoideApplication.getDefaultSharedPreferences(),
-            aptoideApplication.getBaseBodyInterceptorV7Pool(),
+            aptoideApplication.getAccountSettingsBodyInterceptorPoolV7(),
             aptoideApplication.getDefaultClient(), WebService.getDefaultConverter(),
             aptoideApplication.getTokenInvalidator());
 
@@ -227,7 +246,7 @@ public class PostFragment extends FragmentView implements PostView {
     presenter = new PostPresenter(this, CrashReport.getInstance(),
         new PostManager(postRemoteAccessor, postLocalAccessor, accountManager),
         getFragmentNavigator(), new UrlValidator(Patterns.WEB_URL),
-        new AccountNavigator(getFragmentNavigator(), accountManager), urlProvider, tabNavigator,
+        ((ActivityResultNavigator) getContext()).getAccountNavigator(), urlProvider, tabNavigator,
         analytics);
     ((BackButtonActivity) getActivity()).registerClickHandler(presenter);
     attachPresenter(presenter, null);
