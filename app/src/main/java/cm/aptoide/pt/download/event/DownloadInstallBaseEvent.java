@@ -1,4 +1,4 @@
-package cm.aptoide.pt.download;
+package cm.aptoide.pt.download.event;
 
 import android.content.SharedPreferences;
 import android.support.annotation.CallSuper;

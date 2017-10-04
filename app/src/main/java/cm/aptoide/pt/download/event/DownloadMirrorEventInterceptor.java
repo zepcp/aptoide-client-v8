@@ -1,4 +1,4 @@
-package cm.aptoide.pt.download;
+package cm.aptoide.pt.download.event;
 
 import cm.aptoide.pt.analytics.Analytics;
 import java.io.IOException;

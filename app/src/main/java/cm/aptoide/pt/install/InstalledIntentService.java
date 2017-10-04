@@ -22,7 +22,7 @@ import cm.aptoide.pt.database.realm.Update;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.ads.AdNetworkUtils;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
-import cm.aptoide.pt.download.InstallEvent;
+import cm.aptoide.pt.download.event.InstallEvent;
 import cm.aptoide.pt.install.rollback.RollbackRepository;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.repository.RepositoryFactory;

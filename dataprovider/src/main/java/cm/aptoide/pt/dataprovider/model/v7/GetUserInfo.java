@@ -1,7 +1,5 @@
 package cm.aptoide.pt.dataprovider.model.v7;
 
-import lombok.Data;
-
 /**
  * Created by pedroribeiro on 01/06/17.
  *
@@ -10,12 +8,36 @@ import lombok.Data;
  * GetUserRequest already existed.
  */
 
-@Data public class GetUserInfo extends BaseV7Response {
+public class GetUserInfo extends BaseV7Response {
 
   private Nodes nodes;
 
-  @Data public static class Nodes {
+  public Nodes getNodes() {
+    return nodes;
+  }
+
+  public void setNodes(Nodes nodes) {
+    this.nodes = nodes;
+  }
+
+  public static class Nodes {
     private GetUserMeta meta;
     private GetUserSettings settings;
+
+    public GetUserMeta getMeta() {
+      return meta;
+    }
+
+    public void setMeta(GetUserMeta meta) {
+      this.meta = meta;
+    }
+
+    public GetUserSettings getSettings() {
+      return settings;
+    }
+
+    public void setSettings(GetUserSettings settings) {
+      this.settings = settings;
+    }
   }
 }

@@ -23,11 +23,12 @@ import cm.aptoide.pt.database.accessors.ScheduledAccessor;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
-import cm.aptoide.pt.download.DownloadEvent;
+import cm.aptoide.pt.download.event.DownloadEvent;
 import cm.aptoide.pt.downloadmanager.Constants;
 import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.downloadmanager.base.DownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
 import cm.aptoide.pt.install.InstallFabricEvents;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.Installer;
@@ -156,7 +157,7 @@ public class InstallService extends Service {
             forceDefaultInstall));
   }
 
-  private Observable<Boolean> downloadAndInstall(Context context, String md5,
+  private Observable<Boolean> downloadAndInstall(Context context, DownloadRequest request,
       boolean forceDefaultInstall) {
     return downloadManager.getDownload(md5)
         .first()
@@ -228,11 +229,11 @@ public class InstallService extends Service {
     stopForeground(removeNotification);
     switch (download.getAction()) {
       case INSTALL:
-        return installer.install(context, download.getHashCode(), forceDefaultInstall);
+        return installer.install(context, download, forceDefaultInstall);
       case UPDATE:
-        return installer.update(context, download.getHashCode(), forceDefaultInstall);
+        return installer.update(context, download, forceDefaultInstall);
       case DOWNGRADE:
-        return installer.downgrade(context, download.getHashCode(), forceDefaultInstall);
+        return installer.downgrade(context, download, forceDefaultInstall);
       default:
         return Completable.error(
             new IllegalArgumentException("Invalid download action " + download.getAction()));

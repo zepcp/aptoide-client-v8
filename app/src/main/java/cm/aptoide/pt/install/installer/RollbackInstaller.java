@@ -7,6 +7,7 @@ package cm.aptoide.pt.install.installer;
 
 import android.content.Context;
 import cm.aptoide.pt.database.realm.Rollback;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
 import cm.aptoide.pt.install.Installer;
 import cm.aptoide.pt.install.rollback.RollbackFactory;
 import cm.aptoide.pt.install.rollback.RollbackRepository;
@@ -33,7 +34,7 @@ public class RollbackInstaller implements Installer {
   }
 
   @Override public Completable install(Context context, String md5, boolean forceDefaultInstall) {
-    return installationProvider.getInstallation(md5)
+    return installationProvider.install(md5)
         .cast(RollbackInstallation.class)
         .first()
         .toSingle()
@@ -42,7 +43,7 @@ public class RollbackInstaller implements Installer {
   }
 
   @Override public Completable update(Context context, String md5, boolean forceDefaultInstall) {
-    return installationProvider.getInstallation(md5)
+    return installationProvider.install(md5)
         .cast(RollbackInstallation.class)
         .first()
         .toSingle()
@@ -51,14 +52,14 @@ public class RollbackInstaller implements Installer {
         .andThen(defaultInstaller.update(context, md5, forceDefaultInstall));
   }
 
-  @Override public Completable downgrade(Context context, String md5, boolean forceDefaultInstall) {
-    return installationProvider.getInstallation(md5)
+  @Override public Completable downgrade(Context context, DownloadRequest request, boolean forceDefaultInstall) {
+    return installationProvider.install(request)
         .cast(RollbackInstallation.class)
         .first()
         .toSingle()
         .flatMapCompletable(installation -> saveRollback(context, installation.getPackageName(),
             Rollback.Action.DOWNGRADE, installation.getIcon(), installation.getVersionName()))
-        .andThen(defaultInstaller.downgrade(context, md5, forceDefaultInstall));
+        .andThen(defaultInstaller.downgrade(context, request, forceDefaultInstall));
   }
 
   @Override public Completable uninstall(Context context, String packageName, String versionName) {

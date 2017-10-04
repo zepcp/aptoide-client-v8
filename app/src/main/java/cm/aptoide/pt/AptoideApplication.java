@@ -110,7 +110,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreMetaRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.RequestBodyFactory;
 import cm.aptoide.pt.deprecated.SQLiteDatabaseHelper;
 import cm.aptoide.pt.download.DownloadAnalytics;
-import cm.aptoide.pt.download.DownloadMirrorEventInterceptor;
+import cm.aptoide.pt.download.event.DownloadMirrorEventInterceptor;
 import cm.aptoide.pt.download.DownloadRepository;
 import cm.aptoide.pt.download.PaidAppsDownloadInterceptor;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;

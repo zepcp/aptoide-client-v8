@@ -1,4 +1,4 @@
-package cm.aptoide.pt.download;
+package cm.aptoide.pt.download.event;
 
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -8,8 +8,6 @@ import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Data;
-import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Root;
-import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 
@@ -17,16 +15,16 @@ import retrofit2.Converter;
  * Created by trinkes on 05/01/2017.
  */
 
-public class InstallEventConverter extends DownloadInstallEventConverter<InstallEvent> {
+public class DownloadEventConverter extends DownloadInstallEventConverter<DownloadEvent> {
 
+  private final BodyInterceptor<BaseBody> bodyInterceptor;
   private final OkHttpClient httpClient;
   private final Converter.Factory converterFactory;
-  private final BodyInterceptor<BaseBody> bodyInterceptor;
   private final TokenInvalidator tokenInvalidator;
   private final SharedPreferences sharedPreferences;
   private final NavigationTracker navigationTracker;
 
-  public InstallEventConverter(BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
+  public DownloadEventConverter(BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator, String appId,
       SharedPreferences sharedPreferences, ConnectivityManager connectivityManager,
       TelephonyManager telephonyManager, NavigationTracker navigationTracker) {
@@ -39,22 +37,29 @@ public class InstallEventConverter extends DownloadInstallEventConverter<Install
     this.navigationTracker = navigationTracker;
   }
 
-  @Override protected Data convertSpecificFields(InstallEvent report, Data data) {
-    Root root = new Root();
-    root.setAptoideSettings(report.getAptoideSettings());
-    root.setPhone(report.getIsPhoneRooted());
-    data.setRoot(root);
+  @Override protected Data convertSpecificFields(DownloadEvent report, Data data) {
+    data.getApp()
+        .setMirror(report.getMirrorApk());
+    for (int i = 0; data.getObb() != null && i < data.getObb()
+        .size(); i++) {
+      if (i == 0) {
+        data.getObb()
+            .get(0)
+            .setMirror(report.getMirrorObbMain());
+      } else {
+        data.getObb()
+            .get(1)
+            .setMirror(report.getMirrorObbPatch());
+      }
+    }
     return data;
   }
 
-  @Override protected InstallEvent createEventObject(DownloadInstallBaseEvent.Action action,
+  @Override protected DownloadEvent createEventObject(DownloadInstallBaseEvent.Action action,
       DownloadInstallBaseEvent.Origin origin, String packageName, String url, String obbUrl,
       String patchObbUrl, DownloadInstallBaseEvent.AppContext context, int versionCode) {
-    InstallEvent installEvent =
-        new InstallEvent(action, origin, packageName, url, obbUrl, patchObbUrl, context,
-            versionCode, this, bodyInterceptor, httpClient, converterFactory, tokenInvalidator,
-            sharedPreferences, navigationTracker.getPreviousViewName());
-    installEvent.setAptoideSettings(ManagerPreferences.allowRootInstallation(sharedPreferences));
-    return installEvent;
+    return new DownloadEvent(action, origin, packageName, url, obbUrl, patchObbUrl, context,
+        versionCode, this, bodyInterceptor, httpClient, converterFactory, tokenInvalidator,
+        sharedPreferences, navigationTracker.getPreviousViewName());
   }
 }

@@ -16,15 +16,16 @@ import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
-import cm.aptoide.pt.BuildConfig;
 import android.text.TextUtils;
+import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
-import cm.aptoide.pt.download.InstallEvent;
-import cm.aptoide.pt.downloadmanager.base.DownloadFile;
+import cm.aptoide.pt.download.event.InstallEvent;
 import cm.aptoide.pt.downloadmanager.DownloadFileType;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.Installer;
 import cm.aptoide.pt.install.InstallerAnalytics;
@@ -81,18 +82,16 @@ public class DefaultInstaller implements Installer {
     this.sharedPreferences = sharedPreferences;
   }
 
-  public Observable<Boolean> isInstalled(String md5) {
-    return installationProvider.getInstallation(md5)
-        .map(installation -> isInstalled(installation.getPackageName(),
-            installation.getVersionCode()))
+  public Observable<Boolean> isInstalled(DownloadRequest request) {
+    return installationProvider.isInstalled(request)
         .onErrorReturn(throwable -> false);
   }
 
-  @Override public Completable install(Context context, String md5, boolean forceDefaultInstall) {
+  @Override public Completable install(Context context, DownloadRequest request, boolean forceDefaultInstall) {
     return rootAvailabilityManager.isRootAvailable()
         .doOnSuccess(isRoot -> Analytics.RootInstall.installationType(
             ManagerPreferences.allowRootInstallation(sharedPreferences), isRoot))
-        .flatMapObservable(isRoot -> installationProvider.getInstallation(md5)
+        .flatMapObservable(isRoot -> installationProvider.install(request)
             .first())
         .observeOn(Schedulers.computation())
         .doOnNext(installation -> {
@@ -100,7 +99,7 @@ public class DefaultInstaller implements Installer {
           installation.setType(Installed.TYPE_UNKNOWN);
           moveInstallationFiles(installation);
         })
-        .flatMap(installation -> isInstalled(md5).first()
+        .flatMap(installation -> isInstalled(request).first()
             .flatMap(isInstalled -> {
               if (isInstalled) {
                 installation.setStatus(Installed.STATUS_COMPLETED);
@@ -119,17 +118,17 @@ public class DefaultInstaller implements Installer {
         .toCompletable();
   }
 
-  @Override public Completable update(Context context, String md5, boolean forceDefaultInstall) {
-    return install(context, md5, forceDefaultInstall);
+  @Override public Completable update(Context context, DownloadRequest request, boolean forceDefaultInstall) {
+    return install(context, request, forceDefaultInstall);
   }
 
-  @Override public Completable downgrade(Context context, String md5, boolean forceDefaultInstall) {
-    return installationProvider.getInstallation(md5)
+  @Override public Completable downgrade(Context context, DownloadRequest request, boolean forceDefaultInstall) {
+    return installationProvider.install(request)
         .first()
         .flatMapCompletable(installation -> uninstall(context, installation.getPackageName(),
             installation.getVersionName()))
         .toCompletable()
-        .andThen(install(context, md5, forceDefaultInstall));
+        .andThen(install(context, request, forceDefaultInstall));
   }
 
   @Override public Completable uninstall(Context context, String packageName, String versionName) {

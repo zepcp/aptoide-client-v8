@@ -1,9 +1,10 @@
 package cm.aptoide.pt.download;
 
 import cm.aptoide.pt.database.realm.FileToDownload;
-import cm.aptoide.pt.downloadmanager.base.DownloadFile;
 import cm.aptoide.pt.downloadmanager.DownloadFileType;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
+import cm.aptoide.pt.downloadmanager.base.DownloadFile;
+import java.io.File;
 
 public class DownloadFileAdapter implements DownloadFile {
 
@@ -71,6 +72,15 @@ public class DownloadFileAdapter implements DownloadFile {
 
   @Override public String getFilePath() {
     return downloadFile.getFilePath();
+  }
+
+  @Override public void setFilePath(String filePath) {
+    final int endIndex = filePath.lastIndexOf(File.pathSeparatorChar);
+    if (endIndex > 0) {
+      downloadFile.setPath(filePath.substring(0, endIndex));
+      downloadFile.setFileName(filePath.substring(endIndex));
+    }
+    downloadFile.setFileName(filePath);
   }
 
   @Override public String getPath() {

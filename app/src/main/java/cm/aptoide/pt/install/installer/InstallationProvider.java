@@ -5,6 +5,7 @@
 
 package cm.aptoide.pt.install.installer;
 
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
 import rx.Observable;
 
 /**
@@ -12,5 +13,7 @@ import rx.Observable;
  */
 public interface InstallationProvider {
 
-  Observable<RollbackInstallation> getInstallation(String md5);
+  Observable<RollbackInstallation> install(DownloadRequest downloadRequest);
+
+  Observable<Boolean> isInstalled(DownloadRequest request);
 }

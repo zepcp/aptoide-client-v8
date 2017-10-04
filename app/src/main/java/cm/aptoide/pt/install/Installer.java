@@ -1,6 +1,7 @@
 package cm.aptoide.pt.install;
 
 import android.content.Context;
+import cm.aptoide.pt.downloadmanager.base.DownloadRequest;
 import cm.aptoide.pt.install.installer.InstallationState;
 import rx.Completable;
 import rx.Observable;
@@ -10,11 +11,11 @@ import rx.Observable;
  */
 public interface Installer {
 
-  Completable install(Context context, String md5, boolean forceDefaultInstall);
+  Completable install(Context context, DownloadRequest request, boolean forceDefaultInstall);
 
-  Completable update(Context context, String md5, boolean forceDefaultInstall);
+  Completable update(Context context, DownloadRequest request, boolean forceDefaultInstall);
 
-  Completable downgrade(Context context, String md5, boolean forceDefaultInstall);
+  Completable downgrade(Context context, DownloadRequest request, boolean forceDefaultInstall);
 
   Completable uninstall(Context context, String packageName, String versionName);
 
