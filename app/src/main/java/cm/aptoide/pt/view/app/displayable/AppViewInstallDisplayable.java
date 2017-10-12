@@ -9,12 +9,14 @@ import android.widget.Button;
 import cm.aptoide.pt.Install;
 import cm.aptoide.pt.InstallManager;
 import cm.aptoide.pt.R;
+import cm.aptoide.pt.analytics.AptoideNavigationTracker;
 import cm.aptoide.pt.analytics.DownloadCompleteAnalytics;
 import cm.aptoide.pt.app.AppViewAnalytics;
-import cm.aptoide.pt.database.realm.MinimalAd;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.download.DownloadFactory;
+import cm.aptoide.pt.install.InstalledRepository;
+import cm.aptoide.pt.search.model.SearchAdResult;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.view.app.AppViewFragment;
 import rx.Observable;
@@ -37,6 +39,8 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
   private DownloadFactory downloadFactory;
   private TimelineAnalytics timelineAnalytics;
   private DownloadCompleteAnalytics analytics;
+  private AptoideNavigationTracker aptoideNavigationTracker;
+  private String editorsChoiceBrickPosition;
 
   public AppViewInstallDisplayable() {
     super();
@@ -44,10 +48,11 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
   }
 
   public AppViewInstallDisplayable(InstallManager installManager, GetApp getApp,
-      MinimalAd minimalAd, boolean shouldInstall, TimelineAnalytics timelineAnalytics,
-      AppViewAnalytics appViewAnalytics, PublishSubject installAppRelay,
-      DownloadFactory downloadFactory, AppViewFragment appViewFragment,
-      DownloadCompleteAnalytics analytics) {
+      SearchAdResult searchAdResult, boolean shouldInstall, InstalledRepository installedRepository,
+      TimelineAnalytics timelineAnalytics, AppViewAnalytics appViewAnalytics,
+      PublishRelay installAppRelay, DownloadFactory downloadFactory,
+      AppViewFragment appViewFragment, DownloadCompleteAnalytics analytics,
+      AptoideNavigationTracker aptoideNavigationTracker, String editorsChoiceBrickPosition) {
     super(getApp, appViewAnalytics);
     this.installManager = installManager;
     this.md5 = getApp.getNodes()
@@ -64,23 +69,26 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
         .getData()
         .getFile()
         .getVercode();
-    this.minimalAd = minimalAd;
+    this.searchAdResult = searchAdResult;
     this.shouldInstall = shouldInstall;
     this.downloadFactory = downloadFactory;
     this.installAppRelay = installAppRelay;
     this.timelineAnalytics = timelineAnalytics;
     this.appViewFragment = appViewFragment;
     this.analytics = analytics;
+    this.aptoideNavigationTracker = aptoideNavigationTracker;
+    this.editorsChoiceBrickPosition = editorsChoiceBrickPosition;
   }
 
   public static AppViewInstallDisplayable newInstance(GetApp getApp, InstallManager installManager,
-      MinimalAd minimalAd, boolean shouldInstall, DownloadFactory downloadFactory,
-      TimelineAnalytics timelineAnalytics, AppViewAnalytics appViewAnalytics,
-      PublishSubject installAppRelay, AppViewFragment appViewFragment,
-      DownloadCompleteAnalytics analytics) {
-    return new AppViewInstallDisplayable(installManager, getApp, minimalAd, shouldInstall,
-        timelineAnalytics, appViewAnalytics, installAppRelay, downloadFactory, appViewFragment,
-        analytics);
+      SearchAdResult searchAdResult, boolean shouldInstall, InstalledRepository installedRepository,
+      DownloadFactory downloadFactory, TimelineAnalytics timelineAnalytics,
+      AppViewAnalytics appViewAnalytics, PublishRelay installAppRelay,
+      AppViewFragment appViewFragment, DownloadCompleteAnalytics analytics,
+      AptoideNavigationTracker aptoideNavigationTracker, String editorsBrickPosition) {
+    return new AppViewInstallDisplayable(installManager, getApp, searchAdResult, shouldInstall,
+        installedRepository, timelineAnalytics, appViewAnalytics, installAppRelay, downloadFactory,
+        appViewFragment, analytics, aptoideNavigationTracker, editorsBrickPosition);
   }
 
   public boolean isShouldInstall() {
@@ -137,9 +145,11 @@ public class AppViewInstallDisplayable extends AppViewDisplayable {
     GetAppMeta.App app = getPojo().getNodes()
         .getMeta()
         .getData();
-    analytics.installClicked(app.getMd5(), app.getPackageName(), app.getFile()
-        .getMalware()
-        .getRank()
-        .name());
+    analytics.installClicked(aptoideNavigationTracker.getPreviousScreen(),
+        aptoideNavigationTracker.getCurrentScreen(), app.getMd5(), app.getPackageName(),
+        app.getFile()
+            .getMalware()
+            .getRank()
+            .name(), editorsChoiceBrickPosition);
   }
 }
