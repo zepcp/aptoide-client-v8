@@ -1,9 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'me.tatarka.retrolambda'
-retrolambda {
-  jvmArgs '-noverify'
-}
 
 android {
   compileSdkVersion Integer.parseInt(project.COMPILE_SDK_VERSION)
@@ -12,8 +8,6 @@ android {
   defaultConfig {
     minSdkVersion project.MINIMUM_SDK_VERSION
   }
-
-  publishNonDefault true
 
   buildTypes {
     release {
@@ -46,38 +40,37 @@ android {
 
 dependencies {
 
-  compile project(path: ':utils', configuration: 'release')
-  compile project(path: ':crashreports', configuration: 'release')
+  implementation project(path: ':utils')
+  implementation project(path: ':crashreports')
 
-  compile fileTree(dir: 'libs', include: ['*.jar'])
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-  testCompile "junit:junit:${JUNIT_VERSION}"
-  //testCompile "org.mockito:mockito-core:${MOCKITO_CORE_VERSION}"
-  testCompile "org.mockito:mockito-inline:${MOCKITO_CORE_VERSION}"
-  testCompile("com.nhaarman:mockito-kotlin:${MOCKITO_KOTLIN_VERSION}") {
+  testImplementation "junit:junit:${JUNIT_VERSION}"
+  testImplementation "org.mockito:mockito-inline:${MOCKITO_CORE_VERSION}"
+  testImplementation("com.nhaarman:mockito-kotlin:${MOCKITO_KOTLIN_VERSION}") {
     exclude group: 'org.jetbrains.kotlin'
     exclude group: 'org.mockito'
   }
 
   //noinspection GradleDependency
-  compile "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
+  implementation "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
 
-  compile "io.reactivex:rxjava:${RXJAVA_VERSION}"
-  compile "nl.littlerobots.rxlint:rxlint:${Rx_lint_version}"
+  implementation "io.reactivex:rxjava:${RXJAVA_VERSION}"
+  implementation "nl.littlerobots.rxlint:rxlint:${Rx_lint_version}"
   // And ProGuard rules for RxJava!
-  compile "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
-  compile "com.squareup.retrofit2:retrofit:${RETROFIT_VERSION}"
+  implementation "com.artemzin.rxjava:proguard-rules:${RXJAVA_PROGUARD_RULES_VERSION}"
+  implementation "com.squareup.retrofit2:retrofit:${RETROFIT_VERSION}"
 
   // kotlin
-  compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-  compile "io.reactivex:rxkotlin:$rx_kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+  implementation "io.reactivex:rxkotlin:$rx_kotlin_version"
 
   // download lib 1 (LingoChamp)
-  compile "com.liulishuo.filedownloader:library:${FILE_DOWNLOADER_VERSION}"
-  compile "cn.dreamtobe.filedownloader:filedownloader-okhttp3-connection:${FILE_DOWNLOADER_OKHTTP_IMP_VERSION}"
+  implementation "com.liulishuo.filedownloader:library:${FILE_DOWNLOADER_VERSION}"
+  implementation "cn.dreamtobe.filedownloader:filedownloader-okhttp3-connection:${FILE_DOWNLOADER_OKHTTP_IMP_VERSION}"
 
   // download lib 2 (Fetch)
-  //compile "com.tonyodev.fetch:fetch:${FETCH_VERSION}"
+  //implementation "com.tonyodev.fetch:fetch:${FETCH_VERSION}"
 }
 repositories {
   mavenCentral()
