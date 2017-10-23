@@ -30,7 +30,7 @@ android {
     targetSdkVersion Integer.parseInt(project.TARGET_SDK_VERSION)
     multiDexEnabled true
     versionCode project.PROD_VERSION_CODE.toInteger()
-    versionName "8.5.1.0"
+    versionName "8.5.1.1"
     testProguardFile 'proguard-rules-test.pro'
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -88,6 +88,13 @@ android {
 
     leak {
       dimension "mode"
+    }
+
+    fairy {
+      dimension "mode"
+      applicationIdSuffix "testfairy"
+      versionName "8.5.1." + getDate()
+      versionCode project.DEV_VERSION_CODE.toInteger()
     }
   }
 
@@ -229,6 +236,7 @@ android {
       variant.buildConfigField "String", "PAYPAL_KEY", "\"" + project.PAYPAL_PRODUCTION_KEY + "\""
       variant.buildConfigField "String", "TWITTER_KEY", "\"" + project.TWITTER_KEY + "\""
       variant.buildConfigField "String", "TWITTER_SECRET", "\"" + project.TWITTER_SECRET + "\""
+      resValue "string", "TEST_FAIRY_TOKEN", "\"" + project.TEST_FAIRY_TOKEN + "\""
     }
 
     //variant.outputs.each { vOutput ->
@@ -400,6 +408,8 @@ dependencies {
   }
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
   implementation "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
+
+  fairyCompile "testfairy:testfairy-android-sdk:${TEST_FAIRY_VERSION}"
 }
 repositories {
   mavenCentral()
