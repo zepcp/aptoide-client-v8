@@ -118,7 +118,6 @@ ext {
   BRAINTREE_CARD_FORM_VERSION = '3.0.6'
 
   TEST_FAIRY_VERSION = '1.5.5'
-}
 
   rx_kotlin_version = '1.0.0'
 
