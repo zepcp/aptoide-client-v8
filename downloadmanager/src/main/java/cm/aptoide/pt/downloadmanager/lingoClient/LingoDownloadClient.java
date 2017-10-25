@@ -9,8 +9,8 @@ public class LingoDownloadClient implements DownloadClient {
   private boolean isInitialized = false;
   private final FileDownloader fileDownloader;
 
-  public LingoDownloadClient(FileDownloader fileDownloader) {
-    this.fileDownloader = fileDownloader;
+  public LingoDownloadClient() {
+    this.fileDownloader = new FileDownloader();
   }
 
   @Override public LingoDownloadTask startDownload(String string) {

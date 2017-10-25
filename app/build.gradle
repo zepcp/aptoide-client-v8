@@ -1,5 +1,11 @@
 import com.android.builder.model.ProductFlavor
 
+apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+apply plugin: 'realm-android'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+
 buildscript {
 
   repositories {
@@ -10,11 +16,6 @@ buildscript {
     classpath 'io.fabric.tools:gradle:1.22.1'
   }
 }
-
-apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
-apply plugin: 'realm-android'
-apply plugin: 'kotlin-android'
 
 android {
 
@@ -61,11 +62,13 @@ android {
     partner {
       dimension "product"
       applicationId "com.aptoide.partners.apps"
+      matchingFallbacks = ['internal', 'prod']
     }
 
     vanilla {
       dimension "product"
       applicationId "cm.aptoide.pt"
+      matchingFallbacks = ['internal', 'prod']
     }
 
     internal {
@@ -80,6 +83,7 @@ android {
       applicationIdSuffix "dev"
       versionName "8.5.1." + getDate()
       versionCode project.DEV_VERSION_CODE.toInteger()
+      matchingFallbacks = ['internal', 'prod']
     }
 
     prod {
@@ -88,6 +92,7 @@ android {
 
     leak {
       dimension "mode"
+      matchingFallbacks = ['internal', 'prod']
     }
 
     fairy {
@@ -95,6 +100,7 @@ android {
       applicationIdSuffix "testfairy"
       versionName "8.5.1." + getDate()
       versionCode project.DEV_VERSION_CODE.toInteger()
+      matchingFallbacks = ['internal', 'prod']
     }
   }
 
@@ -162,9 +168,9 @@ android {
     String applicationId = applicationIdBase
 
     def searchSuggestionProviderAuthority =
-        "${applicationIdBase}.provider.SearchSuggestionProvider";
+        "${applicationIdBase}.provider.SearchSuggestionProvider"
     def storeSuggestionProviderAuthority =
-        "${applicationIdBase}.provider.StoreSearchSuggestionProvider";
+        "${applicationIdBase}.provider.StoreSearchSuggestionProvider"
     def toolboxProviderAuthority = "${applicationIdBase}.StubProvider"
 
     if (applicationIdSuffix != null) {
@@ -239,7 +245,6 @@ android {
       resValue "string", "TEST_FAIRY_TOKEN", "\"" + project.TEST_FAIRY_TOKEN + "\""
     }
 
-    //variant.outputs.each { vOutput ->
     variant.outputs.all { vOutput ->
       def SEP = "_"
       def dimension = variant.productFlavors[0].name
@@ -258,7 +263,6 @@ android {
           versionCode +
           ".apk"
 
-      //vOutput.outputFile = new File(vOutput.outputFile.parent, newApkName)
       outputFileName = newApkName
     }
   }
@@ -303,8 +307,8 @@ dependencies {
 
   internalImplementation project(path: ':dataprovider')
   prodImplementation project(path: ':dataprovider')
-  devImplementation project(path: ':dataprovider', configuration: 'prodRelease')
-  leakImplementation project(path: ':dataprovider', configuration: 'prodRelease')
+  devImplementation project(path: ':dataprovider')
+  leakImplementation project(path: ':dataprovider')
 
   implementation project(path: ':aptoide-database')
   implementation project(path: ':aptoidepreferences')
@@ -323,9 +327,10 @@ dependencies {
   androidTestImplementation("com.android.support:multidex-instrumentation:${MULTIDEX_VERSION}") {
     exclude group: "com.android.support", module: "support-annotations"
   }
-  androidTestImplementation "com.android.support:support-annotations:${SUPPORT_LIB_VERSION}"
 
-  implementation "com.android.support:support-annotations:${SUPPORT_LIB_VERSION}"
+  androidTestImplementation "com.android.support:support-annotations:${SUPPORT_LIB_VERSION_ANNOTATIONS}"
+  implementation "com.android.support:support-annotations:${SUPPORT_LIB_VERSION_ANNOTATIONS}"
+
   implementation "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
   implementation "com.android.support:preference-v7:${SUPPORT_LIB_VERSION}"
   implementation "com.android.support:recyclerview-v7:${SUPPORT_LIB_VERSION}"
@@ -383,7 +388,7 @@ dependencies {
 
   // Parceler - https://github.com/johncarl81/parceler
   implementation "org.parceler:parceler-api:${PARCELER_VERSION}"
-  annotationProcessor "org.parceler:parceler:${PARCELER_VERSION}"
+  kapt "org.parceler:parceler:${PARCELER_VERSION}"
 
   implementation "com.android.support.constraint:constraint-layout:${CONSTRAINT_LAYOUT_VERSION}"
   //noinspection GradleDependency
@@ -409,14 +414,10 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
   implementation "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
 
-  fairyCompile "testfairy:testfairy-android-sdk:${TEST_FAIRY_VERSION}"
-}
-repositories {
-  mavenCentral()
-  google()
+  fairyImplementation "testfairy:testfairy-android-sdk:${TEST_FAIRY_VERSION}"
 }
 
-String getDate() {
+static String getDate() {
   def date = new Date()
   def formattedDate = date.format('yyyyMMdd')
   return formattedDate

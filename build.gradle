@@ -1,17 +1,17 @@
 buildscript {
 
-  ext.kotlin_version = '1.1.3-2'
+  ext.kotlin_version = '1.1.51'
 
   repositories {
     jcenter()
+    google()
     mavenLocal()
   }
 
   dependencies {
-    //classpath 'com.android.tools.build:gradle:2.3.3'
-    classpath 'com.android.tools.build:gradle:3.0.0-beta7'
+    classpath 'com.android.tools.build:gradle:3.0.0-rc2'
     classpath 'me.tatarka.retrolambda.projectlombok:lombok.ast:0.2.3.a2'
-    classpath 'io.realm:realm-gradle-plugin:3.7.2'
+    classpath 'io.realm:realm-gradle-plugin:3.7.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 
@@ -31,6 +31,7 @@ allprojects {
     maven { url 'https://maven.fabric.io/public' }
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url "https://jitpack.io" }
+    mavenCentral()
   }
 }
 
@@ -47,7 +48,8 @@ ext {
 
   BUILD_TOOLS_VERSION = '26.0.2'
 
-  SUPPORT_LIB_VERSION = '26.0.2'
+  SUPPORT_LIB_VERSION = '26.1.0'
+  SUPPORT_LIB_VERSION_ANNOTATIONS = '26.0.2'
 
   // Google Play Services
   PLAY_SERVICES_VERSION = '9.8.0'
@@ -59,7 +61,7 @@ ext {
   // Rx
   RXJAVA_VERSION = '1.2.7'
   RXANDROID_VERSION = '1.2.1'
-  JW_RX_BINDING_VERSION = '1.0.0'
+  JW_RX_BINDING_VERSION = '1.0.1'
   RXJAVA_PROGUARD_RULES_VERSION = '1.2.7.0'
   TRELLO_RX_LIFECYCLE_VERSION = '1.0'
   RX_RELAY = '1.2.0'
@@ -90,7 +92,7 @@ ext {
   GLIDE_VERSION = '3.7.0'
 
   // Facebook Android SDK
-  FACEBOOK_ANDROID_SDK_VERSION = '4.17.0'
+  FACEBOOK_ANDROID_SDK_VERSION = '4.21.1'
 
   // File Downloader lib
   FILE_DOWNLOADER_VERSION = '1.6.4'

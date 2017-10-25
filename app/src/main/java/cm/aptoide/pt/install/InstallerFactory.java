@@ -15,7 +15,7 @@ import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.accessors.StoredMinimalAdAccessor;
 import cm.aptoide.pt.database.realm.StoredMinimalAd;
 import cm.aptoide.pt.download.DownloadInstallationProvider;
-import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
+import cm.aptoide.pt.downloadmanager.base.DownloadManager;
 import cm.aptoide.pt.downloadmanager.external.DownloadRepository;
 import cm.aptoide.pt.install.installer.DefaultInstaller;
 import cm.aptoide.pt.install.installer.RollbackInstaller;
@@ -58,16 +58,15 @@ public class InstallerFactory {
     final AptoideApplication applicationContext =
         (AptoideApplication) context.getApplicationContext();
 
-    return new DefaultInstaller(context.getPackageManager(), getInstallationProvider(
-        applicationContext.getDownloadManager(),
-        context.getApplicationContext()), new FileUtils(), Analytics.getInstance(),
-        ToolboxManager.isDebug(
-            applicationContext.getDefaultSharedPreferences())
+    return new DefaultInstaller(context.getPackageManager(),
+        getInstallationProvider(applicationContext.getDownloadManager(),
+            context.getApplicationContext()), new FileUtils(), Analytics.getInstance(),
+        ToolboxManager.isDebug(applicationContext.getDefaultSharedPreferences())
             || BuildConfig.DEBUG,
         RepositoryFactory.getInstalledRepository(context.getApplicationContext()), 180000,
         applicationContext.getRootAvailabilityManager(),
-        applicationContext.getDefaultSharedPreferences(),
-        installerAnalytics, BuildConfig.CONTENT_AUTHORITY );
+        applicationContext.getDefaultSharedPreferences(), installerAnalytics,
+        BuildConfig.CONTENT_AUTHORITY);
   }
 
   @NonNull private RollbackInstaller getRollbackInstaller(Context context) {
@@ -78,8 +77,9 @@ public class InstallerFactory {
         context.getApplicationContext()));
   }
 
-  @NonNull private DownloadInstallationProvider getInstallationProvider(
-      AptoideDownloadManager downloadManager, Context context) {
+  @NonNull
+  private DownloadInstallationProvider getInstallationProvider(DownloadManager downloadManager,
+      Context context) {
     final DownloadRepository downloadRepository = RepositoryFactory.getDownloadRepository(context);
 
     final InstalledRepository installedRepository =

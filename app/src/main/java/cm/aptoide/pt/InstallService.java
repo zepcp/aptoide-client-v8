@@ -24,7 +24,6 @@ import cm.aptoide.pt.database.realm.Installed;
 import cm.aptoide.pt.database.realm.Scheduled;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
 import cm.aptoide.pt.download.event.DownloadEvent;
-import cm.aptoide.pt.downloadmanager.Constants;
 import cm.aptoide.pt.downloadmanager.base.Download;
 import cm.aptoide.pt.downloadmanager.base.DownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadStatus;
