@@ -10,9 +10,9 @@ buildscript {
 
   dependencies {
     classpath 'com.android.tools.build:gradle:3.0.0-rc2'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     classpath 'me.tatarka.retrolambda.projectlombok:lombok.ast:0.2.3.a2'
     classpath 'io.realm:realm-gradle-plugin:3.7.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 
   // Exclude the version that the android plugin depends on.
