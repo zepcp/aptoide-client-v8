@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.BaseV7Response;
-import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.dataprovider.util.HashMapNotNull;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.store.RequestBodyFactory;
@@ -48,7 +47,7 @@ public class SetStoreImageRequest extends V7<BaseV7Response, HashMapNotNull<Stri
       Converter.Factory converterFactory, RequestBodyFactory requestBodyFactory,
       ObjectMapper serializer, SharedPreferences sharedPreferences,
       TokenInvalidator tokenInvalidator, List<SimpleSetStoreRequest.StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> storeDeleteLinksList) {
+      List<String> storeDeleteLinksList) {
 
     final HashMapNotNull<String, RequestBody> body = new HashMapNotNull<>();
 
@@ -62,7 +61,7 @@ public class SetStoreImageRequest extends V7<BaseV7Response, HashMapNotNull<Stri
         bodyInterceptor, httpClient, converterFactory, sharedPreferences, tokenInvalidator);
   }
 
-  private static void addStoreDeleteLinks(List<Store.SocialChannelType> storeDeleteLinksList,
+  private static void addStoreDeleteLinks(List<String> storeDeleteLinksList,
       HashMapNotNull<String, RequestBody> body, ObjectMapper serializer,
       RequestBodyFactory requestBodyFactory) {
     try {

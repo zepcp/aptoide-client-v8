@@ -11,5 +11,5 @@ import rx.Completable;
 public interface StoreManager {
   Completable createOrUpdate(String storeName, String storeDescription, String storeImagePath,
       boolean hasNewAvatar, String storeThemeName, boolean storeExists,
-      List<SocialLink> storeLinksList, List<Store.SocialChannelType> storeDeleteLinksList);
+      List<SocialLink> storeLinksList, List<String> storeDeleteLinksList);
 }

@@ -125,10 +125,6 @@ public class Store {
     this.access = access;
   }
 
-  public enum SocialChannelType {
-    FACEBOOK, TWITTER, YOUTUBE, TWITCH, BLOG
-  }
-
   public enum BadgeType {
     NONE, BRONZE, SILVER, GOLD, PLATINUM
   }
@@ -193,16 +189,16 @@ public class Store {
   }
 
   public static class SocialChannel {
-    private SocialChannelType type;
+    private String type;
     private String name;
     private String graphic;
     private String url;
 
-    public SocialChannelType getType() {
+    public String getType() {
       return type;
     }
 
-    public void setType(SocialChannelType type) {
+    public void setType(String type) {
       this.type = type;
     }
 

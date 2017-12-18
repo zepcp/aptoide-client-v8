@@ -182,7 +182,7 @@ public class AptoideAccountManager {
   public Completable createOrUpdate(String storeName, String storeDescription,
       String storeImagePath, boolean hasNewAvatar, String storeThemeName, boolean storeExists,
       List<SocialLink> storeLinksList,
-      List<cm.aptoide.pt.dataprovider.model.v7.store.Store.SocialChannelType> storeDeleteLinksList) {
+      List<String> storeDeleteLinksList) {
     return storeManager.createOrUpdate(storeName, storeDescription, storeImagePath, hasNewAvatar,
         storeThemeName, storeExists, storeLinksList, storeDeleteLinksList)
         .andThen(syncAccount());

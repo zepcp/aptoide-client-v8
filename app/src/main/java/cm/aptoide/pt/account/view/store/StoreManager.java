@@ -10,7 +10,6 @@ import cm.aptoide.pt.account.view.exception.StoreCreationException;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v3.ErrorResponse;
-import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.dataprovider.util.HashMapNotNull;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v3.BaseBody;
@@ -65,7 +64,7 @@ public class StoreManager implements cm.aptoide.accountmanager.StoreManager {
 
   public Completable createOrUpdate(String storeName, String storeDescription,
       String storeImagePath, boolean hasNewAvatar, String storeThemeName, boolean storeExists,
-      List<SocialLink> storeLinksList, List<Store.SocialChannelType> storeDeleteLinksList) {
+      List<SocialLink> storeLinksList, List<String> storeDeleteLinksList) {
     return Completable.defer(() -> {
       if (storeExists) {
         return updateStore(storeName, storeDescription, storeImagePath, hasNewAvatar,
@@ -124,7 +123,7 @@ public class StoreManager implements cm.aptoide.accountmanager.StoreManager {
   private Completable createStore(String storeName, String storeDescription, String storeImage,
       boolean hasNewAvatar, String storeThemeName,
       List<SimpleSetStoreRequest.StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+      List<String> storeDeleteSocialLinksList) {
 
     if (TextUtils.isEmpty(storeName)) {
       return Completable.error(new StoreValidationException(StoreValidationException.EMPTY_NAME));
@@ -172,8 +171,7 @@ public class StoreManager implements cm.aptoide.accountmanager.StoreManager {
 
   private Completable updateStore(String storeName, String storeDescription, String storeImage,
       boolean hasNewAvatar, String storeThemeName,
-      List<SimpleSetStoreRequest.StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> socialDeleteLinksList) {
+      List<SimpleSetStoreRequest.StoreLinks> storeLinksList, List<String> socialDeleteLinksList) {
 
     if (TextUtils.isEmpty(storeName)) {
       return Completable.error(new StoreValidationException(StoreValidationException.EMPTY_NAME));
@@ -196,7 +194,7 @@ public class StoreManager implements cm.aptoide.accountmanager.StoreManager {
 
   private Completable updateStoreWithoutAvatar(String storeName, String storeDescription,
       String storeThemeName, List<SimpleSetStoreRequest.StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+      List<String> storeDeleteSocialLinksList) {
     return SimpleSetStoreRequest.of(storeName, storeThemeName, storeDescription, bodyInterceptorV7,
         httpClient, converterFactory, tokenInvalidator, sharedPreferences, storeLinksList,
         storeDeleteSocialLinksList)
@@ -206,8 +204,7 @@ public class StoreManager implements cm.aptoide.accountmanager.StoreManager {
 
   private Completable updateStoreWithAvatar(String storeName, String storeDescription,
       String storeThemeName, String storeImagePath,
-      List<SimpleSetStoreRequest.StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> socialDeleteLinksList) {
+      List<SimpleSetStoreRequest.StoreLinks> storeLinksList, List<String> socialDeleteLinksList) {
     return SetStoreImageRequest.of(storeName, storeThemeName, storeDescription, storeImagePath,
         multipartBodyInterceptor, httpClient, converterFactory, requestBodyFactory, objectMapper,
         sharedPreferences, tokenInvalidator, storeLinksList, socialDeleteLinksList)

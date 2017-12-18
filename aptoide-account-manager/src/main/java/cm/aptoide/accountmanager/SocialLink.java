@@ -1,6 +1,5 @@
 package cm.aptoide.accountmanager;
 
-import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import org.parceler.Parcel;
 
 /**
@@ -9,18 +8,24 @@ import org.parceler.Parcel;
 
 @Parcel public class SocialLink {
 
-  Store.SocialChannelType type;
+  public final static String FACEBOOK = "FACEBOOK";
+  public final static String TWITCH = "TWITCH";
+  public final static String TWITTER = "TWITTER";
+  public final static String YOUTUBE = "YOUTUBE";
+  public final static String BLOG = "BLOG";
+
+  String type;
   String url;
 
   public SocialLink() {
   }
 
-  public SocialLink(Store.SocialChannelType type, String url) {
+  public SocialLink(String type, String url) {
     this.type = type;
     this.url = url;
   }
 
-  public Store.SocialChannelType getType() {
+  public String getType() {
     return type;
   }
 

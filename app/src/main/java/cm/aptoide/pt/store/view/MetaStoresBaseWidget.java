@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import cm.aptoide.accountmanager.SocialLink;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.utils.AptoideUtils;
@@ -37,21 +38,21 @@ public abstract class MetaStoresBaseWidget<T extends Displayable> extends Widget
     for (int i = 0; i < socialChannels.size(); i++) {
       Store.SocialChannel socialChannel = socialChannels.get(i);
       if (socialChannel.getType() != null && !socialChannel.getType()
-          .equals(Store.SocialChannelType.BLOG)) {
+          .equals(SocialLink.BLOG)) {
         layoutInflater.inflate(R.layout.social_button_layout, socialChannelsLayout);
         imageButton = ((ImageButton) socialChannelsLayout.getChildAt(
             socialChannelsLayout.getChildCount() - 1));
         switch (socialChannel.getType()) {
-          case FACEBOOK:
+          case SocialLink.FACEBOOK:
             imageButton.setImageDrawable(getDrawable(R.drawable.facebook_logo));
             break;
-          case TWITTER:
+          case SocialLink.TWITTER:
             imageButton.setImageDrawable(getDrawable(R.drawable.twitter_logo));
             break;
-          case YOUTUBE:
+          case SocialLink.YOUTUBE:
             imageButton.setImageDrawable(getDrawable(R.drawable.youtube_logo));
             break;
-          case TWITCH:
+          case SocialLink.TWITCH:
             imageButton.setImageDrawable(getDrawable(R.drawable.twitch_logo));
             break;
         }

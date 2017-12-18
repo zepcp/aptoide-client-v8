@@ -23,7 +23,7 @@ import org.parceler.Parcel;
   StoreTheme storeTheme;
   boolean newAvatar;
   List<SocialLink> socialLinks;
-  List<Store.SocialChannelType> socialDelLinks;
+  List<String> socialDelLinks;
 
   public ManageStoreViewModel() {
     this.storeId = -1;
@@ -132,11 +132,11 @@ import org.parceler.Parcel;
     this.socialLinks = socialLinks;
   }
 
-  public List<Store.SocialChannelType> getSocialDeleteLinks() {
+  public List<String> getSocialDeleteLinks() {
     return socialDelLinks;
   }
 
-  public void setSocialDelLinks(List<Store.SocialChannelType> socialDelLinks) {
+  public void setSocialDelLinks(List<String> socialDelLinks) {
     this.socialDelLinks = socialDelLinks;
   }
 }

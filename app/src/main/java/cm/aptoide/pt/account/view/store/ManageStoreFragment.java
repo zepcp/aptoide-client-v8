@@ -113,7 +113,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
   private ImageView twitchEndRowIcon;
   private ImageView twitterEndRowIcon;
   private ImageView youtubeEndRowIcon;
-  private List<Store.SocialChannelType> storeDeleteLinksList;
+  private List<String> storeDeleteLinksList;
   private int requestCode;
 
   public static ManageStoreFragment newInstance(ManageStoreViewModel storeModel, boolean goToHome) {
@@ -165,22 +165,22 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     facebookUser.setOnFocusChangeListener(
         (v, focus) -> changeSocialRowTextAndAppearance(facebookUser, facebookText,
             R.style.Aptoide_TextView_Regular_XS_Facebook, facebookTextAndPlus,
-            facebookUsernameWrapper, R.string.facebook, Store.SocialChannelType.FACEBOOK));
+            facebookUsernameWrapper, R.string.facebook, SocialLink.FACEBOOK));
 
     twitchUser.setOnFocusChangeListener(
         (v, focus) -> changeSocialRowTextAndAppearance(twitchUser, twitchText,
             R.style.Aptoide_TextView_Regular_XS_Twitch, twitchTextAndPlus, twitchUsernameWrapper,
-            R.string.twitch, Store.SocialChannelType.TWITCH));
+            R.string.twitch, SocialLink.TWITCH));
 
     twitterUser.setOnFocusChangeListener(
         (v, focus) -> changeSocialRowTextAndAppearance(twitterUser, twitterText,
             R.style.Aptoide_TextView_Regular_XS_Twitter, twitterTextAndPlus, twitterUsernameWrapper,
-            R.string.twitter, Store.SocialChannelType.TWITTER));
+            R.string.twitter, SocialLink.TWITTER));
 
     youtubeUser.setOnFocusChangeListener(
         (v, focus) -> changeSocialRowTextAndAppearance(youtubeUser, youtubeText,
             R.style.Aptoide_TextView_Regular_XS_Youtube, youtubeTextAndPlus, youtubeUsernameWrapper,
-            R.string.youtube, Store.SocialChannelType.YOUTUBE));
+            R.string.youtube, SocialLink.YOUTUBE));
   }
 
   private void registerSocialEditTextClickListeners() {
@@ -308,7 +308,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
   private void changeSocialRowTextAndAppearance(EditText editText, TextView textView,
       @StyleRes int style, RelativeLayout relativeLayout,
       CustomTextInputLayout customTextInputLayout, @StringRes int socialNetworkName,
-      Store.SocialChannelType socialChannelType) {
+      String socialChannelType) {
     if (!editText.hasFocus()) {
       if (!editText.getText()
           .toString()
@@ -331,7 +331,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     }
   }
 
-  private String getUrl(Store.SocialChannelType channelType) {
+  private String getUrl(String channelType) {
     for (SocialLink channel : currentModel.getSocialLinks()) {
       if (channel.getType()
           .equals(channelType)) {
@@ -512,7 +512,7 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     return currentModel;
   }
 
-  private List<Store.SocialChannelType> checkLinksToDelete() {
+  private List<String> checkLinksToDelete() {
     storeDeleteLinksList = new ArrayList<>();
     List<SocialLink> socialLinks = currentModel.getSocialLinks();
     for (SocialLink socialLink : socialLinks) {
@@ -525,28 +525,28 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     if (!socialLink.getUrl()
         .isEmpty()) {
       if (socialLink.getType()
-          .equals(Store.SocialChannelType.FACEBOOK) && facebookUser.getText()
+          .equals(SocialLink.FACEBOOK) && facebookUser.getText()
           .toString()
           .isEmpty()) {
-        storeDeleteLinksList.add(Store.SocialChannelType.FACEBOOK);
+        storeDeleteLinksList.add(SocialLink.FACEBOOK);
       }
       if (socialLink.getType()
-          .equals(Store.SocialChannelType.TWITCH) && twitchUser.getText()
+          .equals(SocialLink.TWITCH) && twitchUser.getText()
           .toString()
           .isEmpty()) {
-        storeDeleteLinksList.add(Store.SocialChannelType.TWITCH);
+        storeDeleteLinksList.add(SocialLink.TWITCH);
       }
       if (socialLink.getType()
-          .equals(Store.SocialChannelType.TWITTER) && twitterUser.getText()
+          .equals(SocialLink.TWITTER) && twitterUser.getText()
           .toString()
           .isEmpty()) {
-        storeDeleteLinksList.add(Store.SocialChannelType.TWITTER);
+        storeDeleteLinksList.add(SocialLink.TWITTER);
       }
       if (socialLink.getType()
-          .equals(Store.SocialChannelType.YOUTUBE) && youtubeUser.getText()
+          .equals(SocialLink.YOUTUBE) && youtubeUser.getText()
           .toString()
           .isEmpty()) {
-        storeDeleteLinksList.add(Store.SocialChannelType.YOUTUBE);
+        storeDeleteLinksList.add(SocialLink.YOUTUBE);
       }
     }
   }
@@ -559,26 +559,26 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     List<SocialLink> storeLinksList = new ArrayList<>();
     if (!TextUtils.isEmpty(facebookUser.getText()
         .toString())) {
-      storeLinksList.add(new SocialLink(Store.SocialChannelType.FACEBOOK,
-          setSocialChannelUrl(Store.SocialChannelType.FACEBOOK, facebookUser.getText()
+      storeLinksList.add(new SocialLink(SocialLink.FACEBOOK,
+          setSocialChannelUrl(SocialLink.FACEBOOK, facebookUser.getText()
               .toString())));
     }
     if (!TextUtils.isEmpty(twitchUser.getText()
         .toString())) {
-      storeLinksList.add(new SocialLink(Store.SocialChannelType.TWITCH,
-          setSocialChannelUrl(Store.SocialChannelType.TWITCH, twitchUser.getText()
+      storeLinksList.add(new SocialLink(SocialLink.TWITCH,
+          setSocialChannelUrl(SocialLink.TWITCH, twitchUser.getText()
               .toString())));
     }
     if (!TextUtils.isEmpty(twitterUser.getText()
         .toString())) {
-      storeLinksList.add(new SocialLink(Store.SocialChannelType.TWITTER,
-          setSocialChannelUrl(Store.SocialChannelType.TWITTER, twitterUser.getText()
+      storeLinksList.add(new SocialLink(SocialLink.TWITTER,
+          setSocialChannelUrl(SocialLink.TWITTER, twitterUser.getText()
               .toString())));
     }
     if (!TextUtils.isEmpty(youtubeUser.getText()
         .toString())) {
-      storeLinksList.add(new SocialLink(Store.SocialChannelType.YOUTUBE,
-          setSocialChannelUrl(Store.SocialChannelType.YOUTUBE, youtubeUser.getText()
+      storeLinksList.add(new SocialLink(SocialLink.YOUTUBE,
+          setSocialChannelUrl(SocialLink.YOUTUBE, youtubeUser.getText()
               .toString())));
     }
     if (storeLinksList.isEmpty()) {
@@ -587,24 +587,24 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     return storeLinksList;
   }
 
-  private String setSocialChannelUrl(Store.SocialChannelType socialChannelType, String userInput) {
+  private String setSocialChannelUrl(String socialChannelType, String userInput) {
     switch (socialChannelType) {
-      case FACEBOOK:
+      case SocialLink.FACEBOOK:
         if (!Patterns.WEB_URL.matcher(userInput)
             .matches()) {
           return ManageStoreViewModel.FACEBOOK_BASE_URL + userInput;
         }
-      case TWITCH:
+      case SocialLink.TWITCH:
         if (!Patterns.WEB_URL.matcher(userInput)
             .matches()) {
           return ManageStoreViewModel.TWITCH_BASE_URL + userInput;
         }
-      case TWITTER:
+      case SocialLink.TWITTER:
         if (!Patterns.WEB_URL.matcher(userInput)
             .matches()) {
           return ManageStoreViewModel.TWITTER_BASE_URL + userInput;
         }
-      case YOUTUBE:
+      case SocialLink.YOUTUBE:
         if (!Patterns.WEB_URL.matcher(userInput)
             .matches()) {
           return ManageStoreViewModel.YOUTUBE_BASE_URL + userInput;
@@ -646,16 +646,16 @@ public class ManageStoreFragment extends BackButtonFragment implements ManageSto
     if (!storeLinksList.isEmpty()) {
       for (SocialLink storeLinks : storeLinksList) {
         if (storeLinks.getType()
-            .equals(Store.SocialChannelType.FACEBOOK)) {
+            .equals(SocialLink.FACEBOOK)) {
           setStoreSocialSentUrl(storeLinks, facebookText, facebookEndRowIcon, facebookUser);
         } else if (storeLinks.getType()
-            .equals(Store.SocialChannelType.TWITCH)) {
+            .equals(SocialLink.TWITCH)) {
           setStoreSocialSentUrl(storeLinks, twitchText, twitchEndRowIcon, twitchUser);
         } else if (storeLinks.getType()
-            .equals(Store.SocialChannelType.TWITTER)) {
+            .equals(SocialLink.TWITTER)) {
           setStoreSocialSentUrl(storeLinks, twitterText, twitterEndRowIcon, twitterUser);
         } else if (storeLinks.getType()
-            .equals(Store.SocialChannelType.YOUTUBE)) {
+            .equals(SocialLink.YOUTUBE)) {
           setStoreSocialSentUrl(storeLinks, youtubeText, youtubeEndRowIcon, youtubeUser);
         }
       }

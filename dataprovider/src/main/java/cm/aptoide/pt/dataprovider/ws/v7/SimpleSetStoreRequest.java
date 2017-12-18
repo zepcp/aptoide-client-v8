@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.BaseV7Response;
-import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,7 +23,7 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
   private SimpleSetStoreRequest(Body body, BodyInterceptor<BaseBody> bodyInterceptor,
       OkHttpClient httpClient, Converter.Factory converterFactory,
       TokenInvalidator tokenInvalidator, SharedPreferences sharedPreferences,
-      List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+      List<String> storeDeleteSocialLinksList) {
     super(body, getHost(sharedPreferences), httpClient, converterFactory, bodyInterceptor,
         tokenInvalidator);
   }
@@ -41,7 +40,7 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
       String storeDescription, BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, List<StoreLinks> storeLinksList,
-      List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+      List<String> storeDeleteSocialLinksList) {
     Body body = new Body(storeName, storeTheme, storeDescription, storeLinksList,
         storeDeleteSocialLinksList);
     return new SimpleSetStoreRequest(body, bodyInterceptor, httpClient, converterFactory,
@@ -56,13 +55,13 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
   public static class Body extends BaseBody {
 
     @JsonProperty("store_links") private List<StoreLinks> storeLinksList;
-    @JsonProperty("store_del_links") private List<Store.SocialChannelType>
+    @JsonProperty("store_del_links") private List<String>
         storeDeleteSocialLinksList;
     private StoreProperties storeProperties;
     private String storeName;
 
     public Body(String storeName, String storeTheme, String storeDescription,
-        List<StoreLinks> storeLinksList, List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+        List<StoreLinks> storeLinksList, List<String> storeDeleteSocialLinksList) {
       this.storeName = storeName;
       this.storeLinksList = storeLinksList;
       this.storeDeleteSocialLinksList = storeDeleteSocialLinksList;
@@ -93,12 +92,11 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
       this.storeLinksList = storeLinksList;
     }
 
-    public List<Store.SocialChannelType> getStoreDeleteSocialLinksList() {
+    public List<String> getStoreDeleteSocialLinksList() {
       return storeDeleteSocialLinksList;
     }
 
-    public void setStoreDeleteSocialLinksList(
-        List<Store.SocialChannelType> storeDeleteSocialLinksList) {
+    public void setStoreDeleteSocialLinksList(List<String> storeDeleteSocialLinksList) {
       this.storeDeleteSocialLinksList = storeDeleteSocialLinksList;
     }
   }
@@ -132,13 +130,13 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
 
   @Parcel public static class StoreLinks {
 
-    private Store.SocialChannelType type;
+    private String type;
     private String url;
 
     public StoreLinks() {
     }
 
-    public StoreLinks(Store.SocialChannelType type, String url) {
+    public StoreLinks(String type, String url) {
       this.type = type;
       this.url = url;
     }
@@ -151,11 +149,11 @@ public class SimpleSetStoreRequest extends V7<BaseV7Response, SimpleSetStoreRequ
       this.url = url;
     }
 
-    public Store.SocialChannelType getType() {
+    public String getType() {
       return type;
     }
 
-    public void setType(Store.SocialChannelType type) {
+    public void setType(String type) {
       this.type = type;
     }
   }
