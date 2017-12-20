@@ -6,6 +6,7 @@ import cm.aptoide.accountmanager.AccountException;
 import cm.aptoide.accountmanager.AccountFactory;
 import cm.aptoide.accountmanager.AccountService;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.accountmanager.SocialLink;
 import cm.aptoide.accountmanager.Store;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV3Exception;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
@@ -30,6 +31,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.store.ChangeStoreSubscriptionRequest;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.networking.AuthenticationPersistence;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
@@ -273,7 +275,17 @@ public class AccountServiceV3 implements AccountService {
     return new Store(store.getStats() == null ? 0 : store.getStats()
         .getDownloads(), store.getAvatar(), store.getId(), store.getName(),
         store.getAppearance() == null ? "DEFAULT" : store.getAppearance()
-            .getTheme(), null, null, publicAccessConstant.equalsIgnoreCase(store.getAccess()));
+            .getTheme(), null, null, publicAccessConstant.equalsIgnoreCase(store.getAccess()),
+        createStoreLinksList(store.getSocialChannels()));
+  }
+
+  private List<SocialLink> createStoreLinksList(
+      List<cm.aptoide.pt.dataprovider.model.v7.store.Store.SocialChannel> socialChannels) {
+    List<SocialLink> socialLinks = new ArrayList<>();
+    for (cm.aptoide.pt.dataprovider.model.v7.store.Store.SocialChannel socialChannel : socialChannels) {
+      socialLinks.add(new SocialLink(socialChannel.getType(), socialChannel.getUrl()));
+    }
+    return socialLinks;
   }
 
   private Single<GetUserInfo> getServerAccount() {

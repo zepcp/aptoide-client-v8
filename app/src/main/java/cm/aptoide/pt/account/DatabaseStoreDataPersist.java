@@ -1,8 +1,10 @@
 package cm.aptoide.pt.account;
 
+import cm.aptoide.accountmanager.SocialLink;
 import cm.aptoide.accountmanager.Store;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.logger.Logger;
+import java.util.ArrayList;
 import java.util.List;
 import rx.Completable;
 import rx.Observable;
@@ -56,7 +58,17 @@ public class DatabaseStoreDataPersist {
     public Store fromDatabase(cm.aptoide.pt.database.realm.Store store) {
       return new Store(store.getDownloads(), store.getIconPath(), store.getStoreId(),
           store.getStoreName(), store.getTheme(), store.getUsername(), store.getPasswordSha1(),
-          true);
+          true, createSocialLinksFromDatabase(store));
+    }
+
+    private List<SocialLink> createSocialLinksFromDatabase(
+        cm.aptoide.pt.database.realm.Store store) {
+      List<SocialLink> socialLinks = new ArrayList<>();
+      socialLinks.add(new SocialLink(SocialLink.FACEBOOK, store.getFacebookUrl()));
+      socialLinks.add(new SocialLink(SocialLink.TWITCH, store.getTwitchUrl()));
+      socialLinks.add(new SocialLink(SocialLink.TWITTER, store.getTwitterUrl()));
+      socialLinks.add(new SocialLink(SocialLink.YOUTUBE, store.getYoutubeUrl()));
+      return socialLinks;
     }
   }
 }

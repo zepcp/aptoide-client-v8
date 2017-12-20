@@ -4,9 +4,12 @@ import android.accounts.AccountManager;
 import cm.aptoide.accountmanager.Account;
 import cm.aptoide.accountmanager.AccountFactory;
 import cm.aptoide.accountmanager.AccountPersistence;
+import cm.aptoide.accountmanager.SocialLink;
 import cm.aptoide.accountmanager.Store;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.networking.AuthenticationPersistence;
+import java.util.ArrayList;
+import java.util.List;
 import rx.Completable;
 import rx.Scheduler;
 import rx.Single;
@@ -30,6 +33,10 @@ public class AndroidAccountManagerPersistence implements AccountPersistence {
   private static final String ACCOUNT_STORE_THEME = "account_store_theme";
   private static final String ACCOUNT_STORE_USERNAME = "account_store_username";
   private static final String ACCOUNT_STORE_PASSWORD = "account_store_password";
+  private static final String ACCOUNT_STORE_FACEBOOK_URL = "account_store_facebook_url";
+  private static final String ACCOUNT_STORE_TWITCH_URL = "account_store_twitch_url";
+  private static final String ACCOUNT_STORE_TWITTER_URL = "account_store_twitter_url";
+  private static final String ACCOUNT_STORE_YOUTUBE_URL = "account_store_youtube_url";
 
   private final AccountManager androidAccountManager;
   private final DatabaseStoreDataPersist storePersist;
@@ -91,6 +98,18 @@ public class AndroidAccountManagerPersistence implements AccountPersistence {
           androidAccountManager.setUserData(androidAccount, ACCOUNT_STORE_PASSWORD,
               account.getStore()
                   .getPassword());
+          androidAccountManager.setUserData(androidAccount, ACCOUNT_STORE_FACEBOOK_URL,
+              getSocialUrlFromAccount(account.getStore()
+                  .getSocialLinkList(), SocialLink.FACEBOOK));
+          androidAccountManager.setUserData(androidAccount, ACCOUNT_STORE_TWITCH_URL,
+              getSocialUrlFromAccount(account.getStore()
+                  .getSocialLinkList(), SocialLink.TWITCH));
+          androidAccountManager.setUserData(androidAccount, ACCOUNT_STORE_TWITTER_URL,
+              getSocialUrlFromAccount(account.getStore()
+                  .getSocialLinkList(), SocialLink.TWITTER));
+          androidAccountManager.setUserData(androidAccount, ACCOUNT_STORE_YOUTUBE_URL,
+              getSocialUrlFromAccount(account.getStore()
+                  .getSocialLinkList(), SocialLink.YOUTUBE));
 
           return storePersist.persist(account.getSubscribedStores())
               .doOnCompleted(() -> {
@@ -153,6 +172,31 @@ public class AndroidAccountManagerPersistence implements AccountPersistence {
         androidAccountManager.getUserData(account, ACCOUNT_STORE_NAME),
         androidAccountManager.getUserData(account, ACCOUNT_STORE_THEME),
         androidAccountManager.getUserData(account, ACCOUNT_STORE_USERNAME),
-        androidAccountManager.getUserData(account, ACCOUNT_STORE_PASSWORD), true);
+        androidAccountManager.getUserData(account, ACCOUNT_STORE_PASSWORD), true,
+        createStoreSocialLinksFromAccount(
+            androidAccountManager.getUserData(account, ACCOUNT_STORE_FACEBOOK_URL),
+            androidAccountManager.getUserData(account, ACCOUNT_STORE_TWITCH_URL),
+            androidAccountManager.getUserData(account, ACCOUNT_STORE_TWITTER_URL),
+            androidAccountManager.getUserData(account, ACCOUNT_STORE_YOUTUBE_URL)));
+  }
+
+  private List<SocialLink> createStoreSocialLinksFromAccount(String facebookUrl, String twitchUrl,
+      String twitterUrl, String youtubeUrl) {
+    List<SocialLink> socialLinks = new ArrayList<>();
+    socialLinks.add(new SocialLink(SocialLink.FACEBOOK, facebookUrl));
+    socialLinks.add(new SocialLink(SocialLink.TWITCH, twitchUrl));
+    socialLinks.add(new SocialLink(SocialLink.TWITTER, twitterUrl));
+    socialLinks.add(new SocialLink(SocialLink.YOUTUBE, youtubeUrl));
+    return socialLinks;
+  }
+
+  private String getSocialUrlFromAccount(List<SocialLink> socialLinks, String socialType) {
+    for (SocialLink socialLink : socialLinks) {
+      if (socialLink.getType()
+          .equals(socialType)) {
+        return socialLink.getUrl();
+      }
+    }
+    return "";
   }
 }

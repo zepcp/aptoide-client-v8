@@ -356,5 +356,15 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
 
       oldVersion++;
     }
+
+    if (oldVersion == 8091) {
+      schema.get("Store")
+          .addField("facebookUrl", String.class)
+          .addField("twitchUrl", String.class)
+          .addField("twitterUrl", String.class)
+          .addField("youtubeUrl", String.class);
+
+      oldVersion++;
+    }
   }
 }

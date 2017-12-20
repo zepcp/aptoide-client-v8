@@ -24,6 +24,10 @@ public class Store extends RealmObject {
   public static final String STORE_NAME = "storeName";
   public static final String USERNAME = "username";
   public static final String PASSWORD_SHA1 = "passwordSha1";
+  public static final String FACEBOOK_URL = "facebookUrl";
+  public static final String TWITCH_URL = "twitchUrl";
+  public static final String TWITTER_URL = "twitterUrl";
+  public static final String YOUTUBE_URL = "youtubeUrl";
 
   @PrimaryKey private long storeId;
   private String iconPath;
@@ -32,6 +36,10 @@ public class Store extends RealmObject {
   @Index private String storeName;
   private String username;
   private String passwordSha1;
+  private String facebookUrl;
+  private String twitchUrl;
+  private String twitterUrl;
+  private String youtubeUrl;
 
   public long getStoreId() {
     return storeId;
@@ -87,5 +95,37 @@ public class Store extends RealmObject {
 
   public void setPasswordSha1(String passwordSha1) {
     this.passwordSha1 = passwordSha1;
+  }
+
+  public String getFacebookUrl() {
+    return facebookUrl;
+  }
+
+  public void setFacebookUrl(String facebookUrl) {
+    this.facebookUrl = facebookUrl;
+  }
+
+  public String getTwitchUrl() {
+    return twitchUrl;
+  }
+
+  public void setTwitchUrl(String twitchUrl) {
+    this.twitchUrl = twitchUrl;
+  }
+
+  public String getTwitterUrl() {
+    return twitterUrl;
+  }
+
+  public void setTwitterUrl(String twitterUrl) {
+    this.twitterUrl = twitterUrl;
+  }
+
+  public String getYoutubeUrl() {
+    return youtubeUrl;
+  }
+
+  public void setYoutubeUrl(String youtubeUrl) {
+    this.youtubeUrl = youtubeUrl;
   }
 }

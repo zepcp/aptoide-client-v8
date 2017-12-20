@@ -1,5 +1,8 @@
 package cm.aptoide.accountmanager;
 
+import java.util.Collections;
+import java.util.List;
+
 public class Store {
   private final long id;
   private final String name;
@@ -9,9 +12,10 @@ public class Store {
   private final String username;
   private final String password;
   private final boolean publicAccess;
+  private final List<SocialLink> socialLinkList;
 
   public Store(long downloadCount, String avatar, long id, String name, String theme,
-      String username, String password, boolean publicAccess) {
+      String username, String password, boolean publicAccess, List<SocialLink> socialLinkList) {
     this.downloadCount = downloadCount;
     this.avatar = avatar;
     this.id = id;
@@ -20,6 +24,7 @@ public class Store {
     this.username = username;
     this.password = password;
     this.publicAccess = publicAccess;
+    this.socialLinkList = socialLinkList;
   }
 
   private Store() {
@@ -31,6 +36,7 @@ public class Store {
     this.username = "";
     this.password = "";
     this.publicAccess = true;
+    this.socialLinkList = Collections.emptyList();
   }
 
   public static Store emptyStore() {
@@ -67,5 +73,9 @@ public class Store {
 
   public boolean hasPublicAccess() {
     return publicAccess;
+  }
+
+  public List<SocialLink> getSocialLinkList() {
+    return socialLinkList;
   }
 }

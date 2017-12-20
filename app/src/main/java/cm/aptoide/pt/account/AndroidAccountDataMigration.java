@@ -28,6 +28,12 @@ public class AndroidAccountDataMigration {
       "storeAvatar", "account_store_download_count", "account_store_id", "account_store_theme",
       "account_store_username", "account_store_password"
   };
+
+  private static final String[] STORE_LINKS_MIGRATION_KEYS = {
+      "account_store_facebook_url", "account_store_twitch_url", "account_store_twitter_url",
+      "account_store_youtube_url"
+  };
+
   private static final Object MIGRATION_LOCK = new Object();
 
   private final SharedPreferences secureSharedPreferences;
@@ -77,6 +83,7 @@ public class AndroidAccountDataMigration {
 
         return migrateAccountFromPreviousThan43().andThen(migrateAccountFrom43to59())
             .andThen(migrateAccountFromVersion59To60())
+            .andThen(migrateAccountFrom60To61())
             .andThen(cleanShareDialogShowPref())
             .doOnCompleted(() -> markMigrated());
       }
@@ -85,7 +92,7 @@ public class AndroidAccountDataMigration {
   }
 
   /**
-   * This method is responsible for cleaning a preference that allowing
+   * This method is responsible for cleaning a preference that allows
    * the share dialog on app install to show. This preference should be cleaned every time
    * we upgrade to a new major version (X.X.0.0)
    */
@@ -268,6 +275,24 @@ public class AndroidAccountDataMigration {
           } else {
             accountManager.setUserData(oldAccount, key, "");
           }
+        }
+        return Completable.complete();
+      }));
+    }
+    return Completable.complete();
+  }
+
+  private Completable migrateAccountFrom60To61() {
+    if (oldVersion < 61) {
+      Log.w(TAG, "migrateAccountFrom60To61");
+      return Completable.defer(() -> Completable.fromCallable(() -> {
+        final android.accounts.Account[] accounts = accountManager.getAccountsByType(accountType);
+        final Account oldAccount = accounts[0];
+
+        for (String key : STORE_LINKS_MIGRATION_KEYS) {
+          /// TODO: 20/12/17 do the account store links migration from the database values.
+          /// Check dabase migration to see if both the migrations are done asynchronously to check
+          /// the viability of this solution
         }
         return Completable.complete();
       }));

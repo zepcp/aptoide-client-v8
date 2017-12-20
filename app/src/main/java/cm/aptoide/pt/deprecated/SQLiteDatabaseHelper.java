@@ -24,7 +24,7 @@ import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 
 public class SQLiteDatabaseHelper extends SQLiteOpenHelper {
 
-  public static final int DATABASE_VERSION = 60;
+  public static final int DATABASE_VERSION = 61;
   public static final String DATABASE_NAME = "aptoide.db";
   private static final String TAG = SQLiteDatabaseHelper.class.getSimpleName();
   public static int OLD_DATABASE_VERSION;
