@@ -1,6 +1,7 @@
 package cm.aptoide.pt.billing.view.payment;
 
 import cm.aptoide.pt.billing.Billing;
+import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
@@ -63,12 +64,23 @@ public class PaymentMethodsPresenter implements Presenter {
   private void onCreateShowPaymentMethods() {
     view.getLifecycle()
         .filter(event -> event.equals(View.LifecycleEvent.RESUME))
-        .doOnNext(__ -> view.showLoading())
         .flatMap(__ -> billing.getCustomer()
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(customer -> {
+
+          if (customer.getStatus().equals(Customer.Status.LOADING)) {
+            view.showLoading();
+          }
+
+          if (customer.getStatus().equals(Customer.Status.LOADED)) {
+            view.hideLoading();
+          }
+
+          if (customer.getStatus().equals(Customer.Status.LOADING_ERROR)) {
+            view.showNetworkError();
+          }
 
           if (!customer.isAuthenticated()) {
             navigator.navigateToCustomerAuthenticationView(merchantPackageName);
@@ -81,7 +93,6 @@ public class PaymentMethodsPresenter implements Presenter {
               } else {
                 view.showAvailablePaymentMethods(customer.getPaymentMethods());
               }
-              view.hideLoading();
             } else {
               navigator.navigateToPaymentView(merchantPackageName);
             }

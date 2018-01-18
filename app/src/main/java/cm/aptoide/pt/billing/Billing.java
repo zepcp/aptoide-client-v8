@@ -55,7 +55,7 @@ public class Billing {
             .compose(selectPaymentMethod())))
         .scan(Customer.loading(),
             (oldCustomer, newCustomer) -> Customer.consolidate(oldCustomer, newCustomer))
-        .publish()
+        .replay(1)
         .autoConnect();
     this.payment = actions.publish(published -> Observable.merge(
         published.ofType(SelectProduct.class)
@@ -64,7 +64,7 @@ public class Billing {
             .compose(selectCustomer())))
         .scan(Payment.loading(),
             (oldPayment, newPayment) -> Payment.consolidate(oldPayment, newPayment))
-        .publish()
+        .replay(1)
         .autoConnect();
   }
 
@@ -74,13 +74,13 @@ public class Billing {
       return;
     }
 
-    customer.subscribe(customer -> {
-      actions.onNext(new SelectCustomer(customer));
+    payment.subscribe(__ -> {
     }, throwable -> {
       throw new OnErrorNotImplementedException(throwable);
     });
 
-    payment.subscribe(__ -> {
+    customer.subscribe(customer -> {
+      actions.onNext(new SelectCustomer(customer));
     }, throwable -> {
       throw new OnErrorNotImplementedException(throwable);
     });
@@ -112,14 +112,17 @@ public class Billing {
 
   private Observable.Transformer<LoadCustomer, Customer> loadCustomer() {
     return load -> load.map(data -> data.getUser())
-        .flatMap(user -> Single.zip(billingService.getPaymentMethods(),
-            billingService.getAuthorizations(user.getId()),
-            (paymentMethods, authorizations) -> Customer.loaded(user.isAuthenticated(),
-                paymentMethods, authorizations, getDefaultAuthorization(authorizations), null,
-                user.getId()))
-            .toObservable()
-            .onErrorReturn(throwable -> Customer.error())
-            .startWith(Customer.loading()));
+        .flatMap(user -> {
+          if (user.isAuthenticated()) {
+            return Single.zip(billingService.getPaymentMethods(),
+                billingService.getAuthorizations(user.getId()),
+                (paymentMethods, authorizations) -> Customer.authenticated(paymentMethods,
+                    authorizations, getDefaultAuthorization(authorizations), null, user.getId()))
+                .toObservable();
+          }
+          return Observable.just(Customer.notAuthenticated());
+        })
+        .onErrorReturn(throwable -> Customer.error());
   }
 
   private Observable.Transformer<SelectCustomer, Payment> selectCustomer() {

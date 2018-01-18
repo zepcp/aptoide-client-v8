@@ -65,15 +65,19 @@ public class Customer {
         Status.LOADING_ERROR);
   }
 
-  public static Customer loaded(Boolean authenticated, List<PaymentMethod> paymentMethods,
+  public static Customer authenticated(List<PaymentMethod> paymentMethods,
       List<Authorization> authorizations, Authorization selectedAuthorization,
       PaymentMethod selectedPaymentMethod, String id) {
-    return new Customer(id, authenticated, paymentMethods, authorizations, selectedAuthorization,
+    return new Customer(id, true, paymentMethods, authorizations, selectedAuthorization,
         selectedPaymentMethod, Status.LOADED);
   }
 
+  public static Customer notAuthenticated() {
+    return new Customer(null, false, null, null, null, null, Status.LOADED);
+  }
+
   public static Customer withPaymentMethod(PaymentMethod selectedPaymentMethod) {
-    return loaded(null, null, null, null, selectedPaymentMethod, null);
+    return new Customer(null, true, null, null, null, selectedPaymentMethod, null);
   }
 
   public static Customer consolidate(Customer oldCustomer, Customer newCustomer) {
@@ -98,8 +102,8 @@ public class Customer {
       paymentMethods = newCustomer.paymentMethods;
     }
 
-    if (newCustomer.authenticated != null) {
-      authenticated = newCustomer.authenticated;
+    if (newCustomer.authorizations != null) {
+      authorizations = newCustomer.authorizations;
     }
 
     if (newCustomer.selectedAuthorization != null) {

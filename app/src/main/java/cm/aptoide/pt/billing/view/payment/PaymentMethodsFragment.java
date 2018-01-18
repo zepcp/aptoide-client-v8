@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
@@ -137,5 +138,10 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
 
   @Override public void hideLoading() {
     progressBarContainer.setVisibility(View.GONE);
+  }
+
+  @Override public void showNetworkError() {
+    Toast.makeText(getContext(), R.string.connection_error, Toast.LENGTH_SHORT)
+        .show();
   }
 }

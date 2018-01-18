@@ -28,20 +28,20 @@ public class PaymentViewHolder extends RecyclerView.ViewHolder {
     this.spannableFactory = spannableFactory;
   }
 
-  public void setPaymentMethod(PaymentMethod service) {
-    itemView.setOnClickListener(view -> paymentSubject.onNext(service));
+  public void setPaymentMethod(PaymentMethod paymentMethod) {
+    itemView.setOnClickListener(view -> paymentSubject.onNext(paymentMethod));
     Glide.with(itemView.getContext())
-        .load(service.getIcon())
+        .load(paymentMethod.getIcon())
         .into(new TextViewTarget(AptoideUtils.ScreenU.getPixelsForDip(16, itemView.getResources()),
             paymentText));
 
     CharSequence text;
-    if (TextUtils.isEmpty(service.getDescription())) {
-      text = service.getName();
+    if (TextUtils.isEmpty(paymentMethod.getDescription())) {
+      text = paymentMethod.getName();
     } else {
       text = spannableFactory.createTextAppearanceSpan(itemView.getContext(),
-          R.style.TextAppearance_Aptoide_Small, service.getName() + "\n" + service.getDescription(),
-          service.getDescription());
+          R.style.TextAppearance_Aptoide_Small, paymentMethod.getName() + "\n" + paymentMethod.getDescription(),
+          paymentMethod.getDescription());
     }
     paymentText.setText(text);
   }

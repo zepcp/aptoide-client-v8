@@ -18,4 +18,6 @@ public interface PaymentMethodsView extends View {
   void showLoading();
 
   void hideLoading();
+
+  void showNetworkError();
 }
