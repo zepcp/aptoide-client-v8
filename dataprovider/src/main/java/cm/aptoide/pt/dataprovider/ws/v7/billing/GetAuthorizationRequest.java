@@ -75,6 +75,8 @@ public class GetAuthorizationRequest
       private User user;
       private String status;
       private Metadata data;
+      private String icon;
+      private String name;
 
       public long getId() {
         return id;
@@ -130,6 +132,22 @@ public class GetAuthorizationRequest
 
       public void setData(Metadata data) {
         this.data = data;
+      }
+
+      public String getIcon() {
+        return icon;
+      }
+
+      public void setIcon(String icon) {
+        this.icon = icon;
+      }
+
+      public void setName(String name) {
+        this.name = name;
+      }
+
+      public String getName() {
+        return name;
       }
 
       public static class User {

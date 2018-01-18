@@ -1,12 +1,9 @@
 package cm.aptoide.pt.billing.view.card;
 
-import adyen.com.adyencse.encrypter.ClientSideEncrypter;
-import adyen.com.adyencse.encrypter.exception.EncrypterException;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,19 +15,15 @@ import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.payment.Adyen;
+import cm.aptoide.pt.billing.payment.CreditCard;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
-import com.adyen.core.models.PaymentMethod;
-import com.adyen.core.models.paymentdetails.CreditCardPaymentDetails;
-import com.adyen.core.models.paymentdetails.PaymentDetails;
 import com.braintreepayments.cardform.view.CardForm;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
-import org.json.JSONException;
-import org.json.JSONObject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -49,12 +42,8 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   private Billing billing;
   private BillingNavigator navigator;
   private BillingAnalytics analytics;
-  private Adyen adyen;
   private PublishRelay<Void> backButton;
   private PublishRelay<Void> keyboardBuyRelay;
-  private String publicKey;
-  private String generationTime;
-  private PaymentMethod paymentMethod;
 
   public static CreditCardAuthorizationFragment create(Bundle bundle) {
     final CreditCardAuthorizationFragment fragment = new CreditCardAuthorizationFragment();
@@ -70,7 +59,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     analytics = ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
     backButton = PublishRelay.create();
     keyboardBuyRelay = PublishRelay.create();
-    adyen = ((AptoideApplication) getContext().getApplicationContext()).getAdyen();
   }
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -98,6 +86,14 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     };
     registerClickHandler(clickHandler);
 
+    cardForm.cardRequired(true)
+        .expirationRequired(true)
+        .cvvRequired(true)
+        .postalCodeRequired(false)
+        .mobileNumberRequired(false)
+        .actionLabel(getString(R.string.fragment_credit_card_authorization_next_button))
+        .setup(getActivity());
+
     cardForm.setOnCardFormValidListener(valid -> {
       if (valid) {
         nextButton.setEnabled(true);
@@ -105,13 +101,13 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
         nextButton.setEnabled(false);
       }
     });
+
     cardForm.setOnCardFormSubmitListener(() -> {
       keyboardBuyRelay.call(null);
     });
 
-    attachPresenter(new CreditCardAuthorizationPresenter(this,
-        getArguments().getString(BillingActivity.EXTRA_SKU), billing, navigator, analytics,
-        getArguments().getString(BillingActivity.EXTRA_SERVICE_NAME), adyen,
+    attachPresenter(new CreditCardAuthorizationPresenter(this, billing, navigator, analytics,
+        getArguments().getString(BillingActivity.EXTRA_SERVICE_NAME),
         AndroidSchedulers.mainThread()));
   }
 
@@ -159,9 +155,10 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
         .map(dialogInterface -> null);
   }
 
-  @Override public Observable<PaymentDetails> creditCardDetailsEvent() {
+  @Override public Observable<CreditCard> saveCreditCardEvent() {
     return Observable.merge(keyboardBuyRelay, RxView.clicks(nextButton))
-        .map(__ -> getPaymentDetails(publicKey, generationTime));
+        .map(__ -> new CreditCard(cardForm.getCardNumber(), cardForm.getExpirationMonth(),
+            cardForm.getExpirationYear(), cardForm.getCvv()));
   }
 
   @Override public void showNetworkError() {
@@ -174,42 +171,27 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     return backButton;
   }
 
-  @Override
-  public void showCreditCardView(PaymentMethod paymentMethod, boolean cvcRequired, String publicKey,
-      String generationTime) {
-    this.paymentMethod = paymentMethod;
-    this.publicKey = publicKey;
-    this.generationTime = generationTime;
-    cardForm.cardRequired(true)
-        .expirationRequired(true)
-        .cvvRequired(cvcRequired)
-        .postalCodeRequired(false)
-        .mobileNumberRequired(false)
-        .actionLabel(getString(R.string.fragment_credit_card_authorization_next_button))
-        .setup(getActivity());
-  }
-
-  private PaymentDetails getPaymentDetails(String publicKey, String generationTime) {
-
-    final CreditCardPaymentDetails creditCardPaymentDetails =
-        new CreditCardPaymentDetails(paymentMethod.getInputDetails());
-    try {
-      final JSONObject sensitiveData = new JSONObject();
-
-      sensitiveData.put("holderName", "Checkout Shopper Placeholder");
-      sensitiveData.put("number", cardForm.getCardNumber());
-      sensitiveData.put("expiryMonth", cardForm.getExpirationMonth());
-      sensitiveData.put("expiryYear", cardForm.getExpirationYear());
-      sensitiveData.put("generationtime", generationTime);
-      sensitiveData.put("cvc", cardForm.getCvv());
-      creditCardPaymentDetails.fillCardToken(
-          new ClientSideEncrypter(publicKey).encrypt(sensitiveData.toString()));
-    } catch (JSONException e) {
-      Log.e(TAG, "JSON Exception occurred while generating token.", e);
-    } catch (EncrypterException e) {
-      Log.e(TAG, "EncrypterException occurred while generating token.", e);
-    }
-    creditCardPaymentDetails.fillStoreDetails(true);
-    return creditCardPaymentDetails;
-  }
+  //private PaymentDetails getCreditCard() {
+  //
+  //  final CreditCardPaymentDetails creditCardPaymentDetails =
+  //      new CreditCardPaymentDetails(paymentMethod.getInputDetails());
+  //  try {
+  //    final JSONObject sensitiveData = new JSONObject();
+  //
+  //    sensitiveData.put("holderName", "Checkout Shopper Placeholder");
+  //    sensitiveData.put("number", cardForm.getCardNumber());
+  //    sensitiveData.put("expiryMonth", cardForm.getExpirationMonth());
+  //    sensitiveData.put("expiryYear", cardForm.getExpirationYear());
+  //    sensitiveData.put("generationtime", generationTime);
+  //    sensitiveData.put("cvc", cardForm.getCvv());
+  //    creditCardPaymentDetails.fillCardToken(
+  //        new ClientSideEncrypter(publicKey).encrypt(sensitiveData.toString()));
+  //  } catch (JSONException e) {
+  //    Log.e(TAG, "JSON Exception occurred while generating token.", e);
+  //  } catch (EncrypterException e) {
+  //    Log.e(TAG, "EncrypterException occurred while generating token.", e);
+  //  }
+  //  creditCardPaymentDetails.fillStoreDetails(true);
+  //  return creditCardPaymentDetails;
+  //}
 }

@@ -12,40 +12,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.BillingIdManager;
-import cm.aptoide.pt.billing.payment.PaymentMethod;
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
-import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import cm.aptoide.pt.view.spannable.SpannableFactory;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
-import java.util.List;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
 public class PaymentFragment extends PermissionServiceFragment implements PaymentView {
 
-  private static final String CHECKED_SERVICE_ID = "CHECKED_SERVICE_ID";
   private View progressView;
-  private RadioGroup serviceRadioGroup;
   private ImageView productIcon;
   private TextView productName;
   private TextView merchantNameText;
@@ -59,14 +49,11 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   private SpannableFactory spannableFactory;
   private Toolbar toolbar;
 
-  private boolean paymentLoading;
-  private boolean buyLoading;
-
   private Billing billing;
   private BillingAnalytics billingAnalytics;
   private BillingNavigator billingNavigator;
-  private BillingIdManager billingIdManager;
-  private int checkedServiceId;
+  private ImageView authorizationIcon;
+  private TextView authorizationDescription;
 
   public static Fragment create(Bundle bundle) {
     final PaymentFragment fragment = new PaymentFragment();
@@ -81,8 +68,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     billingAnalytics =
         ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
     billingNavigator = ((ActivityResultNavigator) getContext()).getBillingNavigator();
-    billingIdManager = ((AptoideApplication) getContext().getApplicationContext()).getIdResolver(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
     cancelRelay = PublishRelay.create();
   }
 
@@ -108,9 +93,11 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     productIcon = (ImageView) view.findViewById(R.id.include_payment_product_icon);
     productName = (TextView) view.findViewById(R.id.fragment_payment_product_name);
     merchantNameText = (TextView) view.findViewById(R.id.payment_fragment_merchant_name);
+    authorizationIcon = (ImageView) view.findViewById(R.id.fragment_payment_authorization_icon);
+    authorizationDescription =
+        (TextView) view.findViewById(R.id.fragment_payment_authorization_description);
 
     productPrice = (TextView) view.findViewById(R.id.include_payment_product_price);
-    serviceRadioGroup = (RadioGroup) view.findViewById(R.id.fragment_payment_authorization_list);
 
     buyButton = (Button) view.findViewById(R.id.fragment_payment_buy_button);
 
@@ -129,17 +116,8 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     };
     registerClickHandler(handler);
 
-    if (savedInstanceState != null) {
-      checkedServiceId = savedInstanceState.getInt(CHECKED_SERVICE_ID);
-    } else {
-      checkedServiceId = -1;
-    }
-
     attachPresenter(new PaymentPresenter(this, billing, billingNavigator, billingAnalytics,
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME),
-        getArguments().getString(BillingActivity.EXTRA_SKU),
-        getArguments().getString(BillingActivity.EXTRA_DEVELOPER_PAYLOAD),
-        AndroidSchedulers.mainThread()));
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME), AndroidSchedulers.mainThread()));
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
@@ -150,13 +128,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     return super.onOptionsItemSelected(item);
   }
 
-  @Override public void onSaveInstanceState(Bundle outState) {
-    if (serviceRadioGroup != null) {
-      outState.putInt(CHECKED_SERVICE_ID, serviceRadioGroup.getCheckedRadioButtonId());
-    }
-    super.onSaveInstanceState(outState);
-  }
-
   @Override public void onDestroyView() {
     unregisterClickHandler(handler);
     spannableFactory = null;
@@ -165,14 +136,11 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     productName = null;
     merchantNameText = null;
     productPrice = null;
-    serviceRadioGroup = null;
     buyButton = null;
     networkErrorDialog.dismiss();
     networkErrorDialog = null;
     unknownErrorDialog.dismiss();
     unknownErrorDialog = null;
-    paymentLoading = false;
-    buyLoading = false;
     super.onDestroyView();
   }
 
@@ -181,60 +149,35 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
         .getSimpleName());
   }
 
-  @Override public Observable<String> cancelEvent() {
-    return cancelRelay.map(
-        __ -> billingIdManager.generateServiceId(serviceRadioGroup.getCheckedRadioButtonId()));
+  @Override public Observable<Void> cancelEvent() {
+    return cancelRelay;
   }
 
-  @Override public Observable<String> buyEvent() {
-    return RxView.clicks(buyButton)
-        .map(__ -> billingIdManager.generateServiceId(serviceRadioGroup.getCheckedRadioButtonId()));
+  @Override public Observable<Void> buyEvent() {
+    return RxView.clicks(buyButton);
   }
 
-  @Override public void showPaymentLoading() {
-    paymentLoading = true;
+  @Override public void showLoading() {
     progressView.setVisibility(View.VISIBLE);
   }
 
-  @Override public void showBuyLoading() {
-    buyLoading = true;
-    progressView.setVisibility(View.VISIBLE);
-  }
+  @Override public void showAuthorization(Authorization authorization) {
 
-  @Override public void showPayments(List<PaymentMethod> services) {
-    serviceRadioGroup.removeAllViews();
+    Glide.with(this)
+        .load(authorization.getIcon())
+        .into(authorizationIcon);
 
-    RadioButton radioButton;
-    CharSequence radioText;
-    for (PaymentMethod service : services) {
-
-      radioButton = (RadioButton) getActivity().getLayoutInflater()
-          .inflate(R.layout.item_payment_authorization, serviceRadioGroup, false);
-      radioButton.setId((int) billingIdManager.resolveServiceId(service.getId()));
-
-      Glide.with(this)
-          .load(service.getIcon())
-          .into(new RadioButtonTarget(AptoideUtils.ScreenU.getPixelsForDip(16, getResources()),
-              radioButton));
-
-      if (TextUtils.isEmpty(service.getDescription())) {
-        radioText = service.getName();
-      } else {
-        radioText = spannableFactory.createTextAppearanceSpan(getContext(),
-            R.style.TextAppearance_Aptoide_Small,
-            service.getName() + "\n" + service.getDescription(), service.getDescription());
-      }
-
-      radioButton.setText(radioText);
-
-      radioButton.setChecked(service.isDefaultMethod());
-
-      serviceRadioGroup.addView(radioButton);
+    CharSequence description;
+    if (TextUtils.isEmpty(authorization.getDescription())) {
+      description = authorization.getName();
+    } else {
+      description = spannableFactory.createTextAppearanceSpan(getContext(),
+          R.style.TextAppearance_Aptoide_Small,
+          authorization.getName() + "\n" + authorization.getDescription(),
+          authorization.getDescription());
     }
 
-    if (checkedServiceId != -1) {
-      serviceRadioGroup.check(checkedServiceId);
-    }
+    authorizationDescription.setText(description);
   }
 
   @Override public void showProduct(Product product) {
@@ -250,18 +193,8 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     merchantNameText.setText(merchantName);
   }
 
-  @Override public void hidePaymentLoading() {
-    paymentLoading = false;
-    if (!buyLoading) {
-      progressView.setVisibility(View.GONE);
-    }
-  }
-
-  @Override public void hideBuyLoading() {
-    buyLoading = false;
-    if (!paymentLoading) {
-      progressView.setVisibility(View.GONE);
-    }
+  @Override public void hideLoading() {
+    progressView.setVisibility(View.GONE);
   }
 
   @Override public void showNetworkError() {
@@ -273,27 +206,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   @Override public void showUnknownError() {
     if (!networkErrorDialog.isShowing() && !unknownErrorDialog.isShowing()) {
       unknownErrorDialog.show();
-    }
-  }
-
-  private static class RadioButtonTarget extends SimpleTarget<GlideDrawable> {
-
-    private RadioButton radioButton;
-
-    public RadioButtonTarget(int pixels, RadioButton radioButton) {
-      super(pixels, pixels);
-      this.radioButton = radioButton;
-    }
-
-    @Override public void onResourceReady(GlideDrawable glideDrawable,
-        GlideAnimation<? super GlideDrawable> glideAnimation) {
-      radioButton.setCompoundDrawablesWithIntrinsicBounds(null, null, glideDrawable.getCurrent(),
-          null);
-    }
-
-    @Override public void onDestroy() {
-      radioButton = null;
-      super.onDestroy();
     }
   }
 }

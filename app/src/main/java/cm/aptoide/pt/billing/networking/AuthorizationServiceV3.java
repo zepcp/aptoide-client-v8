@@ -3,7 +3,6 @@ package cm.aptoide.pt.billing.networking;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import cm.aptoide.pt.billing.BillingIdManager;
-import cm.aptoide.pt.billing.CustomerPersistence;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.AuthorizationService;
@@ -30,16 +29,17 @@ public class AuthorizationServiceV3 implements AuthorizationService {
   private final Converter.Factory converterFactory;
   private final TokenInvalidator tokenInvalidator;
   private final SharedPreferences sharedPreferences;
-  private final CustomerPersistence customerPersistence;
   private final Resources resources;
   private final BillingIdManager billingIdManager;
+  private final String authorizationName;
+  private final String authorizationIcon;
 
   public AuthorizationServiceV3(AuthorizationFactory authorizationFactory,
       AuthorizationMapperV3 authorizationMapper, TransactionMapperV3 transactionMapper,
       TransactionPersistence transactionPersistence, BodyInterceptor<BaseBody> bodyInterceptorV3,
       OkHttpClient httpClient, Converter.Factory converterFactory,
-      TokenInvalidator tokenInvalidator, SharedPreferences sharedPreferences, CustomerPersistence customerPersistence,
-      Resources resources, BillingIdManager billingIdManager) {
+      TokenInvalidator tokenInvalidator, SharedPreferences sharedPreferences, Resources resources,
+      BillingIdManager billingIdManager, String authorizationName, String authorizationIcon) {
     this.authorizationFactory = authorizationFactory;
     this.authorizationMapper = authorizationMapper;
     this.transactionMapper = transactionMapper;
@@ -49,9 +49,10 @@ public class AuthorizationServiceV3 implements AuthorizationService {
     this.converterFactory = converterFactory;
     this.tokenInvalidator = tokenInvalidator;
     this.sharedPreferences = sharedPreferences;
-    this.customerPersistence = customerPersistence;
     this.resources = resources;
     this.billingIdManager = billingIdManager;
+    this.authorizationName = authorizationName;
+    this.authorizationIcon = authorizationIcon;
   }
 
   @Override public Single<Authorization> getAuthorization(String transactionId, String customerId) {
@@ -72,17 +73,18 @@ public class AuthorizationServiceV3 implements AuthorizationService {
                   .toSingle()
                   .map(transactionResponse -> authorizationMapper.map(
                       billingIdManager.generateAuthorizationId(1), customerId, transactionId,
-                      transactionResponse, response));
+                      transactionResponse, response, authorizationIcon, authorizationName));
             }
             return Single.just(
                 authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                    AuthorizationFactory.PAYPAL_SDK, Authorization.Status.REDEEMED, null, null, null, transactionId, null));
+                    AuthorizationFactory.PAYPAL_SDK, Authorization.Status.REDEEMED, null, null,
+                    null, transactionId, null, authorizationIcon, authorizationName));
           }
 
           return Single.just(
               authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null,
-                  null, null, transactionId, null));
+                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null, null, null,
+                  transactionId, null, authorizationIcon, authorizationName));
         });
   }
 
@@ -109,7 +111,8 @@ public class AuthorizationServiceV3 implements AuthorizationService {
 
                   final Authorization authorization =
                       authorizationMapper.map(billingIdManager.generateAuthorizationId(1),
-                          customerId, transactionId, response, paidApp);
+                          customerId, transactionId, response, paidApp, authorizationIcon,
+                          authorizationName);
 
                   if (authorization.isActive()) {
                     return transactionPersistence.saveTransaction(
@@ -125,8 +128,8 @@ public class AuthorizationServiceV3 implements AuthorizationService {
 
           return Single.just(
               authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null,
-                  null, null, transactionId, null));
+                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null, null, null,
+                  transactionId, null, authorizationIcon, authorizationName));
         });
   }
 

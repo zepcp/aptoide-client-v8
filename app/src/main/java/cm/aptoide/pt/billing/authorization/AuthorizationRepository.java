@@ -34,8 +34,9 @@ public class AuthorizationRepository {
   }
 
   public Single<Authorization> createAuthorization(String customerId, String transactionId,
-      Authorization.Status status) {
-    return authorizationPersistence.createAuthorization(customerId, transactionId, status);
+      Authorization.Status status, String description, String icon, String name) {
+    return authorizationPersistence.createAuthorization(customerId, transactionId, status,
+        description, icon, name);
   }
 
   public Completable removeAuthorization(String customerId, String transactionId) {

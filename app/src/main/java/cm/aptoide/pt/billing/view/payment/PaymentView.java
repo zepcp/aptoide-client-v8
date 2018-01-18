@@ -5,31 +5,26 @@
 
 package cm.aptoide.pt.billing.view.payment;
 
-import cm.aptoide.pt.billing.payment.PaymentMethod;
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.presenter.View;
-import java.util.List;
 import rx.Observable;
 
 public interface PaymentView extends View {
 
-  Observable<String> cancelEvent();
+  Observable<Void> cancelEvent();
 
-  Observable<String> buyEvent();
+  Observable<Void> buyEvent();
 
-  void showPaymentLoading();
+  void showLoading();
 
-  void showBuyLoading();
-
-  void showPayments(List<PaymentMethod> paymentList);
+  void showAuthorization(Authorization authorization);
 
   void showProduct(Product product);
 
   void showMerchant(String merchantName);
 
-  void hidePaymentLoading();
-
-  void hideBuyLoading();
+  void hideLoading();
 
   void showNetworkError();
 

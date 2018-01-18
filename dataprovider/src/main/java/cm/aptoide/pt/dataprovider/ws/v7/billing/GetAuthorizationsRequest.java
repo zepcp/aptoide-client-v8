@@ -5,6 +5,7 @@ import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.BaseV7Response;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
+import cm.aptoide.pt.dataprovider.ws.RefreshBody;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
@@ -16,12 +17,12 @@ import retrofit2.Response;
 import rx.Observable;
 
 public class GetAuthorizationsRequest
-    extends V7<Response<GetAuthorizationsRequest.ResponseBody>, Void> {
+    extends V7<Response<GetAuthorizationsRequest.ResponseBody>, RefreshBody> {
 
   private final String accessToken;
   private final String customerId;
 
-  public GetAuthorizationsRequest(Void body, String baseHost, OkHttpClient httpClient,
+  public GetAuthorizationsRequest(RefreshBody body, String baseHost, OkHttpClient httpClient,
       Converter.Factory converterFactory, BodyInterceptor bodyInterceptor,
       TokenInvalidator tokenInvalidator, String accessToken, String customerId) {
     super(body, baseHost, httpClient, converterFactory, bodyInterceptor, tokenInvalidator);

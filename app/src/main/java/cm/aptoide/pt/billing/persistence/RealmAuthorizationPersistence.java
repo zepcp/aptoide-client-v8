@@ -101,16 +101,18 @@ public class RealmAuthorizationPersistence implements AuthorizationPersistence {
           final Authorization updatedAuthorization =
               authorizationFactory.create(authorization.getId(), authorization.getCustomerId(),
                   authorizationFactory.getType(authorization), status, metadata, null,
-                  null, authorization.getTransactionId(), null);
+                  authorization.getDescription(), authorization.getTransactionId(), null,
+                  authorization.getIcon(), authorization.getName());
           return saveAuthorization(updatedAuthorization).andThen(Single.just(updatedAuthorization));
         });
   }
 
   @Override
   public Single<Authorization> createAuthorization(String customerId, String transactionId,
-      Authorization.Status status) {
+      Authorization.Status status, String description, String icon, String name) {
     final Authorization authorization =
-        authorizationFactory.create(idGenerator.generate(), customerId, null, status, null, null, null, transactionId, null);
+        authorizationFactory.create(idGenerator.generate(), customerId, null, status, null, null,
+            description, transactionId, null, icon, name);
     return saveAuthorization(authorization).andThen(Single.just(authorization));
   }
 

@@ -271,6 +271,9 @@ public abstract class AptoideApplication extends Application {
         .addLogger(new ConsoleLogger());
     Logger.setDBG(ToolboxManager.isDebug(getDefaultSharedPreferences()) || BuildConfig.DEBUG);
 
+
+    getBilling(BuildConfig.APPLICATION_ID).setup();
+
     try {
       PRNGFixes.apply();
     } catch (Exception e) {

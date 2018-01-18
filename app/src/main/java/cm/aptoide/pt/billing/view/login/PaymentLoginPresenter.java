@@ -34,16 +34,13 @@ public class PaymentLoginPresenter implements Presenter {
   private final BillingAnalytics billingAnalytics;
   private final BillingNavigator billingNavigator;
   private final String merchantName;
-  private final String sku;
-  private final String payload;
 
   public PaymentLoginPresenter(PaymentLoginView view, Collection<String> permissions,
       AccountNavigator accountNavigator, Collection<String> requiredPermissions,
       AptoideAccountManager accountManager, CrashReport crashReport,
       ThrowableToStringMapper errorMapper, Scheduler viewScheduler,
       ScreenOrientationManager orientationManager, AccountAnalytics accountAnalytics,
-      BillingAnalytics billingAnalytics, BillingNavigator billingNavigator, String merchantName,
-      String sku, String payload) {
+      BillingAnalytics billingAnalytics, BillingNavigator billingNavigator, String merchantName) {
     this.view = view;
     this.accountNavigator = accountNavigator;
     this.permissions = permissions;
@@ -57,8 +54,6 @@ public class PaymentLoginPresenter implements Presenter {
     this.billingAnalytics = billingAnalytics;
     this.billingNavigator = billingNavigator;
     this.merchantName = merchantName;
-    this.sku = sku;
-    this.payload = payload;
   }
 
   @Override public void present() {
@@ -108,7 +103,7 @@ public class PaymentLoginPresenter implements Presenter {
         .subscribe(__ -> {
           accountAnalytics.loginSuccess();
           billingAnalytics.sendCustomerAuthenticatedEvent(true);
-          billingNavigator.navigateToPaymentMethodsView(merchantName, sku, payload);
+          billingNavigator.navigateToPaymentMethodsView(merchantName);
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });

@@ -7,13 +7,11 @@ package cm.aptoide.pt.billing.view.payment;
 
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.exception.ServiceNotAuthorizedException;
-import cm.aptoide.pt.billing.payment.PaymentMethod;
+import cm.aptoide.pt.billing.payment.Payment;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
-import java.io.IOException;
-import rx.Completable;
+import io.reactivex.exceptions.OnErrorNotImplementedException;
 import rx.Scheduler;
 
 public class PaymentPresenter implements Presenter {
@@ -23,20 +21,15 @@ public class PaymentPresenter implements Presenter {
   private final BillingNavigator navigator;
   private final BillingAnalytics analytics;
   private final String merchantName;
-  private final String sku;
-  private final String payload;
   private final Scheduler viewScheduler;
 
   public PaymentPresenter(PaymentView view, Billing billing, BillingNavigator navigator,
-      BillingAnalytics analytics, String merchantName, String sku, String payload,
-      Scheduler viewScheduler) {
+      BillingAnalytics analytics, String merchantName, Scheduler viewScheduler) {
     this.view = view;
     this.billing = billing;
     this.navigator = navigator;
     this.analytics = analytics;
     this.merchantName = merchantName;
-    this.sku = sku;
-    this.payload = payload;
     this.viewScheduler = viewScheduler;
   }
 
@@ -52,48 +45,62 @@ public class PaymentPresenter implements Presenter {
   private void onViewCreatedShowPayment() {
     view.getLifecycle()
         .filter(event -> event.equals(View.LifecycleEvent.RESUME))
-        .doOnNext(__ -> view.showPaymentLoading())
-        .flatMap(loading -> billing.getPayment(sku)
+        .doOnNext(__ -> view.showLoading())
+        .flatMap(loading -> billing.getPayment()
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(payment -> {
           if (!payment.getCustomer()
               .isAuthenticated()) {
-            navigator.navigateToCustomerAuthenticationView(merchantName, sku, payload);
+            navigator.navigateToCustomerAuthenticationView(merchantName);
           } else {
-            if (payment.isNew() || payment.isPendingAuthorization()) {
-              view.hidePaymentLoading();
+            if (payment.getStatus()
+                .equals(Payment.Status.LOADED)) {
+              view.hideLoading();
             }
 
-            if (payment.isProcessing()) {
-              view.showPaymentLoading();
+            if (payment.getStatus()
+                .equals(Payment.Status.LOADING) || payment.getStatus()
+                .equals(Payment.Status.PROCESSING)) {
+              view.showLoading();
             }
 
-            if (payment.isCompleted()) {
+            if (payment.getStatus()
+                .equals(Payment.Status.COMPLETED)) {
               analytics.sendPaymentSuccessEvent();
               navigator.popViewWithResult(payment.getPurchase());
             }
 
-            if (payment.isFailed()) {
-              view.hidePaymentLoading();
+            if (payment.getStatus()
+                .equals(Payment.Status.FAILED)) {
+              view.hideLoading();
               view.showUnknownError();
               analytics.sendPaymentErrorEvent();
+            }
+
+            if (payment.getStatus()
+                .equals(Payment.Status.LOADING_ERROR)) {
+              view.hideLoading();
+              view.showNetworkError();
             }
 
             view.showMerchant(payment.getMerchant()
                 .getName());
             view.showProduct(payment.getProduct());
-            view.showPayments(payment.getPaymentMethods());
+            view.showAuthorization(payment.getCustomer()
+                .getSelectedAuthorization());
           }
-        }, throwable -> navigator.popViewWithResult(throwable));
+        }, throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 
   private void handleCancelEvent() {
     view.getLifecycle()
         .filter(event -> View.LifecycleEvent.RESUME.equals(event))
         .flatMap(__ -> view.cancelEvent()
-            .flatMap(serviceId -> billing.getPayment(sku)
+            .flatMap(serviceId -> billing.getPayment()
                 .first()
                 .doOnNext(payment -> analytics.sendPaymentViewCancelEvent(payment)))
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
@@ -101,49 +108,18 @@ public class PaymentPresenter implements Presenter {
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
           navigator.popViewWithResult();
-        }, throwable -> navigator.popViewWithResult());
+        }, throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 
   private void handleBuyEvent() {
     view.getLifecycle()
         .filter(event -> View.LifecycleEvent.CREATE.equals(event))
-        .flatMap(__ -> view.buyEvent()
-            .doOnNext(___ -> view.showBuyLoading())
-            .flatMap(serviceId -> billing.getPayment(sku)
-                .first()
-                .doOnNext(payment -> analytics.sendPaymentViewBuyEvent(payment))
-                .flatMapCompletable(payment -> billing.processPayment(serviceId, sku, payload)
-                    .observeOn(viewScheduler)
-                .doOnCompleted(() -> {
-                  view.hideBuyLoading();
-                })
-                    .onErrorResumeNext(throwable -> navigateToAuthorizationView(
-                        payment.getPaymentMethod(serviceId), throwable))))
-            .observeOn(viewScheduler)
-            .doOnError(throwable -> {
-              view.hideBuyLoading();
-              showError(throwable);
-            })
-            .retry())
+        .flatMap(__ -> view.buyEvent())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
-        }, throwable -> navigator.popViewWithResult(throwable));
-  }
-
-  private Completable navigateToAuthorizationView(PaymentMethod selectedService,
-      Throwable throwable) {
-    if (throwable instanceof ServiceNotAuthorizedException) {
-      navigator.navigateToAuthorizationView(merchantName, selectedService, sku);
-      return Completable.complete();
-    }
-    return Completable.error(throwable);
-  }
-
-  private void showError(Throwable throwable) {
-    if (throwable instanceof IOException) {
-      view.showNetworkError();
-    } else {
-      view.showUnknownError();
-    }
+        .subscribe(__ -> billing.pay(), throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 }

@@ -46,7 +46,7 @@ public class AuthorizationMapperV7 {
     return authorizationFactory.create(billingIdManager.generateAuthorizationId(response.getId()),
         String.valueOf(response.getUser()
             .getId()), response.getType(), Authorization.Status.valueOf(response.getStatus()), null,
-        price, description, transactionId, session);
+        price, description, transactionId, session, response.getIcon(), response.getName());
   }
 
   public List<Authorization> map(

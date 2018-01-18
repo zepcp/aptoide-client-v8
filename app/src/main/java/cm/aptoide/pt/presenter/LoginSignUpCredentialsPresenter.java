@@ -105,6 +105,7 @@ public class LoginSignUpCredentialsPresenter implements Presenter, BackButton.Cl
                   view.hideLoading();
                 })
                 .doOnError(throwable -> {
+                  throwable.printStackTrace();
                   view.showError(errorMapper.map(throwable));
                   view.hideLoading();
                   crashReport.log(throwable);

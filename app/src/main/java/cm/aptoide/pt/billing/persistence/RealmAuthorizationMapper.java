@@ -28,15 +28,11 @@ public class RealmAuthorizationMapper {
       type = AuthorizationFactory.ADYEN_SDK;
     }
 
-    String description = null;
     double amount = 0;
     String currency = null;
     String currencySymbol = null;
 
     if (authorization instanceof PayPalAuthorization) {
-
-      description = ((PayPalAuthorization) authorization).getDescription();
-
       if (((PayPalAuthorization) authorization).getPrice() != null) {
         amount = ((PayPalAuthorization) authorization).getPrice()
             .getAmount();
@@ -56,8 +52,8 @@ public class RealmAuthorizationMapper {
 
     return new RealmAuthorization(authorization.getId(), authorization.getCustomerId(),
         authorization.getStatus()
-            .name(), authorization.getTransactionId(), metadata, description, amount, currency,
-        currencySymbol, type);
+            .name(), authorization.getTransactionId(), metadata, authorization.getDescription(),
+        amount, currency, currencySymbol, type, authorization.getIcon(), authorization.getName());
   }
 
   public Authorization map(RealmAuthorization realmAuthorization) {
@@ -66,6 +62,7 @@ public class RealmAuthorizationMapper {
         Authorization.Status.valueOf(realmAuthorization.getStatus()), realmAuthorization.getMetadata(),
         new Price(realmAuthorization.getAmount(), realmAuthorization.getCurrency(),
             realmAuthorization.getCurrencySymbol()), realmAuthorization.getDescription(),
-        realmAuthorization.getTransactionId(), null);
+        realmAuthorization.getTransactionId(), null, realmAuthorization.getIcon(),
+        realmAuthorization.getName());
   }
 }

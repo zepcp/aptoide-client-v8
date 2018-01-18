@@ -11,22 +11,17 @@ public class PaymentMethodsPresenter implements Presenter {
 
   private final PaymentMethodsView view;
   private final Billing billing;
-  private final String sku;
   private final Scheduler viewScheduler;
   private final BillingNavigator navigator;
   private final String merchantPackageName;
-  private final String payload;
 
-  public PaymentMethodsPresenter(PaymentMethodsView view, Billing billing, String sku,
-      Scheduler viewScheduler, BillingNavigator navigator, String merchantPackageName,
-      String payload) {
+  public PaymentMethodsPresenter(PaymentMethodsView view, Billing billing, Scheduler viewScheduler,
+      BillingNavigator navigator, String merchantPackageName) {
     this.view = view;
     this.billing = billing;
-    this.sku = sku;
     this.viewScheduler = viewScheduler;
     this.navigator = navigator;
     this.merchantPackageName = merchantPackageName;
-    this.payload = payload;
   }
 
   @Override public void present() {
@@ -58,7 +53,8 @@ public class PaymentMethodsPresenter implements Presenter {
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(paymentMethod -> {
-          navigator.navigateToAuthorizationView(merchantPackageName, paymentMethod, sku);
+          billing.selectPaymentMethod(paymentMethod);
+          navigator.navigateToAuthorizationView(merchantPackageName, paymentMethod);
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
@@ -68,26 +64,26 @@ public class PaymentMethodsPresenter implements Presenter {
     view.getLifecycle()
         .filter(event -> event.equals(View.LifecycleEvent.RESUME))
         .doOnNext(__ -> view.showLoading())
-        .flatMap(__ -> billing.getPayment(sku)
+        .flatMap(__ -> billing.getCustomer()
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(payment -> {
+        .subscribe(customer -> {
 
-          if (!payment.getCustomer().isAuthenticated()) {
-            navigator.navigateToCustomerAuthenticationView(merchantPackageName, sku, payload);
+          if (!customer.isAuthenticated()) {
+            navigator.navigateToCustomerAuthenticationView(merchantPackageName);
           } else {
-            if (payment.getAuthorizations()
+            if (customer.getAuthorizations()
                 .isEmpty()) {
-              if (payment.getPaymentMethods()
+              if (customer.getPaymentMethods()
                   .isEmpty()) {
                 view.showNoPaymentMethodsAvailableMessage();
               } else {
-                view.showAvailablePaymentMethods(payment.getPaymentMethods());
+                view.showAvailablePaymentMethods(customer.getPaymentMethods());
               }
               view.hideLoading();
             } else {
-              navigator.navigateToPaymentView(merchantPackageName, sku, payload);
+              navigator.navigateToPaymentView(merchantPackageName);
             }
           }
         }, throwable -> {

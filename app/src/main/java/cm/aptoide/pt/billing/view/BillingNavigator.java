@@ -47,16 +47,14 @@ public class BillingNavigator {
     this.customTabsToolbarColor = customTabsToolbarColor;
   }
 
-  public void navigateToCustomerAuthenticationView(String merchantName, String sku,
-      String payload) {
+  public void navigateToCustomerAuthenticationView(String merchantName) {
     fragmentNavigator.navigateToWithoutBackSave(
-        PaymentLoginFragment.create(getBillingBundle(merchantName, sku, payload)), true);
+        PaymentLoginFragment.create(getBillingBundle(merchantName, null)), true);
   }
 
-  public void navigateToAuthorizationView(String merchantName, PaymentMethod service,
-      String sku) {
+  public void navigateToAuthorizationView(String merchantName, PaymentMethod service) {
 
-    final Bundle bundle = getBillingBundle(merchantName, sku, service.getType());
+    final Bundle bundle = getBillingBundle(merchantName, service.getType());
 
     switch (service.getType()) {
       case PayPalPaymentService.TYPE:
@@ -109,9 +107,8 @@ public class BillingNavigator {
         bundleMapper.mapCancellation());
   }
 
-  private Bundle getBillingBundle(String merchantName, String sku, String serviceName) {
+  private Bundle getBillingBundle(String merchantName, String serviceName) {
     final Bundle bundle = new Bundle();
-    bundle.putString(BillingActivity.EXTRA_SKU, sku);
     bundle.putString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME, merchantName);
     bundle.putString(BillingActivity.EXTRA_SERVICE_NAME, serviceName);
     return bundle;
@@ -148,14 +145,14 @@ public class BillingNavigator {
     return customTabsNavigator.customTabResults();
   }
 
-  public void navigateToPaymentView(String merchantName, String sku, String payload) {
+  public void navigateToPaymentView(String merchantName) {
     fragmentNavigator.navigateToWithoutBackSave(
-        PaymentFragment.create(getBillingBundle(merchantName, sku, payload)), true);
+        PaymentFragment.create(getBillingBundle(merchantName, null)), true);
   }
 
-  public void navigateToPaymentMethodsView(String merchantName, String sku, String payload) {
+  public void navigateToPaymentMethodsView(String merchantName) {
     fragmentNavigator.navigateToWithoutBackSave(
-        PaymentMethodsFragment.create(getBillingBundle(merchantName, sku, payload)), true);
+        PaymentMethodsFragment.create(getBillingBundle(merchantName, null)), true);
   }
 
   public static class PayPalResult {

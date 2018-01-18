@@ -12,16 +12,13 @@ public class PaymentMethod {
   private final String name;
   private final String description;
   private final String icon;
-  private final boolean defaultMethod;
 
-  public PaymentMethod(String id, String type, String name, String description, String icon,
-      boolean defaultMethod) {
+  public PaymentMethod(String id, String type, String name, String description, String icon) {
     this.id = id;
     this.type = type;
     this.name = name;
     this.description = description;
     this.icon = icon;
-    this.defaultMethod = defaultMethod;
   }
 
   public String getId() {
@@ -44,7 +41,4 @@ public class PaymentMethod {
     return icon;
   }
 
-  public boolean isDefaultMethod() {
-    return defaultMethod;
-  }
 }

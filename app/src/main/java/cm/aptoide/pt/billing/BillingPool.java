@@ -9,7 +9,7 @@ import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
 import cm.aptoide.pt.billing.authorization.AuthorizationRepository;
 import cm.aptoide.pt.billing.authorization.LocalIdGenerator;
-import cm.aptoide.pt.billing.customer.AccountCustomerPersistence;
+import cm.aptoide.pt.billing.customer.AccountUserPersistence;
 import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
 import cm.aptoide.pt.billing.networking.AuthorizationMapperV3;
 import cm.aptoide.pt.billing.networking.AuthorizationMapperV7;
@@ -102,7 +102,7 @@ public class BillingPool {
 
   private AuthorizationPersistence authorizationPersistence;
   private TransactionPersistence transactionPersistence;
-  private CustomerPersistence customerPersistence;
+  private UserPersistence userPersistence;
   private TransactionFactory transactionFactory;
   private AuthorizationFactory authorizationFactory;
   private PurchaseTokenDecoder purchaseTokenDecoder;
@@ -165,10 +165,9 @@ public class BillingPool {
     if (merchantPackageName.equals(BuildConfig.APPLICATION_ID)) {
       return new Billing.Builder().setMerchantPackageName(merchantPackageName)
           .setMerchantVersionProvider(getMerchantVersionProvider())
-          .setCustomerPersistence(getCustomerPersistence())
+          .setUserPersistence(getUserPersistence())
           .setPurchaseTokenDecoder(getPurchaseTokenDecoder())
           .setBillingService(getBillingServiceV3())
-          .setSyncScheduler(getBillingSyncSchedulerV3())
           .setTransactionRepository(getPaidAppTransactionRepository())
           .setAuthorizationRepository(getPaidAppAuthorizationRepository())
           .registerPaymentService(AdyenPaymentService.TYPE, getAdyenPaymentService())
@@ -177,10 +176,9 @@ public class BillingPool {
     } else {
       return new Billing.Builder().setMerchantPackageName(merchantPackageName)
           .setMerchantVersionProvider(getMerchantVersionProvider())
-          .setCustomerPersistence(getCustomerPersistence())
+          .setUserPersistence(getUserPersistence())
           .setPurchaseTokenDecoder(getPurchaseTokenDecoder())
           .setBillingService(getBillingServiceV7())
-          .setSyncScheduler(getBillingSyncSchedulerV7())
           .setTransactionRepository(getInAppTransactionRepository())
           .setAuthorizationRepository(getInAppAuthorizationRepository())
           .registerPaymentService(AdyenPaymentService.TYPE, getAdyenPaymentService())
@@ -234,7 +232,7 @@ public class BillingPool {
               sharedPreferences, new PurchaseMapperV3(purchaseFactory),
               new ProductMapperV3(getBillingIdManagerV3()), resources,
               new PaymentMethod(getBillingIdManagerV3().generateServiceId(1),
-                  PayPalPaymentService.TYPE, "PayPal", null, "", true), getBillingIdManagerV3(),
+                  PayPalPaymentService.TYPE, "PayPal", null, ""), getBillingIdManagerV3(),
               Build.VERSION.SDK_INT, minimumAPILevelPayPal, marketName);
     }
     return billingServiceV3;
@@ -248,8 +246,9 @@ public class BillingPool {
               new PurchaseMapperV7(externalBillingSerializer, getBillingIdManagerV7(),
                   purchaseFactory), new ProductMapperV7(getBillingIdManagerV7()),
               new PaymentMethodMapper(crashLogger, getBillingIdManagerV7(), Build.VERSION.SDK_INT,
-                  minimumAPILevelAdyen, minimumAPILevelPayPal),
-              getBillingIdManagerV7(), purchaseFactory);
+                  minimumAPILevelAdyen, minimumAPILevelPayPal), getBillingIdManagerV7(),
+              purchaseFactory, authenticationPersistence,
+              new AuthorizationMapperV7(getAuthorizationFactory(), getBillingIdManagerV7()));
     }
     return billingServiceV7;
   }
@@ -281,7 +280,7 @@ public class BillingPool {
   private BillingSyncScheduler getBillingSyncSchedulerV7() {
     if (billingSyncSchedulerV7 == null) {
       billingSyncSchedulerV7 = new BillingSyncManager(
-          new BillingSyncFactory(getCustomerPersistence(), getTransactionServiceV7(),
+          new BillingSyncFactory(getUserPersistence(), getTransactionServiceV7(),
               new AuthorizationServiceV7(
                   new AuthorizationMapperV7(getAuthorizationFactory(), getBillingIdManagerV7()),
                   httpClient, WebService.getDefaultConverter(), tokenInvalidator, sharedPreferences,
@@ -296,13 +295,12 @@ public class BillingPool {
   private BillingSyncScheduler getBillingSyncSchedulerV3() {
     if (billingSyncSchedulerV3 == null) {
       billingSyncSchedulerV3 = new BillingSyncManager(
-          new BillingSyncFactory(getCustomerPersistence(), getTransactionServiceV3(),
+          new BillingSyncFactory(getUserPersistence(), getTransactionServiceV3(),
               new AuthorizationServiceV3(getAuthorizationFactory(),
                   new AuthorizationMapperV3(getAuthorizationFactory()), getTransactionMapperV3(),
                   getTransactionPersistence(), bodyInterceptorV3, httpClient,
-                  WebService.getDefaultConverter(), tokenInvalidator, sharedPreferences,
-                  customerPersistence,
-                  resources, getBillingIdManagerV3()), getTransactionPersistence(),
+                  WebService.getDefaultConverter(), tokenInvalidator, sharedPreferences, resources,
+                  getBillingIdManagerV3(), "PayPal", ""), getTransactionPersistence(),
               getAuthorizationPersistence(), getLocalIdGenerator()), syncScheduler, new HashSet<>(),
           new HashMap<>());
     }
@@ -369,11 +367,11 @@ public class BillingPool {
     return authorizationFactory;
   }
 
-  private CustomerPersistence getCustomerPersistence() {
-    if (customerPersistence == null) {
-      customerPersistence = new AccountCustomerPersistence(accountManager);
+  private UserPersistence getUserPersistence() {
+    if (userPersistence == null) {
+      userPersistence = new AccountUserPersistence(accountManager);
     }
-    return customerPersistence;
+    return userPersistence;
   }
 
   private TransactionFactory getTransactionFactory() {

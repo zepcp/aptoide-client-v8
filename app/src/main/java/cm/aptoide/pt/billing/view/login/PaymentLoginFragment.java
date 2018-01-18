@@ -247,9 +247,7 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
             accountNavigator, Arrays.asList("email"), accountManager, crashReport, errorMapper,
             AndroidSchedulers.mainThread(), orientationManager, application.getAccountAnalytics(),
             application.getBillingAnalytics(), billingNavigator,
-            getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME),
-            getArguments().getString(BillingActivity.EXTRA_SKU),
-            getArguments().getString(BillingActivity.EXTRA_DEVELOPER_PAYLOAD)));
+            getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)));
   }
 
   @Override public void onDestroyView() {

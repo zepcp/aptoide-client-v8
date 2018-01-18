@@ -9,9 +9,7 @@ import android.content.SharedPreferences;
 import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.BillingService;
 import cm.aptoide.pt.billing.Merchant;
-import cm.aptoide.pt.billing.exception.MerchantNotFoundException;
-import cm.aptoide.pt.billing.exception.ProductNotFoundException;
-import cm.aptoide.pt.billing.exception.PurchaseNotFoundException;
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
@@ -21,11 +19,13 @@ import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.DeletePurchaseRequest;
+import cm.aptoide.pt.dataprovider.ws.v7.billing.GetAuthorizationsRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetMerchantRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetProductsRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetPurchaseRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetPurchasesRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
+import cm.aptoide.pt.networking.AuthenticationPersistence;
 import java.util.Collections;
 import java.util.List;
 import okhttp3.OkHttpClient;
@@ -45,13 +45,16 @@ public class BillingServiceV7 implements BillingService {
   private final BodyInterceptor<BaseBody> bodyInterceptorV7;
   private final BillingIdManager billingIdManager;
   private final PurchaseFactory purchaseFactory;
+  private final AuthenticationPersistence authenticationPersistence;
+  private final AuthorizationMapperV7 authorizationMapper;
 
   public BillingServiceV7(BodyInterceptor<BaseBody> bodyInterceptorV7, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, PurchaseMapperV7 purchaseMapper,
       ProductMapperV7 productMapperV7, PaymentMethodMapper serviceMapper,
-      BillingIdManager billingIdManager,
-      PurchaseFactory purchaseFactory) {
+      BillingIdManager billingIdManager, PurchaseFactory purchaseFactory,
+      AuthenticationPersistence authenticationPersistence,
+      AuthorizationMapperV7 authorizationMapper) {
     this.httpClient = httpClient;
     this.converterFactory = converterFactory;
     this.tokenInvalidator = tokenInvalidator;
@@ -62,6 +65,8 @@ public class BillingServiceV7 implements BillingService {
     this.bodyInterceptorV7 = bodyInterceptorV7;
     this.billingIdManager = billingIdManager;
     this.purchaseFactory = purchaseFactory;
+    this.authenticationPersistence = authenticationPersistence;
+    this.authorizationMapper = authorizationMapper;
   }
 
   @Override public Single<List<PaymentMethod>> getPaymentMethods() {
@@ -89,7 +94,7 @@ public class BillingServiceV7 implements BillingService {
                 .getId(), "Trivial Drive", response.getData()
                 .getName(), versionCode));
           } else {
-            return Single.error(new MerchantNotFoundException(V7.getErrorMessage(response)));
+            return Single.error(new IllegalArgumentException(V7.getErrorMessage(response)));
           }
         });
   }
@@ -104,7 +109,7 @@ public class BillingServiceV7 implements BillingService {
           if (response != null && response.isOk()) {
             return Completable.complete();
           }
-          return Completable.error(new PurchaseNotFoundException(V7.getErrorMessage(response)));
+          return Completable.error(new IllegalArgumentException(V7.getErrorMessage(response)));
         });
   }
 
@@ -168,8 +173,31 @@ public class BillingServiceV7 implements BillingService {
           if (response != null && response.isOk()) {
             return Single.just(productMapperV7.map(response.getData()));
           } else {
-            return Single.error(new ProductNotFoundException("No product found for sku: " + sku));
+            return Single.error(new IllegalArgumentException("No product found for sku: " + sku));
           }
+        });
+  }
+
+  @Override public Single<List<Authorization>> getAuthorizations(String customerId) {
+    return authenticationPersistence.getAuthentication()
+        .flatMapObservable(
+            authentication -> GetAuthorizationsRequest.of(sharedPreferences, httpClient,
+                converterFactory, bodyInterceptorV7, tokenInvalidator,
+                authentication.getAccessToken(), customerId)
+                .observe())
+        .toSingle()
+        .flatMap(response -> {
+
+          if (response.isSuccessful()) {
+
+            if (response.body() != null && response.body()
+                .isOk()) {
+              return Single.just(authorizationMapper.map(response.body()
+                  .getData()
+                  .getList()));
+            }
+          }
+          return Single.error(new IllegalStateException(V7.getErrorMessage(response.body())));
         });
   }
 }

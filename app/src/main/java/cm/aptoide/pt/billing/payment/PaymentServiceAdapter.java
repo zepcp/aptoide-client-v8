@@ -22,8 +22,8 @@ public class PaymentServiceAdapter {
     this.authorizationRepository = authorizationRepository;
   }
 
-  public Single<Transaction> createTransaction(String type, String serviceId, String sku,
-      String payload, String customerId, String productId) {
+  public Single<Transaction> createTransaction(String type, String serviceId, String payload,
+      String customerId, String productId) {
     return adapters.get(type)
         .processPayment(customerId, productId, serviceId, payload, transactionRepository);
   }

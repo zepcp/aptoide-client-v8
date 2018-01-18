@@ -10,6 +10,7 @@ import android.content.res.Resources;
 import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.BillingService;
 import cm.aptoide.pt.billing.Merchant;
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
@@ -93,6 +94,10 @@ public class BillingServiceV3 implements BillingService {
   @Override public Single<Product> getProduct(String sku, String merchantName) {
     return getServerPaidApp(false, billingIdManager.resolveProductId(sku)).map(
         paidApp -> productMapper.map(paidApp));
+  }
+
+  @Override public Single<List<Authorization>> getAuthorizations(String customerId) {
+    return Single.error(new IllegalStateException("Not implemented."));
   }
 
   private Single<PaidApp> getServerPaidApp(boolean bypassCache, long appId) {

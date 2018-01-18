@@ -1,8 +1,7 @@
 package cm.aptoide.pt.billing.view.card;
 
+import cm.aptoide.pt.billing.payment.CreditCard;
 import cm.aptoide.pt.presenter.View;
-import com.adyen.core.models.PaymentMethod;
-import com.adyen.core.models.paymentdetails.PaymentDetails;
 import rx.Observable;
 
 public interface CreditCardAuthorizationView extends View {
@@ -13,12 +12,9 @@ public interface CreditCardAuthorizationView extends View {
 
   Observable<Void> errorDismisses();
 
-  Observable<PaymentDetails> creditCardDetailsEvent();
+  Observable<CreditCard> saveCreditCardEvent();
 
   void showNetworkError();
 
   Observable<Void> cancelEvent();
-
-  void showCreditCardView(PaymentMethod paymentMethod, boolean cvcStatus, String publicKey,
-      String generationTime);
 }

@@ -1,34 +1,30 @@
 package cm.aptoide.pt.billing.payment;
 
 import cm.aptoide.pt.billing.Merchant;
-import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
-import cm.aptoide.pt.billing.transaction.AuthorizedTransaction;
 import cm.aptoide.pt.billing.transaction.Transaction;
-import java.util.List;
 
 public class Payment {
 
   private final Merchant merchant;
   private final Customer customer;
   private final Product product;
-  private final List<PaymentMethod> paymentMethods;
-
-  private final Transaction transaction;
   private final Purchase purchase;
-  private final List<Authorization> authorizations;
+  private final Status status;
+  private final String payload;
+  private final Transaction transaction;
 
-  public Payment(Merchant merchant, Customer customer, Product product, Transaction transaction,
-      Purchase purchase, List<PaymentMethod> paymentMethods, List<Authorization> authorizations) {
+  public Payment(Merchant merchant, Customer customer, Product product, Purchase purchase,
+      Status status, String payload, Transaction transaction) {
     this.merchant = merchant;
     this.customer = customer;
     this.product = product;
-    this.transaction = transaction;
     this.purchase = purchase;
-    this.paymentMethods = paymentMethods;
-    this.authorizations = authorizations;
+    this.status = status;
+    this.payload = payload;
+    this.transaction = transaction;
   }
 
   public Merchant getMerchant() {
@@ -43,71 +39,85 @@ public class Payment {
     return product;
   }
 
-  public PaymentMethod getPaymentMethod(String serviceId) {
-    for (PaymentMethod service: paymentMethods) {
-      if (service.getId()
-          .equals(serviceId)) {
-        return service;
-      }
-    }
-    throw new IllegalArgumentException("No service for id: " + serviceId);
-  }
-
-  public PaymentMethod getPaymentMethod() {
-    if (transaction != null) {
-      return getPaymentMethod(transaction.getServiceId());
-    }
-    throw new IllegalStateException(
-        "No transaction for payment yet. Can not return payment service.");
-  }
-
   public Purchase getPurchase() {
     return purchase;
   }
 
-  public List<PaymentMethod> getPaymentMethods() {
-    return paymentMethods;
+  public Status getStatus() {
+    return status;
   }
 
-  public boolean isNew() {
-    if (transaction.isNew() && !purchase.isCompleted()) {
-      return true;
+  public String getPayload() {
+    return payload;
+  }
+
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
+  public static Payment loaded(Merchant merchant, Product product, Purchase purchase,
+      String payload) {
+    return new Payment(merchant, null, product, purchase, Status.LOADED, payload, null);
+  }
+
+  public static Payment loading() {
+    return new Payment(null, null, null, null, Status.LOADING, null, null);
+  }
+
+  public static Payment error() {
+    return new Payment(null, null, null, null, Status.LOADING_ERROR, null, null);
+  }
+
+  public static Payment withCustomer(Customer customer) {
+    return new Payment(null, customer, null, null, null, null, null);
+  }
+
+  public static Payment consolidate(Payment oldCustomer, Payment newCustomer) {
+
+    Merchant merchant = oldCustomer.merchant;
+    Customer customer = oldCustomer.customer;
+    Product product = oldCustomer.product;
+    Purchase purchase = oldCustomer.purchase;
+    Status status = oldCustomer.status;
+    String payload = oldCustomer.payload;
+    Transaction transaction = oldCustomer.transaction;
+
+    if (newCustomer.merchant != null) {
+      merchant = newCustomer.merchant;
     }
 
-    if (transaction.isCompleted() && !purchase.isCompleted()) {
-      return true;
+    if (newCustomer.customer != null) {
+      customer = newCustomer.customer;
     }
 
-    return false;
-  }
-
-  public Authorization getAuthorization() {
-    if (transaction instanceof AuthorizedTransaction) {
-      return ((AuthorizedTransaction) transaction).getAuthorization();
+    if (newCustomer.product != null) {
+      product = newCustomer.product;
     }
-    throw new IllegalStateException("Payment does not require authorization.");
-  }
 
-  public boolean isPendingAuthorization() {
-    if (transaction instanceof AuthorizedTransaction) {
-      return transaction.isPendingAuthorization();
+    if (newCustomer.purchase != null) {
+      purchase = newCustomer.purchase;
     }
-    throw new IllegalStateException("Payment does not require authorization.");
+
+    if (newCustomer.status != null) {
+      status = newCustomer.status;
+    }
+
+    if (newCustomer.payload != null) {
+      payload = newCustomer.payload;
+    }
+
+    if (newCustomer.transaction != null) {
+      transaction = newCustomer.transaction;
+    }
+
+    return new Payment(merchant, customer, product, purchase, status, payload, transaction);
   }
 
-  public boolean isProcessing() {
-    return transaction.isProcessing();
+  public static Payment withTransaction(Transaction transaction) {
+    return new Payment(null, null, null, null, null, null, transaction);
   }
 
-  public boolean isFailed() {
-    return transaction.isFailed();
-  }
-
-  public boolean isCompleted() {
-    return purchase.isCompleted();
-  }
-
-  public List<Authorization> getAuthorizations() {
-    return authorizations;
+  public static enum Status {
+    LOADING, LOADING_ERROR, LOADED, PROCESSING, FAILED, COMPLETED, PENDING_AUTHORIZATION
   }
 }

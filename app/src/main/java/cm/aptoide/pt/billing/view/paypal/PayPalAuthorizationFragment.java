@@ -55,7 +55,7 @@ public class PayPalAuthorizationFragment extends PermissionServiceFragment imple
 
     attachPresenter(
         new PayPalAuthorizationPresenter(this, billing, billingAnalytics, billingNavigator,
-            AndroidSchedulers.mainThread(), getArguments().getString(BillingActivity.EXTRA_SKU),
+            AndroidSchedulers.mainThread(),
             getArguments().getString(BillingActivity.EXTRA_SERVICE_NAME)));
   }
 

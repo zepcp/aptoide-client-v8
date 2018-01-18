@@ -29,25 +29,25 @@ public class CreateTransactionRequest
         + "/api/7/";
   }
 
-  public static CreateTransactionRequest of(long productId, long serviceId, String payload,
+  public static CreateTransactionRequest of(long productId, long paymentMethodId, String payload,
       BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences) {
     final RequestBody body = new RequestBody();
     body.setProductId(productId);
-    body.setServiceId(serviceId);
+    body.setServiceId(paymentMethodId);
     body.setPayload(payload);
     return new CreateTransactionRequest(body, getHost(sharedPreferences), httpClient,
         converterFactory, bodyInterceptor, tokenInvalidator);
   }
 
-  public static CreateTransactionRequest of(long productId, long serviceId, String payload,
+  public static CreateTransactionRequest of(long productId, long paymentMethodId, String payload,
       String token, BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences) {
     final RequestBody body = new RequestBody();
     body.setProductId(productId);
-    body.setServiceId(serviceId);
+    body.setServiceId(paymentMethodId);
     body.setPayload(payload);
     final RequestBody.Data serviceData = new RequestBody.Data();
     serviceData.setToken(token);

@@ -15,7 +15,6 @@ import android.os.RemoteException;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.exception.MerchantNotFoundException;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.PaymentThrowableCodeMapper;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
@@ -82,6 +81,7 @@ public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
       throws RemoteException {
     merchantName = packageManager.getPackagesForUid(Binder.getCallingUid())[0];
     billing = ((AptoideApplication) context.getApplicationContext()).getBilling(merchantName);
+    billing.setup();
     return super.onTransact(code, data, reply, flags);
   }
 
@@ -96,10 +96,7 @@ public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
       return billing.getMerchant()
           .map(merchant -> RESULT_OK)
           .onErrorResumeNext(throwable -> {
-            if (throwable instanceof MerchantNotFoundException) {
               return Single.just(RESULT_BILLING_UNAVAILABLE);
-            }
-            return Single.error(throwable);
           })
           .toBlocking()
           .value();
@@ -160,9 +157,10 @@ public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
     }
 
     try {
+      billing.selectProduct(sku, developerPayload);
       result.putInt(RESPONSE_CODE, RESULT_OK);
       result.putParcelable(BUY_INTENT, PendingIntent.getActivity(context, 0,
-          BillingActivity.getIntent(context, sku, merchantName, developerPayload),
+          BillingActivity.getIntent(context, merchantName),
           PendingIntent.FLAG_UPDATE_CURRENT));
       analytics.sendPaymentViewShowEvent();
     } catch (Exception exception) {

@@ -53,8 +53,8 @@ import cm.aptoide.pt.app.view.displayable.AppViewRateAndCommentsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewScreenshotsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewStoreDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppsDisplayable;
+import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.exception.BillingException;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
@@ -94,14 +94,13 @@ import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.notification.NotificationAnalytics;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.repository.RepositoryFactory;
-import cm.aptoide.pt.util.ReferrerUtils;
-import cm.aptoide.pt.search.analytics.SearchAnalytics;
-import cm.aptoide.pt.search.SuggestionCursorAdapter;
 import cm.aptoide.pt.search.SearchNavigator;
+import cm.aptoide.pt.search.SuggestionCursorAdapter;
+import cm.aptoide.pt.search.analytics.SearchAnalytics;
 import cm.aptoide.pt.search.model.SearchAdResult;
+import cm.aptoide.pt.search.suggestions.TrendingManager;
 import cm.aptoide.pt.search.view.AppSearchSuggestionsView;
 import cm.aptoide.pt.search.view.SearchSuggestionsPresenter;
-import cm.aptoide.pt.search.suggestions.TrendingManager;
 import cm.aptoide.pt.share.ShareAppHelper;
 import cm.aptoide.pt.spotandshare.SpotAndShareAnalytics;
 import cm.aptoide.pt.store.StoreAnalytics;
@@ -110,6 +109,7 @@ import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.timeline.SocialRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
+import cm.aptoide.pt.util.ReferrerUtils;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.SimpleSubscriber;
@@ -191,6 +191,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private SearchNavigator searchNavigator;
   private TrendingManager trendingManager;
   private SearchAnalytics searchAnalytics;
+  private Billing billing;
 
   public static AppViewFragment newInstanceUname(String uname) {
     Bundle bundle = new Bundle();
@@ -353,7 +354,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     this.appViewModel.setMarketName(application.getMarketName());
 
     adMapper = new MinimalAdMapper();
-
+    billing = application.getBilling(BuildConfig.APPLICATION_ID);
     this.appViewModel.setqManager(application.getQManager());
     purchaseBundleMapper = application.getPurchaseBundleMapper();
     final AptoideAccountManager accountManager = application.getAccountManager();
@@ -607,8 +608,9 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   public void buyApp(GetAppMeta.App app) {
     billingAnalytics.sendPaymentViewShowEvent();
+    billing.selectProduct(String.valueOf(app.getId()), null);
     startActivityForResult(
-        BillingActivity.getIntent(getActivity(), app.getId(), BuildConfig.APPLICATION_ID),
+        BillingActivity.getIntent(getActivity(), BuildConfig.APPLICATION_ID),
         PAY_APP_REQUEST_CODE);
   }
 
@@ -624,11 +626,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         installApp.putExtra(AppBoughtReceiver.APP_PATH, purchase.getSignatureData());
         fragmentActivity.sendBroadcast(installApp);
       } catch (Throwable throwable) {
-        if (throwable instanceof BillingException) {
-          ShowMessage.asSnack(header.badge, R.string.user_cancelled);
-        } else {
-          ShowMessage.asSnack(header.badge, R.string.unknown_error);
-        }
+        ShowMessage.asSnack(header.badge, R.string.unknown_error);
       }
     } else {
       super.onActivityResult(requestCode, resultCode, intent);

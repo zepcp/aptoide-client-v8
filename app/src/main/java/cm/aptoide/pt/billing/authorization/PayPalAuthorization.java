@@ -10,20 +10,17 @@ import cm.aptoide.pt.billing.Price;
 public class PayPalAuthorization extends MetadataAuthorization {
 
   private final Price price;
-  private final String description;
 
   public PayPalAuthorization(String id, String customerId, Status status, String transactionId,
-      String metadata, Price price, String description) {
-    super(id, customerId, status, transactionId, metadata);
+      String metadata, Price price, String description, String icon, String name,
+      boolean defaultAuthorization) {
+    super(id, customerId, status, transactionId, metadata, icon, name, description,
+        defaultAuthorization);
     this.price = price;
-    this.description = description;
   }
 
   public Price getPrice() {
     return price;
   }
 
-  public String getDescription() {
-    return description;
-  }
 }

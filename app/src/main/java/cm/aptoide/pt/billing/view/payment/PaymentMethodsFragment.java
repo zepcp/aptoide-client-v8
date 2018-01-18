@@ -85,10 +85,8 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
         LayoutInflater.from(getContext()), new SpannableFactory());
     list.setAdapter(adapter);
 
-    new PaymentMethodsPresenter(this, billing, getArguments().getString(BillingActivity.EXTRA_SKU),
-        AndroidSchedulers.mainThread(), navigator,
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME),
-        getArguments().getString(BillingActivity.EXTRA_DEVELOPER_PAYLOAD)).present();
+    new PaymentMethodsPresenter(this, billing, AndroidSchedulers.mainThread(), navigator,
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)).present();
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {

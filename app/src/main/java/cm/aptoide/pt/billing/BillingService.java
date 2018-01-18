@@ -1,5 +1,6 @@
 package cm.aptoide.pt.billing;
 
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
@@ -22,4 +23,6 @@ public interface BillingService {
   Single<List<Product>> getProducts(String merchantName, List<String> skus);
 
   Single<Product> getProduct(String sku, String merchantName);
+
+  Single<List<Authorization>> getAuthorizations(String userId);
 }

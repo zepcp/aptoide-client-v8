@@ -11,12 +11,21 @@ public class Authorization {
   private final String customerId;
   private final Status status;
   private final String transactionId;
+  private final String icon;
+  private final String name;
+  private final String description;
+  private final boolean defaultAuthorization;
 
-  public Authorization(String id, String customerId, Status status, String transactionId) {
+  public Authorization(String id, String customerId, Status status, String transactionId,
+      String icon, String name, String description, boolean defaultAuthorization) {
     this.id = id;
     this.customerId = customerId;
     this.status = status;
     this.transactionId = transactionId;
+    this.icon = icon;
+    this.name = name;
+    this.description = description;
+    this.defaultAuthorization = defaultAuthorization;
   }
 
   public String getId() {
@@ -29,6 +38,18 @@ public class Authorization {
 
   public boolean isPending() {
     return Status.PENDING.equals(status);
+  }
+
+  public String getIcon() {
+    return icon;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
   public boolean isProcessing() {
@@ -57,6 +78,10 @@ public class Authorization {
 
   public String getTransactionId() {
     return transactionId;
+  }
+
+  public boolean isDefault() {
+    return defaultAuthorization;
   }
 
   public enum Status {

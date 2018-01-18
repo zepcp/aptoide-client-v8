@@ -15,7 +15,7 @@ public interface AuthorizationPersistence {
       Authorization.Status status, String metadata);
 
   Single<Authorization> createAuthorization(String customerId, String transactionId,
-      Authorization.Status status);
+      Authorization.Status status, String description, String icon, String name);
 
   Completable removeAuthorizations(String customerId, String transactionId);
 
