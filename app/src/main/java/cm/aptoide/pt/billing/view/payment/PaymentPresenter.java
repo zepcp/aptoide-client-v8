@@ -37,9 +37,21 @@ public class PaymentPresenter implements Presenter {
 
     onViewCreatedShowPayment();
 
+    handleChangeAuthorizationEvent();
+
     handleCancelEvent();
 
     handleBuyEvent();
+  }
+
+  private void handleChangeAuthorizationEvent() {
+    view.getLifecycle()
+        .filter(event -> View.LifecycleEvent.CREATE.equals(event))
+        .flatMap(__ -> view.changeAuthorizationEvent())
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(__ -> navigator.navigateToManageAuthorizationsView(), throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 
   private void onViewCreatedShowPayment() {
@@ -101,12 +113,12 @@ public class PaymentPresenter implements Presenter {
         .filter(event -> View.LifecycleEvent.RESUME.equals(event))
         .flatMap(__ -> view.cancelEvent()
             .flatMap(serviceId -> billing.getPayment()
-                .first()
-                .doOnNext(payment -> analytics.sendPaymentViewCancelEvent(payment)))
+                .first())
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
+        .subscribe(payment -> {
+          analytics.sendPaymentViewCancelEvent(payment);
           navigator.popViewWithResult();
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);

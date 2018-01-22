@@ -4,38 +4,35 @@ import cm.aptoide.pt.billing.Price;
 
 public class AuthorizationFactory {
 
-  public static final String PAYPAL_SDK = "PAYPAL_SDK";
-  public static final String ADYEN_SDK = "ADYEN_SDK";
-
   public Authorization create(String id, String customerId, String type,
-      Authorization.Status status, String metadata, Price price, String description,
-      String transactionId, String session, String icon, String name) {
+      Authorization.Status status, String metadata, Price price, String description, String session,
+      String icon, String name) {
 
     if (type == null) {
-      return new Authorization(id, customerId, status, transactionId, icon, name, description,
+      return new Authorization(id, customerId, status, icon, name, type, description,
           false);
     }
 
     switch (type) {
-      case PAYPAL_SDK:
-        return new PayPalAuthorization(id, customerId, status, transactionId, metadata, price,
-            description, icon, name, false);
-      case ADYEN_SDK:
-        return new AdyenAuthorization(id, customerId, status, transactionId, session, metadata,
-            icon, name, description, false);
+      case Authorization.PAYPAL_SDK:
+        return new PayPalAuthorization(id, customerId, status, metadata, price, description, icon,
+            name, false, Authorization.PAYPAL_SDK);
+      case Authorization.ADYEN_SDK:
+        return new AdyenAuthorization(id, customerId, status, session, metadata, icon, name,
+            description, false, Authorization.ADYEN_SDK);
       default:
-        return new Authorization(id, customerId, status, transactionId, icon, name, description,
+        return new Authorization(id, customerId, status, icon, name, type, description,
             false);
     }
   }
 
   public String getType(Authorization authorization) {
     if (authorization instanceof AdyenAuthorization) {
-      return ADYEN_SDK;
+      return Authorization.ADYEN_SDK;
     }
 
     if (authorization instanceof PayPalAuthorization) {
-      return PAYPAL_SDK;
+      return Authorization.PAYPAL_SDK;
     }
 
     return null;

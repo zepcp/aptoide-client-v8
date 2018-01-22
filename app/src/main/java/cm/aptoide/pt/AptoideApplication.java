@@ -587,7 +587,8 @@ public abstract class AptoideApplication extends Application {
               getBodyInterceptorPoolV7(), getAccountSettingsBodyInterceptorPoolV7(),
               new HashMap<>(), WebService.getDefaultConverter(), CrashReport.getInstance(),
               getAdyen(), getPurchaseFactory(), Build.VERSION_CODES.JELLY_BEAN,
-              Build.VERSION_CODES.JELLY_BEAN, getAuthenticationPersistence(), getMarketName());
+              Build.VERSION_CODES.JELLY_BEAN, getAuthenticationPersistence(), getMarketName(),
+              "android.resource://" + getPackageName() + "/" + R.drawable.ic_paypal);
     }
     return billingPool;
   }

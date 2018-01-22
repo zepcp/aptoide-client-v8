@@ -8,6 +8,7 @@ import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
@@ -60,6 +61,7 @@ public class GetServicesRequest extends V7<GetServicesRequest.ResponseBody, Base
       private String label;
       private String icon;
       private String description;
+      @JsonProperty("isDefault") private boolean defaultService;
 
       public long getId() {
         return id;
@@ -95,6 +97,14 @@ public class GetServicesRequest extends V7<GetServicesRequest.ResponseBody, Base
 
       public String getDescription() {
         return description;
+      }
+
+      public boolean isDefaultService() {
+        return defaultService;
+      }
+
+      public void setDefaultService(boolean defaultService) {
+        this.defaultService = defaultService;
       }
 
       public void setDescription(String description) {

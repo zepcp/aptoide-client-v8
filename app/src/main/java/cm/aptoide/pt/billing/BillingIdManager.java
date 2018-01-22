@@ -13,7 +13,7 @@ public interface BillingIdManager {
 
   long resolveProductId(String productId);
 
-  long resolveServiceId(String serviceId);
+  long resolveAuthorizationId(String serviceId);
 
   long resolvePurchaseId(String purchaseId);
 

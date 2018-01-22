@@ -16,6 +16,8 @@ public interface PaymentView extends View {
 
   Observable<Void> buyEvent();
 
+  Observable<Void> changeAuthorizationEvent();
+
   void showLoading();
 
   void showAuthorization(Authorization authorization);
@@ -29,4 +31,5 @@ public interface PaymentView extends View {
   void showNetworkError();
 
   void showUnknownError();
+
 }

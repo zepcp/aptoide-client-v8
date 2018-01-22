@@ -84,26 +84,9 @@ public class TransactionServiceV7 implements TransactionService {
   }
 
   @Override public Single<Transaction> createTransaction(String customerId, String productId,
-      String serviceId, String payload) {
+      String authorizationId) {
     return CreateTransactionRequest.of(billingIdManager.resolveProductId(productId),
-        billingIdManager.resolveServiceId(serviceId), payload, bodyInterceptorV7, httpClient,
-        converterFactory, tokenInvalidator, sharedPreferences)
-        .observe(true, false)
-        .toSingle()
-        .flatMap(response -> {
-          if (response != null && response.isOk()) {
-            return Single.just(transactionMapper.map(response.getData()));
-          }
-          return Single.just(
-              transactionFactory.create(billingIdManager.generateTransactionId(), customerId,
-                  productId, Transaction.Status.FAILED, null));
-        });
-  }
-
-  @Override public Single<Transaction> createTransaction(String customerId, String productId,
-      String serviceId, String payload, String token) {
-    return CreateTransactionRequest.of(billingIdManager.resolveProductId(productId),
-        billingIdManager.resolveServiceId(serviceId), payload, token, bodyInterceptorV7, httpClient,
+        billingIdManager.resolveAuthorizationId(authorizationId), bodyInterceptorV7, httpClient,
         converterFactory, tokenInvalidator, sharedPreferences)
         .observe(true, false)
         .toSingle()

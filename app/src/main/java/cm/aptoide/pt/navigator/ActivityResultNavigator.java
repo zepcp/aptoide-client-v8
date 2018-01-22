@@ -159,6 +159,7 @@ public abstract class ActivityResultNavigator extends ActivityCustomTabsNavigato
   public BillingNavigator getBillingNavigator() {
     if (billingNavigator == null) {
       billingNavigator = new BillingNavigator(
+          this,
           ((AptoideApplication) getApplicationContext()).getPurchaseBundleMapper(),
           getActivityNavigator(), getFragmentNavigator(),
           ((AptoideApplication) getApplicationContext()).getMarketName(), this,

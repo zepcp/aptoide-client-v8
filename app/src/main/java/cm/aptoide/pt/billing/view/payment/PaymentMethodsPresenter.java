@@ -50,12 +50,10 @@ public class PaymentMethodsPresenter implements Presenter {
   private void handlePaymentMethodSelectedEvent() {
     view.getLifecycle()
         .filter(event -> event.equals(View.LifecycleEvent.RESUME))
-        .flatMap(__ -> view.getSelectedPaymentMethodEvent()
-            .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
+        .flatMap(__ -> view.getSelectedPaymentMethodEvent())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(paymentMethod -> {
           billing.selectPaymentMethod(paymentMethod);
-          navigator.navigateToAuthorizationView(merchantPackageName, paymentMethod);
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
@@ -76,26 +74,29 @@ public class PaymentMethodsPresenter implements Presenter {
 
           if (customer.getStatus().equals(Customer.Status.LOADED)) {
             view.hideLoading();
+            if (!customer.isAuthenticated()) {
+              navigator.navigateToCustomerAuthenticationView(merchantPackageName);
+            } else {
+              if (customer.isPaymentMethodSelected()) {
+                if (customer.isAuthorizationSelected()) {
+                  navigator.navigateToPaymentView(merchantPackageName);
+                } else {
+                  navigator.navigateToAuthorizationView(merchantPackageName,
+                      customer.getSelectedPaymentMethod());
+                }
+              } else {
+                if (customer.getPaymentMethods()
+                    .isEmpty()) {
+                  view.showNoPaymentMethodsAvailableMessage();
+                } else {
+                  view.showAvailablePaymentMethods(customer.getPaymentMethods());
+                }
+              }
+            }
           }
 
           if (customer.getStatus().equals(Customer.Status.LOADING_ERROR)) {
             view.showNetworkError();
-          }
-
-          if (!customer.isAuthenticated()) {
-            navigator.navigateToCustomerAuthenticationView(merchantPackageName);
-          } else {
-            if (customer.getAuthorizations()
-                .isEmpty()) {
-              if (customer.getPaymentMethods()
-                  .isEmpty()) {
-                view.showNoPaymentMethodsAvailableMessage();
-              } else {
-                view.showAvailablePaymentMethods(customer.getPaymentMethods());
-              }
-            } else {
-              navigator.navigateToPaymentView(merchantPackageName);
-            }
           }
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);

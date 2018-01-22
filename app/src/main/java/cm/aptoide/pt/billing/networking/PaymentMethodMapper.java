@@ -6,8 +6,6 @@
 package cm.aptoide.pt.billing.networking;
 
 import cm.aptoide.pt.billing.BillingIdManager;
-import cm.aptoide.pt.billing.payment.AdyenPaymentService;
-import cm.aptoide.pt.billing.payment.PayPalPaymentService;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.crashreports.CrashLogger;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
@@ -46,19 +44,19 @@ public class PaymentMethodMapper {
 
   private PaymentMethod map(GetServicesRequest.ResponseBody.Service response) {
     switch (response.getName()) {
-      case PayPalPaymentService.TYPE:
+      case PaymentMethod.PAYPAL:
         if (currentAPILevel >= minimumAPILevelPayPal) {
           return new PaymentMethod(billingIdManager.generateServiceId(response.getId()),
               response.getName(), response.getLabel(), response.getDescription(),
-              response.getIcon());
+              response.getIcon(), response.isDefaultService());
         }
         throw new IllegalArgumentException(
             "PayPal not supported in Android API lower than " + minimumAPILevelPayPal);
-      case AdyenPaymentService.TYPE:
+      case PaymentMethod.CREDIT_CARD:
         if (currentAPILevel >= minimumAPILevelAdyen) {
           return new PaymentMethod(billingIdManager.generateServiceId(response.getId()),
               response.getName(), response.getLabel(), response.getDescription(),
-              response.getIcon());
+              response.getIcon(), response.isDefaultService());
         }
         throw new IllegalArgumentException(
             "Adyen not supported in Android API lower than " + minimumAPILevelAdyen);

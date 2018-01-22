@@ -1,10 +1,8 @@
 package cm.aptoide.pt.billing.persistence;
 
-import cm.aptoide.pt.billing.Price;
 import cm.aptoide.pt.billing.authorization.AdyenAuthorization;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
-import cm.aptoide.pt.billing.authorization.MetadataAuthorization;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.database.realm.RealmAuthorization;
 
@@ -20,29 +18,15 @@ public class RealmAuthorizationMapper {
 
     String type = null;
     String metadata = null;
-    if (authorization instanceof MetadataAuthorization) {
-      metadata = ((MetadataAuthorization) authorization).getMetadata();
-    }
 
     if (authorization instanceof AdyenAuthorization) {
-      type = AuthorizationFactory.ADYEN_SDK;
+      type = Authorization.ADYEN_SDK;
+      metadata = ((AdyenAuthorization) authorization).getPayload();
     }
 
-    double amount = 0;
-    String currency = null;
-    String currencySymbol = null;
-
     if (authorization instanceof PayPalAuthorization) {
-      if (((PayPalAuthorization) authorization).getPrice() != null) {
-        amount = ((PayPalAuthorization) authorization).getPrice()
-            .getAmount();
-        currency = ((PayPalAuthorization) authorization).getPrice()
-            .getCurrency();
-        currencySymbol = ((PayPalAuthorization) authorization).getPrice()
-            .getCurrencySymbol();
-      }
-
-      type = AuthorizationFactory.PAYPAL_SDK;
+      type = Authorization.PAYPAL_SDK;
+      metadata = ((PayPalAuthorization) authorization).getPayKey();
     }
 
     if (type == null) {
@@ -52,17 +36,15 @@ public class RealmAuthorizationMapper {
 
     return new RealmAuthorization(authorization.getId(), authorization.getCustomerId(),
         authorization.getStatus()
-            .name(), authorization.getTransactionId(), metadata, authorization.getDescription(),
-        amount, currency, currencySymbol, type, authorization.getIcon(), authorization.getName());
+            .name(), metadata, authorization.getDescription(), type, authorization.getIcon(),
+        authorization.getName());
   }
 
   public Authorization map(RealmAuthorization realmAuthorization) {
     return authorizationFactory.create(realmAuthorization.getId(),
         realmAuthorization.getCustomerId(), realmAuthorization.getType(),
         Authorization.Status.valueOf(realmAuthorization.getStatus()), realmAuthorization.getMetadata(),
-        new Price(realmAuthorization.getAmount(), realmAuthorization.getCurrency(),
-            realmAuthorization.getCurrencySymbol()), realmAuthorization.getDescription(),
-        realmAuthorization.getTransactionId(), null, realmAuthorization.getIcon(),
+        null, realmAuthorization.getDescription(), null, realmAuthorization.getIcon(),
         realmAuthorization.getName());
   }
 }

@@ -29,29 +29,13 @@ public class CreateTransactionRequest
         + "/api/7/";
   }
 
-  public static CreateTransactionRequest of(long productId, long paymentMethodId, String payload,
+  public static CreateTransactionRequest of(long productId, long paymentMethodId,
       BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences) {
     final RequestBody body = new RequestBody();
     body.setProductId(productId);
-    body.setServiceId(paymentMethodId);
-    body.setPayload(payload);
-    return new CreateTransactionRequest(body, getHost(sharedPreferences), httpClient,
-        converterFactory, bodyInterceptor, tokenInvalidator);
-  }
-
-  public static CreateTransactionRequest of(long productId, long paymentMethodId, String payload,
-      String token, BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
-      Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
-      SharedPreferences sharedPreferences) {
-    final RequestBody body = new RequestBody();
-    body.setProductId(productId);
-    body.setServiceId(paymentMethodId);
-    body.setPayload(payload);
-    final RequestBody.Data serviceData = new RequestBody.Data();
-    serviceData.setToken(token);
-    body.setServiceData(serviceData);
+    body.setAuthorizationId(paymentMethodId);
     return new CreateTransactionRequest(body, getHost(sharedPreferences), httpClient,
         converterFactory, bodyInterceptor, tokenInvalidator);
   }
@@ -64,17 +48,7 @@ public class CreateTransactionRequest
   public static class RequestBody extends BaseBody {
 
     private long productId;
-    private long serviceId;
-    private String payload;
-    private Data serviceData;
-
-    public Data getServiceData() {
-      return serviceData;
-    }
-
-    public void setServiceData(Data serviceData) {
-      this.serviceData = serviceData;
-    }
+    private long authorizationId;
 
     public long getProductId() {
       return productId;
@@ -84,33 +58,14 @@ public class CreateTransactionRequest
       this.productId = productId;
     }
 
-    public long getServiceId() {
-      return serviceId;
+    public long getAuthorizationId() {
+      return authorizationId;
     }
 
-    public void setServiceId(long serviceId) {
-      this.serviceId = serviceId;
+    public void setAuthorizationId(long authorizationId) {
+      this.authorizationId = authorizationId;
     }
 
-    public String getPayload() {
-      return payload;
-    }
-
-    public void setPayload(String payload) {
-      this.payload = payload;
-    }
-
-    public static class Data {
-      private String token;
-
-      public String getToken() {
-        return token;
-      }
-
-      public void setToken(String token) {
-        this.token = token;
-      }
-    }
   }
 
   public static class ResponseBody extends BaseV7Response {

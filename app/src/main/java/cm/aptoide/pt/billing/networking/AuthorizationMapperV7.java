@@ -24,8 +24,7 @@ public class AuthorizationMapperV7 {
     this.billingIdManager = billingIdManager;
   }
 
-  public Authorization map(GetAuthorizationRequest.ResponseBody.Authorization response,
-      String transactionId) {
+  public Authorization map(GetAuthorizationRequest.ResponseBody.Authorization response) {
 
     Price price = null;
     if (response.getPrice() != null) {
@@ -46,7 +45,7 @@ public class AuthorizationMapperV7 {
     return authorizationFactory.create(billingIdManager.generateAuthorizationId(response.getId()),
         String.valueOf(response.getUser()
             .getId()), response.getType(), Authorization.Status.valueOf(response.getStatus()), null,
-        price, description, transactionId, session, response.getIcon(), response.getName());
+        price, description, session, response.getIcon(), response.getName());
   }
 
   public List<Authorization> map(
@@ -54,7 +53,7 @@ public class AuthorizationMapperV7 {
     final List<Authorization> result = new ArrayList<>();
 
     for (GetAuthorizationRequest.ResponseBody.Authorization authorization : authorizations) {
-      result.add(map(authorization, null));
+      result.add(map(authorization));
     }
     return result;
   }

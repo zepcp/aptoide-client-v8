@@ -33,7 +33,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   private static final String TAG = CreditCardAuthorizationFragment.class.getSimpleName();
 
   private View progressBar;
-  private RxAlertDialog networkErrorDialog;
   private ClickHandler clickHandler;
   private CardForm cardForm;
   private Button nextButton;
@@ -72,11 +71,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     progressBar = view.findViewById(R.id.fragment_credit_card_authorization_progress_bar);
     nextButton = (Button) view.findViewById(R.id.fragment_credit_card_authorization_next_button);
     cardForm = (CardForm) view.findViewById(R.id.fragment_credit_card_authorization_form);
-
-    networkErrorDialog =
-        new RxAlertDialog.Builder(getContext()).setMessage(R.string.connection_error)
-            .setPositiveButton(R.string.ok)
-            .build();
 
     clickHandler = new ClickHandler() {
       @Override public boolean handle() {
@@ -133,8 +127,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     unregisterClickHandler(clickHandler);
     toolbar = null;
     progressBar = null;
-    networkErrorDialog.dismiss();
-    networkErrorDialog = null;
     nextButton = null;
     cardForm.setOnCardFormSubmitListener(null);
     cardForm.setOnCardFormValidListener(null);
@@ -150,21 +142,10 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     progressBar.setVisibility(View.GONE);
   }
 
-  @Override public Observable<Void> errorDismisses() {
-    return networkErrorDialog.dismisses()
-        .map(dialogInterface -> null);
-  }
-
   @Override public Observable<CreditCard> saveCreditCardEvent() {
     return Observable.merge(keyboardBuyRelay, RxView.clicks(nextButton))
         .map(__ -> new CreditCard(cardForm.getCardNumber(), cardForm.getExpirationMonth(),
             cardForm.getExpirationYear(), cardForm.getCvv()));
-  }
-
-  @Override public void showNetworkError() {
-    if (!networkErrorDialog.isShowing()) {
-      networkErrorDialog.show();
-    }
   }
 
   @Override public Observable<Void> cancelEvent() {

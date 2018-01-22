@@ -21,7 +21,6 @@ import java.util.Map;
 import rx.Completable;
 import rx.Observable;
 import rx.Scheduler;
-import rx.Single;
 
 public class RealmAuthorizationPersistence implements AuthorizationPersistence {
 
@@ -60,16 +59,6 @@ public class RealmAuthorizationPersistence implements AuthorizationPersistence {
         .subscribeOn(scheduler);
   }
 
-  @Override
-  public Observable<Authorization> getAuthorization(String customerId, String transactionId) {
-    return authorizationRelay.startWith(getAuthorizations())
-        .flatMap(authorizations -> Observable.from(authorizations)
-            .filter(authorization -> authorization.getCustomerId()
-                .equals(customerId) && authorization.getTransactionId()
-                .equals(transactionId)))
-        .subscribeOn(scheduler);
-  }
-
   @Override public Observable<List<Authorization>> getAuthorizations(String customerId) {
     return authorizationRelay.startWith(getAuthorizations())
         .flatMap(authorizations -> Observable.from(authorizations)
@@ -79,60 +68,10 @@ public class RealmAuthorizationPersistence implements AuthorizationPersistence {
         .subscribeOn(scheduler);
   }
 
-  @Override public Completable saveAuthorizations(List<Authorization> authorizations) {
-    return Observable.from(authorizations)
-        .doOnNext(authorization -> this.authorizations.put(authorization.getId(), authorization))
-        .toList()
-        .doOnCompleted(() -> authorizationRelay.call(getAuthorizations()))
-        .toCompletable()
+  @Override public Completable removeAuthorization(String authorizationId) {
+    return Completable.fromAction(
+        () -> database.delete(RealmAuthorization.class, RealmAuthorization.ID, authorizationId))
         .subscribeOn(scheduler);
-  }
-
-  @Override
-  public Single<Authorization> updateAuthorization(String customerId, String authorizationId,
-      Authorization.Status status, String metadata) {
-    return Observable.from(getAuthorizations())
-        .filter(authorization -> authorization.getCustomerId()
-            .equals(customerId) && authorization.getId()
-            .equals(authorizationId))
-        .first()
-        .toSingle()
-        .flatMap(authorization -> {
-          final Authorization updatedAuthorization =
-              authorizationFactory.create(authorization.getId(), authorization.getCustomerId(),
-                  authorizationFactory.getType(authorization), status, metadata, null,
-                  authorization.getDescription(), authorization.getTransactionId(), null,
-                  authorization.getIcon(), authorization.getName());
-          return saveAuthorization(updatedAuthorization).andThen(Single.just(updatedAuthorization));
-        });
-  }
-
-  @Override
-  public Single<Authorization> createAuthorization(String customerId, String transactionId,
-      Authorization.Status status, String description, String icon, String name) {
-    final Authorization authorization =
-        authorizationFactory.create(idGenerator.generate(), customerId, null, status, null, null,
-            description, transactionId, null, icon, name);
-    return saveAuthorization(authorization).andThen(Single.just(authorization));
-  }
-
-  @Override public Completable removeAuthorizations(String customerId, String transactionId) {
-    return Observable.from(getAuthorizations())
-        .filter(authorization -> authorization.getCustomerId()
-            .equals(customerId) && authorization.getTransactionId()
-            .equals(transactionId))
-        .map(authorization -> authorization.getId())
-        .toList()
-        .flatMapIterable(ids -> ids)
-        .flatMapCompletable(id -> removeAuthorization(id))
-        .toCompletable();
-  }
-
-  private Completable removeAuthorization(String authorizationId) {
-    return Completable.fromAction(() -> {
-      removeLocalAuthorization(authorizationId);
-      authorizations.remove(authorizationId);
-    });
   }
 
   private List<Authorization> getAuthorizations() {
@@ -160,26 +99,6 @@ public class RealmAuthorizationPersistence implements AuthorizationPersistence {
     }
 
     return localAuthorization;
-  }
-
-  private void removeLocalAuthorization(String authorizationId) {
-    Realm realm = database.get();
-
-    try {
-      final RealmAuthorization realmAuthorization = realm.where(RealmAuthorization.class)
-          .contains(RealmAuthorization.ID, authorizationId)
-          .findFirst();
-
-      if (realmAuthorization != null) {
-        realm.beginTransaction();
-        realmAuthorization.deleteFromRealm();
-        realm.commitTransaction();
-      }
-    } finally {
-      if (realm != null) {
-        realm.close();
-      }
-    }
   }
 
   private List<Authorization> getLocalAuthorization() {

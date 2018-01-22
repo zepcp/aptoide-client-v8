@@ -12,8 +12,6 @@ import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v3.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v3.CreateTransactionRequest;
 import cm.aptoide.pt.dataprovider.ws.v3.GetApkInfoRequest;
-import cm.aptoide.pt.dataprovider.ws.v3.GetTransactionRequest;
-import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Single;
@@ -55,43 +53,10 @@ public class AuthorizationServiceV3 implements AuthorizationService {
     this.authorizationIcon = authorizationIcon;
   }
 
-  @Override public Single<Authorization> getAuthorization(String transactionId, String customerId) {
-    return GetApkInfoRequest.of(billingIdManager.resolveTransactionId(transactionId),
-        bodyInterceptorV3, httpClient, converterFactory, tokenInvalidator, sharedPreferences,
-        resources)
-        .observe(false)
-        .toSingle()
-        .flatMap(response -> {
-
-          if (response.isOk()) {
-            if (response.isPaid()) {
-              return GetTransactionRequest.of(response.getPayment()
-                      .getMetadata()
-                      .getProductId(), bodyInterceptorV3, httpClient, converterFactory,
-                  tokenInvalidator, sharedPreferences)
-                  .observe(true)
-                  .toSingle()
-                  .map(transactionResponse -> authorizationMapper.map(
-                      billingIdManager.generateAuthorizationId(1), customerId, transactionId,
-                      transactionResponse, response, authorizationIcon, authorizationName));
-            }
-            return Single.just(
-                authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                    AuthorizationFactory.PAYPAL_SDK, Authorization.Status.REDEEMED, null, null,
-                    null, transactionId, null, authorizationIcon, authorizationName));
-          }
-
-          return Single.just(
-              authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null, null, null,
-                  transactionId, null, authorizationIcon, authorizationName));
-        });
-  }
-
   @Override
-  public Single<Authorization> updateAuthorization(String customerId, String transactionId,
+  public Single<Authorization> updateAuthorization(String customerId, String authorizationId,
       String metadata) {
-    return GetApkInfoRequest.of(billingIdManager.resolveTransactionId(transactionId),
+    return GetApkInfoRequest.of(billingIdManager.resolveTransactionId(authorizationId),
         bodyInterceptorV3, httpClient, converterFactory, tokenInvalidator, sharedPreferences,
         resources)
         .observe(true)
@@ -111,14 +76,14 @@ public class AuthorizationServiceV3 implements AuthorizationService {
 
                   final Authorization authorization =
                       authorizationMapper.map(billingIdManager.generateAuthorizationId(1),
-                          customerId, transactionId, response, paidApp, authorizationIcon,
+                          customerId, authorizationId, response, paidApp, authorizationIcon,
                           authorizationName);
 
                   if (authorization.isActive()) {
                     return transactionPersistence.saveTransaction(
-                        transactionMapper.map(customerId, transactionId, response,
+                        transactionMapper.map(customerId, authorizationId, response,
                             billingIdManager.generateProductId(
-                                billingIdManager.resolveTransactionId(transactionId))))
+                                billingIdManager.resolveTransactionId(authorizationId))))
                         .andThen(Single.just(authorization));
                   }
 
@@ -128,12 +93,8 @@ public class AuthorizationServiceV3 implements AuthorizationService {
 
           return Single.just(
               authorizationFactory.create(billingIdManager.generateAuthorizationId(1), customerId,
-                  AuthorizationFactory.PAYPAL_SDK, Authorization.Status.FAILED, null, null, null,
-                  transactionId, null, authorizationIcon, authorizationName));
+                  Authorization.PAYPAL_SDK, Authorization.Status.FAILED, null, null, null,
+                  null, authorizationIcon, authorizationName));
         });
-  }
-
-  @Override public Single<List<Authorization>> getAuthorizations(String customerId) {
-    return Single.error(new IllegalStateException("Not implemented."));
   }
 }

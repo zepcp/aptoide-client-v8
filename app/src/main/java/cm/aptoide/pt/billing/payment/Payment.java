@@ -72,6 +72,10 @@ public class Payment {
     return new Payment(null, customer, null, null, null, null, null);
   }
 
+  public static Payment withTransaction(Transaction transaction) {
+    return new Payment(null, null, null, null, null, null, transaction);
+  }
+
   public static Payment consolidate(Payment oldCustomer, Payment newCustomer) {
 
     Merchant merchant = oldCustomer.merchant;
@@ -111,10 +115,6 @@ public class Payment {
     }
 
     return new Payment(merchant, customer, product, purchase, status, payload, transaction);
-  }
-
-  public static Payment withTransaction(Transaction transaction) {
-    return new Payment(null, null, null, null, null, null, transaction);
   }
 
   public static enum Status {

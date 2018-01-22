@@ -7,18 +7,24 @@ package cm.aptoide.pt.billing.payment;
 
 public class PaymentMethod {
 
+  public static final String PAYPAL = "PAYPAL";
+  public static final String CREDIT_CARD = "ADYEN";
+
   private final String id;
   private final String type;
   private final String name;
   private final String description;
   private final String icon;
+  private final boolean defaultPaymentMethod;
 
-  public PaymentMethod(String id, String type, String name, String description, String icon) {
+  public PaymentMethod(String id, String type, String name, String description, String icon,
+      boolean defaultPaymentMethod) {
     this.id = id;
     this.type = type;
     this.name = name;
     this.description = description;
     this.icon = icon;
+    this.defaultPaymentMethod = defaultPaymentMethod;
   }
 
   public String getId() {
@@ -41,4 +47,7 @@ public class PaymentMethod {
     return icon;
   }
 
+  public boolean isDefault() {
+    return defaultPaymentMethod;
+  }
 }

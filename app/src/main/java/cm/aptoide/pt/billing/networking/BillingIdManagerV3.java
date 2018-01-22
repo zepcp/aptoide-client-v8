@@ -35,7 +35,7 @@ public class BillingIdManagerV3 implements BillingIdManager {
     return Long.valueOf(productId.replace("product", ""));
   }
 
-  @Override public long resolveServiceId(String serviceId) {
+  @Override public long resolveAuthorizationId(String serviceId) {
     return Long.valueOf(serviceId.replace("service", ""));
   }
 
