@@ -537,5 +537,6 @@
   <string name="fragment_credit_card_authorization_next_button">next</string>
   <string name="fragment_payment_methods_toolbar_title">Add payment method</string>
   <string name="fragment_payment_authorization_change_text">Change</string>
+  <string name="fragment_payment_methods_saved_payments">Saved payments</string>
 </resources>
 
