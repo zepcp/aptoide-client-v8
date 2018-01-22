@@ -30,12 +30,12 @@ public class UpdateAuthorizationRequest
         + "/api/7/";
   }
 
-  public static UpdateAuthorizationRequest of(long transactionId, String metadata,
+  public static UpdateAuthorizationRequest of(String transactionId, String metadata,
       SharedPreferences sharedPreferences, OkHttpClient httpClient,
       Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptorV7,
       TokenInvalidator tokenInvalidator) {
     final RequestBody requestBody = new RequestBody();
-    requestBody.setTransactionId(transactionId);
+    requestBody.setTransactionId(Long.valueOf(transactionId));
     final RequestBody.Data data = new RequestBody.Data();
     data.setPayKey(metadata);
     requestBody.setServiceData(data);

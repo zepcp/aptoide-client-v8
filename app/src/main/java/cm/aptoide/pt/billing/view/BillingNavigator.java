@@ -1,13 +1,13 @@
 package cm.aptoide.pt.billing.view;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
 import android.support.customtabs.CustomTabsIntent;
+import android.widget.Toast;
 import cm.aptoide.pt.BuildConfig;
-import cm.aptoide.pt.billing.payment.AdyenPaymentService;
-import cm.aptoide.pt.billing.payment.PayPalPaymentService;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationFragment;
@@ -29,6 +29,7 @@ import rx.Observable;
 public class BillingNavigator {
 
   private static final int CUSTOMER_AUTHORIZATION_REQUEST_CODE = 2001;
+  private final Context context;
   private final PurchaseBundleMapper bundleMapper;
   private final ActivityNavigator activityNavigator;
   private final FragmentNavigator fragmentNavigator;
@@ -36,9 +37,10 @@ public class BillingNavigator {
   private final CustomTabsNavigator customTabsNavigator;
   private final int customTabsToolbarColor;
 
-  public BillingNavigator(PurchaseBundleMapper bundleMapper, ActivityNavigator activityNavigator,
+  public BillingNavigator(Context context, PurchaseBundleMapper bundleMapper, ActivityNavigator activityNavigator,
       FragmentNavigator fragmentNavigator, String marketName,
       CustomTabsNavigator customTabsNavigator, @ColorInt int customTabsToolbarColor) {
+    this.context = context;
     this.bundleMapper = bundleMapper;
     this.activityNavigator = activityNavigator;
     this.fragmentNavigator = fragmentNavigator;
@@ -57,10 +59,10 @@ public class BillingNavigator {
     final Bundle bundle = getBillingBundle(merchantName, service.getType());
 
     switch (service.getType()) {
-      case PayPalPaymentService.TYPE:
+      case PaymentMethod.PAYPAL:
         fragmentNavigator.navigateToWithoutBackSave(PaymentFragment.create(bundle), true);
         break;
-      case AdyenPaymentService.TYPE:
+      case PaymentMethod.CREDIT_CARD:
         fragmentNavigator.navigateTo(CreditCardAuthorizationFragment.create(bundle), true);
         break;
       default:
@@ -153,6 +155,10 @@ public class BillingNavigator {
   public void navigateToPaymentMethodsView(String merchantName) {
     fragmentNavigator.navigateToWithoutBackSave(
         PaymentMethodsFragment.create(getBillingBundle(merchantName, null)), true);
+  }
+
+  public void navigateToManageAuthorizationsView() {
+    Toast.makeText(context, "Not implemented!", Toast.LENGTH_SHORT).show();
   }
 
   public static class PayPalResult {

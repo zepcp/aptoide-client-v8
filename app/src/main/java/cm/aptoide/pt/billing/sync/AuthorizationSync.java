@@ -6,66 +6,49 @@
 package cm.aptoide.pt.billing.sync;
 
 import cm.aptoide.pt.billing.UserPersistence;
+import cm.aptoide.pt.billing.authorization.AdyenAuthorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
 import cm.aptoide.pt.billing.authorization.AuthorizationService;
-import cm.aptoide.pt.billing.authorization.LocalIdGenerator;
-import cm.aptoide.pt.billing.authorization.MetadataAuthorization;
+import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.sync.Sync;
 import rx.Completable;
+import rx.Observable;
 
 public class AuthorizationSync extends Sync {
 
-  private final String transactionId;
   private final UserPersistence userPersistence;
   private final AuthorizationService authorizationService;
   private final AuthorizationPersistence authorizationPersistence;
-  private final LocalIdGenerator idGenerator;
 
-  public AuthorizationSync(String id, UserPersistence userPersistence, String transactionId,
+  public AuthorizationSync(String id, UserPersistence userPersistence,
       AuthorizationService authorizationService, AuthorizationPersistence authorizationPersistence,
-      boolean periodic, boolean exact, long interval, long trigger, LocalIdGenerator idGenerator) {
+      boolean periodic, boolean exact, long interval, long trigger) {
     super(id, periodic, exact, trigger, interval);
-    this.transactionId = transactionId;
     this.userPersistence = userPersistence;
     this.authorizationService = authorizationService;
     this.authorizationPersistence = authorizationPersistence;
-    this.idGenerator = idGenerator;
   }
 
   @Override public Completable execute() {
     return userPersistence.getUser()
         .first()
         .toSingle()
-        .flatMapCompletable(
-            customer -> syncRemoteAuthorization(customer.getId(), transactionId).onErrorComplete()
-                .andThen(syncMetadataAuthorization(customer.getId(), transactionId)));
+        .flatMapCompletable(customer -> syncAuthorizations(customer.getId()));
   }
 
-  private Completable syncMetadataAuthorization(String customerId, String transactionId) {
-    return authorizationPersistence.getAuthorization(customerId, transactionId)
+  private Completable syncAuthorizations(String customerId) {
+    return authorizationPersistence.getAuthorizations(customerId)
         .first()
-        .filter(authorization -> authorization instanceof MetadataAuthorization)
-        .cast(MetadataAuthorization.class)
-        .filter(authorization -> authorization.isPendingSync())
-        .flatMapSingle(authorization -> authorizationService.updateAuthorization(customerId,
-            authorization.getTransactionId(), authorization.getMetadata()))
+        .flatMapIterable(authorizations -> authorizations)
+        .publish(published -> Observable.merge(published.ofType(AdyenAuthorization.class)
+            .flatMap(adyenAuthorization -> authorizationService.updateAuthorization(customerId,
+                adyenAuthorization.getId(), adyenAuthorization.getPayload())
+                .toObservable()), published.ofType(PayPalAuthorization.class)
+            .flatMap(payPalAuthorization -> authorizationService.updateAuthorization(customerId,
+                payPalAuthorization.getId(), payPalAuthorization.getPayKey())
+                .toObservable())))
         .flatMapCompletable(
-            authorization -> authorizationPersistence.saveAuthorization(authorization))
+            authorization -> authorizationPersistence.removeAuthorization(authorization.getId()))
         .toCompletable();
-  }
-
-  private Completable syncRemoteAuthorization(String customerId, String transactionId) {
-
-    if (idGenerator.isLocal(transactionId)) {
-      return Completable.complete();
-    }
-
-    return authorizationService.getAuthorization(transactionId, customerId)
-        .flatMapCompletable(
-            authorization -> authorizationPersistence.saveAuthorization(authorization));
-  }
-
-  public String getTransactionId() {
-    return transactionId;
   }
 }

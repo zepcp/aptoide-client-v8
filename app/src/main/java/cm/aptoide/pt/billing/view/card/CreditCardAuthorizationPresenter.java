@@ -5,7 +5,6 @@ import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
-import java.io.IOException;
 import rx.Scheduler;
 import rx.exceptions.OnErrorNotImplementedException;
 
@@ -33,9 +32,39 @@ public class CreditCardAuthorizationPresenter implements Presenter {
 
     handleSaveCreditCardEvent();
 
-    handleErrorDismissEvent();
-
     handleCancel();
+
+    handleRegistrationResult();
+  }
+
+  private void handleRegistrationResult() {
+    view.getLifecycle()
+        .filter(event -> event.equals(View.LifecycleEvent.RESUME))
+        .flatMap(__ -> billing.getCustomer()
+            .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .observeOn(viewScheduler)
+        .subscribe(customer -> {
+
+          if (customer.isAuthenticated() && customer.isPaymentMethodSelected()) {
+
+            if (customer.isAuthorizationSelected()) {
+              if (customer.getSelectedAuthorization()
+                  .isFailed()) {
+                analytics.sendAuthorizationErrorEvent(serviceName);
+              }
+
+              if (customer.getSelectedAuthorization()
+                  .isActive()) {
+                navigator.popView();
+              }
+            }
+          } else {
+            navigator.popView();
+          }
+        }, throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 
   private void handleSaveCreditCardEvent() {
@@ -44,7 +73,9 @@ public class CreditCardAuthorizationPresenter implements Presenter {
         .flatMap(created -> view.saveCreditCardEvent())
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(creditCard -> billing.authorize(creditCard), throwable -> showError(throwable));
+        .subscribe(creditCard -> billing.authorize(creditCard), throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
   }
 
   private void handleCancel() {
@@ -52,38 +83,12 @@ public class CreditCardAuthorizationPresenter implements Presenter {
         .filter(event -> event.equals(View.LifecycleEvent.CREATE))
         .flatMap(created -> view.cancelEvent())
         .observeOn(viewScheduler)
-        .doOnNext(__ -> {
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(__ -> {
+          billing.clearPaymentMethodSelection();
           analytics.sendAuthorizationCancelEvent(serviceName);
-          navigator.popView();
-        })
-        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
-        }, throwable -> showError(throwable));
-  }
-
-  private void handleErrorDismissEvent() {
-    view.getLifecycle()
-        .filter(event -> event.equals(View.LifecycleEvent.CREATE))
-        .flatMap(created -> view.errorDismisses())
-        .doOnNext(__ -> popViewWithError())
-        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
-  }
-
-  private void showError(Throwable throwable) {
-    if (throwable instanceof IOException) {
-      view.hideLoading();
-      view.showNetworkError();
-    } else {
-      popViewWithError();
-    }
-  }
-
-  private void popViewWithError() {
-    analytics.sendAuthorizationErrorEvent(serviceName);
-    navigator.popView();
   }
 }

@@ -54,6 +54,7 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   private BillingNavigator billingNavigator;
   private ImageView authorizationIcon;
   private TextView authorizationDescription;
+  private View authorizationContainer;
 
   public static Fragment create(Bundle bundle) {
     final PaymentFragment fragment = new PaymentFragment();
@@ -96,6 +97,7 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     authorizationIcon = (ImageView) view.findViewById(R.id.fragment_payment_authorization_icon);
     authorizationDescription =
         (TextView) view.findViewById(R.id.fragment_payment_authorization_description);
+    authorizationContainer = view.findViewById(R.id.fragment_payment_change_authorization_container);
 
     productPrice = (TextView) view.findViewById(R.id.include_payment_product_price);
 
@@ -178,6 +180,10 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     }
 
     authorizationDescription.setText(description);
+  }
+
+  @Override public Observable<Void> changeAuthorizationEvent() {
+    return RxView.clicks(authorizationContainer);
   }
 
   @Override public void showProduct(Product product) {

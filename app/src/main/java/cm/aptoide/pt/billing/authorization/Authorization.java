@@ -7,23 +7,25 @@ package cm.aptoide.pt.billing.authorization;
 
 public class Authorization {
 
+  public static final String PAYPAL_SDK = "PAYPAL_SDK";
+  public static final String ADYEN_SDK = "ADYEN_SDK";
   private final String id;
   private final String customerId;
   private final Status status;
-  private final String transactionId;
   private final String icon;
   private final String name;
+  private final String type;
   private final String description;
   private final boolean defaultAuthorization;
 
-  public Authorization(String id, String customerId, Status status, String transactionId,
-      String icon, String name, String description, boolean defaultAuthorization) {
+  public Authorization(String id, String customerId, Status status, String icon, String name,
+      String type, String description, boolean defaultAuthorization) {
     this.id = id;
     this.customerId = customerId;
     this.status = status;
-    this.transactionId = transactionId;
     this.icon = icon;
     this.name = name;
+    this.type = type;
     this.description = description;
     this.defaultAuthorization = defaultAuthorization;
   }
@@ -46,6 +48,10 @@ public class Authorization {
 
   public String getName() {
     return name;
+  }
+
+  public String getType() {
+    return type;
   }
 
   public String getDescription() {
@@ -74,10 +80,6 @@ public class Authorization {
 
   public Status getStatus() {
     return status;
-  }
-
-  public String getTransactionId() {
-    return transactionId;
   }
 
   public boolean isDefault() {

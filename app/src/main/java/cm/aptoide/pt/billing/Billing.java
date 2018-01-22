@@ -6,7 +6,8 @@
 package cm.aptoide.pt.billing;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationRepository;
+import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
+import cm.aptoide.pt.billing.authorization.AuthorizationService;
 import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.customer.User;
 import cm.aptoide.pt.billing.payment.Payment;
@@ -14,7 +15,7 @@ import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.payment.PaymentServiceAdapter;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
-import cm.aptoide.pt.billing.transaction.TransactionRepository;
+import cm.aptoide.pt.billing.transaction.TransactionService;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import java.util.HashMap;
 import java.util.List;
@@ -35,12 +36,13 @@ public class Billing {
   private final PublishSubject<Action> actions;
   private final Observable<Customer> customer;
   private final Observable<Payment> payment;
+  private final Authorization payPalAuthorization;
   private boolean setup;
 
   private Billing(String merchantPackageName, BillingService billingService,
       UserPersistence userPersistence, PurchaseTokenDecoder tokenDecoder,
       MerchantVersionProvider versionProvider, PaymentServiceAdapter serviceAdapter,
-      PublishSubject<Action> actions) {
+      PublishSubject<Action> actions, Authorization payPalAuthorization) {
     this.billingService = billingService;
     this.userPersistence = userPersistence;
     this.tokenDecoder = tokenDecoder;
@@ -49,10 +51,12 @@ public class Billing {
     this.serviceAdapter = serviceAdapter;
     this.actions = actions;
     this.setup = false;
+    this.payPalAuthorization = payPalAuthorization;
     this.customer = actions.publish(published -> Observable.merge(
         published.ofType(LoadCustomer.class)
             .compose(loadCustomer()), published.ofType(SelectPaymentMethod.class)
-            .compose(selectPaymentMethod())))
+            .compose(selectPaymentMethod()), published.ofType(ClearPaymentMethod.class)
+            .compose(clearPaymentMethod())))
         .scan(Customer.loading(),
             (oldCustomer, newCustomer) -> Customer.consolidate(oldCustomer, newCustomer))
         .replay(1)
@@ -94,7 +98,18 @@ public class Billing {
   }
 
   private Observable.Transformer<SelectPaymentMethod, Customer> selectPaymentMethod() {
-    return select -> select.map(data -> Customer.withPaymentMethod(data.getPaymentMethod()));
+    return select -> select.map(data -> data.getPaymentMethod())
+        .map(paymentMethod -> {
+          if (paymentMethod.getType()
+              .equals(PaymentMethod.PAYPAL)) {
+            return Customer.withAuthorization(paymentMethod, payPalAuthorization);
+          }
+          return Customer.withPaymentMethod(paymentMethod);
+        });
+  }
+
+  private Observable.Transformer<ClearPaymentMethod, Customer> clearPaymentMethod() {
+    return select -> select.map(data -> Customer.withoutPaymentMethod());
   }
 
   public Single<Merchant> getMerchant() {
@@ -117,8 +132,10 @@ public class Billing {
             return Single.zip(billingService.getPaymentMethods(),
                 billingService.getAuthorizations(user.getId()),
                 (paymentMethods, authorizations) -> Customer.authenticated(paymentMethods,
-                    authorizations, getDefaultAuthorization(authorizations), null, user.getId()))
-                .toObservable();
+                    authorizations, getDefaultAuthorization(authorizations),
+                    getDefaultPaymentMethod(paymentMethods), user.getId()))
+                .toObservable()
+                .startWith(Customer.loading());
           }
           return Observable.just(Customer.notAuthenticated());
         })
@@ -126,7 +143,14 @@ public class Billing {
   }
 
   private Observable.Transformer<SelectCustomer, Payment> selectCustomer() {
-    return selectCustomer -> selectCustomer.map(data -> Payment.withCustomer(data.getCustomer()));
+    return selectCustomer -> selectCustomer.map(data -> {
+      if (data.getCustomer()
+          .getStatus()
+          .equals(Customer.Status.LOADING_ERROR)) {
+        return Payment.error();
+      }
+      return Payment.withCustomer(data.getCustomer());
+    });
   }
 
   private Observable.Transformer<SelectProduct, Payment> selectProduct() {
@@ -154,6 +178,14 @@ public class Billing {
             .startWith(Payment.loading())));
   }
 
+  private PaymentMethod getDefaultPaymentMethod(List<PaymentMethod> paymentMethods) {
+    for (PaymentMethod paymentMethod : paymentMethods) {
+      if (paymentMethod.isDefault()) {
+        return paymentMethod;
+      }
+    }
+    return null;
+  }
   private Authorization getDefaultAuthorization(List<Authorization> authorizations) {
     for (Authorization authorization : authorizations) {
       if (authorization.isDefault()) {
@@ -189,6 +221,10 @@ public class Billing {
 
   public void selectPaymentMethod(PaymentMethod paymentMethod) {
     actions.onNext(new SelectPaymentMethod(paymentMethod));
+  }
+
+  public void clearPaymentMethodSelection() {
+    actions.onNext(new ClearPaymentMethod());
   }
 
   private static class Action {
@@ -252,6 +288,9 @@ public class Billing {
     }
   }
 
+  public static class ClearPaymentMethod extends Action {
+  }
+
   public static class SelectCustomer extends Action {
 
     private final Customer customer;
@@ -271,31 +310,23 @@ public class Billing {
 
   public static class Builder {
 
-    private TransactionRepository transactionRepository;
     private BillingService billingService;
-    private AuthorizationRepository authorizationRepository;
     private UserPersistence userPersistence;
     private PurchaseTokenDecoder tokenDecoder;
     private String merchantPackageName;
     private MerchantVersionProvider versionProvider;
     private Map<String, PaymentService> services;
+    private TransactionService transactionService;
+    private AuthorizationService authorizationService;
+    private AuthorizationPersistence authorizationPersistence;
+    private String payPalIcon;
 
     public Builder() {
       this.services = new HashMap<>();
     }
 
-    public Builder setTransactionRepository(TransactionRepository transactionRepository) {
-      this.transactionRepository = transactionRepository;
-      return this;
-    }
-
     public Builder setBillingService(BillingService billingService) {
       this.billingService = billingService;
-      return this;
-    }
-
-    public Builder setAuthorizationRepository(AuthorizationRepository authorizationRepository) {
-      this.authorizationRepository = authorizationRepository;
       return this;
     }
 
@@ -319,8 +350,28 @@ public class Billing {
       return this;
     }
 
+    public Builder setTransactionService(TransactionService transactionService) {
+      this.transactionService = transactionService;
+      return this;
+    }
+
+    public Builder setAuthorizationService(AuthorizationService authorizationService) {
+      this.authorizationService = authorizationService;
+      return this;
+    }
+
+    public Builder setAuthorizationPersistence(AuthorizationPersistence authorizationPersistence) {
+      this.authorizationPersistence = authorizationPersistence;
+      return this;
+    }
+
     public Builder registerPaymentService(String type, PaymentService service) {
       services.put(type, service);
+      return this;
+    }
+
+    public Builder setPayPalIcon(String payPalIcon) {
+      this.payPalIcon = payPalIcon;
       return this;
     }
 
@@ -332,8 +383,10 @@ public class Billing {
 
       return new Billing(merchantPackageName, billingService, userPersistence, tokenDecoder,
           versionProvider,
-          new PaymentServiceAdapter(services, transactionRepository, authorizationRepository),
-          PublishSubject.create());
+          new PaymentServiceAdapter(services, authorizationService, transactionService,
+              authorizationPersistence),
+          PublishSubject.create(), new Authorization(null, null, null, payPalIcon, "PayPal",
+              Authorization.PAYPAL_SDK, null, true));
     }
   }
 }

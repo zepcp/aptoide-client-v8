@@ -35,6 +35,14 @@ public class Customer {
     return authenticated;
   }
 
+  public boolean isPaymentMethodSelected() {
+    return selectedPaymentMethod != null;
+  }
+
+  public boolean isAuthorizationSelected() {
+    return selectedAuthorization != null;
+  }
+
   public List<PaymentMethod> getPaymentMethods() {
     return paymentMethods;
   }
@@ -80,14 +88,21 @@ public class Customer {
     return new Customer(null, true, null, null, null, selectedPaymentMethod, null);
   }
 
+  public static Customer withoutPaymentMethod() {
+    return new Customer(null, true, null, null, null, null, null);
+  }
+
+  public static Customer withAuthorization(PaymentMethod paymentMethod,
+      Authorization authorization) {
+    return new Customer(null, true, null, null, authorization, paymentMethod, null);
+  }
+
   public static Customer consolidate(Customer oldCustomer, Customer newCustomer) {
 
     String id = oldCustomer.id;
     Boolean authenticated = oldCustomer.authenticated;
     List<PaymentMethod> paymentMethods = oldCustomer.paymentMethods;
     List<Authorization> authorizations = oldCustomer.authorizations;
-    Authorization selectedAuthorization = oldCustomer.selectedAuthorization;
-    PaymentMethod selectedPaymentMethod = oldCustomer.selectedPaymentMethod;
     Status status = oldCustomer.status;
 
     if (newCustomer.id != null) {
@@ -106,20 +121,12 @@ public class Customer {
       authorizations = newCustomer.authorizations;
     }
 
-    if (newCustomer.selectedAuthorization != null) {
-      selectedAuthorization = newCustomer.selectedAuthorization;
-    }
-
-    if (newCustomer.selectedPaymentMethod != null) {
-      selectedPaymentMethod = newCustomer.selectedPaymentMethod;
-    }
-
     if (newCustomer.status != null) {
       status = newCustomer.status;
     }
 
-    return new Customer(id, authenticated, paymentMethods, authorizations, selectedAuthorization,
-        selectedPaymentMethod, status);
+    return new Customer(id, authenticated, paymentMethods, authorizations,
+        newCustomer.selectedAuthorization, newCustomer.selectedPaymentMethod, status);
   }
 
   public enum Status {

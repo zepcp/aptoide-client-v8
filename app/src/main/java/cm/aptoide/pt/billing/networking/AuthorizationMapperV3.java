@@ -40,7 +40,7 @@ public class AuthorizationMapperV3 {
 
     if (transactionResponse.hasErrors()) {
       return getErrorAuthorization(transactionResponse.getErrors(), authorizationId, transactionId,
-          customerId, AuthorizationFactory.PAYPAL_SDK, description, price, icon, name);
+          customerId, Authorization.PAYPAL_SDK, description, price, icon, name);
     }
 
     Authorization.Status status;
@@ -62,8 +62,8 @@ public class AuthorizationMapperV3 {
         status = Authorization.Status.FAILED;
     }
 
-    return authorizationFactory.create(authorizationId, customerId, AuthorizationFactory.PAYPAL_SDK,
-        status, null, price, description, transactionId, null, icon, name);
+    return authorizationFactory.create(authorizationId, customerId, Authorization.PAYPAL_SDK,
+        status, null, price, description, null, icon, name);
   }
 
   private Authorization getErrorAuthorization(List<ErrorResponse> errors, String authorizationId,
@@ -72,7 +72,7 @@ public class AuthorizationMapperV3 {
 
     Authorization authorization =
         authorizationFactory.create(authorizationId, customerId, type, Authorization.Status.FAILED,
-            null, price, description, transactionId, null, icon, name);
+            null, price, description, null, icon, name);
 
     if (errors == null || errors.isEmpty()) {
       return authorization;
@@ -84,18 +84,17 @@ public class AuthorizationMapperV3 {
         || "PRODUCT-209".equals(error.code)
         || "PRODUCT-214".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PENDING, null, price, description, transactionId, null, icon, name);
+          Authorization.Status.PENDING, null, price, description, null, icon, name);
     }
 
     if ("PRODUCT-200".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.ACTIVE, null, price, description, transactionId, null, icon, name);
+          Authorization.Status.ACTIVE, null, price, description, null, icon, name);
     }
 
     if ("PRODUCT-216".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PROCESSING, null, price, description, transactionId,
-          null, icon, name);
+          Authorization.Status.PROCESSING, null, price, description, null, icon, name);
     }
 
     return authorization;
