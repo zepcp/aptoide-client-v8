@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.billing.authorization.Authorization;
+import java.util.ArrayList;
 import java.util.List;
 import rx.Observable;
 import rx.subjects.PublishSubject;
@@ -15,22 +16,29 @@ import rx.subjects.PublishSubject;
 
 class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> {
   private final PublishSubject<Authorization> selectPaymentSubject;
+  private final List<Authorization> selectedPayments;
+  private PaymentMethodSelectedListener paymentSelectionListener = this::setSelected;
   private List<Authorization> paymentMethods;
+  private boolean multiSelectionMode;
 
   SavedPaymentAdapter(List<Authorization> paymentMethods,
       PublishSubject<Authorization> selectPaymentSubject) {
     this.paymentMethods = paymentMethods;
     this.selectPaymentSubject = selectPaymentSubject;
+    this.selectedPayments = new ArrayList<>();
   }
 
   @Override public AuthorizationViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
     return new AuthorizationViewHolder(LayoutInflater.from(viewGroup.getContext())
-        .inflate(R.layout.payment_method_item, viewGroup, false), selectPaymentSubject);
+        .inflate(R.layout.payment_method_item, viewGroup, false), selectPaymentSubject,
+        paymentSelectionListener);
   }
 
   @Override
   public void onBindViewHolder(AuthorizationViewHolder authorizationViewHolder, int position) {
-    authorizationViewHolder.setPost(paymentMethods.get(position));
+    Authorization authorization = paymentMethods.get(position);
+    authorizationViewHolder.setAuthorization(authorization, multiSelectionMode,
+        selectedPayments.contains(authorization));
   }
 
   @Override public int getItemCount() {
@@ -38,11 +46,41 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
   }
 
   Observable<Authorization> authorizationSelected() {
-    return selectPaymentSubject;
+    return selectPaymentSubject.filter(authorization -> multiSelectionMode);
+  }
+
+  List<Authorization> getPaymentMethodsForRemoval() {
+    return selectedPayments;
+  }
+
+  void unsubscribeListeners() {
+    paymentSelectionListener = null;
   }
 
   void addPaymentMethods(List<Authorization> paymentMethods) {
     this.paymentMethods.addAll(paymentMethods);
     notifyDataSetChanged();
+  }
+
+  void multiSelectionMode(boolean multiSelection) {
+    this.multiSelectionMode = multiSelection;
+    notifyDataSetChanged();
+  }
+
+  void removePaymentMethods(List<Authorization> authorizations) {
+    paymentMethods.removeAll(authorizations);
+    notifyDataSetChanged();
+  }
+
+  private void setSelected(Authorization authorization, boolean isChecked) {
+    if (isChecked && !selectedPayments.contains(authorization)) {
+      selectedPayments.add(authorization);
+    } else {
+      selectedPayments.remove(authorization);
+    }
+  }
+
+  public void clearSelectedPayments() {
+    selectedPayments.clear();
   }
 }

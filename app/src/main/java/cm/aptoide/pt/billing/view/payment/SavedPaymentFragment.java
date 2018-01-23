@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -17,7 +18,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
@@ -50,6 +50,7 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
   private PublishRelay<Void> backRelay;
   private PublishSubject<Authorization> selectPaymentSubject;
   private PublishSubject<Void> deleteMenuSubject;
+  private PublishSubject<List<Authorization>> removePaymentsSubject;
   private FloatingActionButton addPayment;
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,6 +58,7 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
     backRelay = PublishRelay.create();
     selectPaymentSubject = PublishSubject.create();
     deleteMenuSubject = PublishSubject.create();
+    removePaymentsSubject = PublishSubject.create();
     setHasOptionsMenu(true);
     billing = ((AptoideApplication) getContext().getApplicationContext()).getBilling(
         getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
@@ -108,6 +110,7 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
   @Override public void onDestroy() {
     list = null;
     toolbar = null;
+    adapter.unsubscribeListeners();
     adapter = null;
     unregisterClickHandler(backClickHandler);
     super.onDestroy();
@@ -124,7 +127,11 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
         deleteMenuSubject.onNext(null);
         return true;
     }
-    return false;
+    return super.onOptionsItemSelected(item);
+  }
+
+  @Override public PublishSubject<List<Authorization>> paymentMethodsToRemove() {
+    return removePaymentsSubject;
   }
 
   @Override public Observable<Void> actionDeleteMenuClicked() {
@@ -144,7 +151,7 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
   }
 
   @Override public void showPaymentMethods(List<Authorization> authorizedPayments) {
-    adapter.addPaymentMethods(getMockedPaymentsList(30));
+    adapter.addPaymentMethods(getMockedPaymentsList(7));
   }
 
   @Override public void setPaymentMethodSelected(Authorization authorization) {
@@ -152,8 +159,39 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
         .show();
   }
 
-  @Override public void showPaymentMethodRemoval() {
-    addPayment.setVisibility(View.INVISIBLE);
+  @Override public void enterPaymentMethodRemovalMode() {
+    AppCompatActivity activity = (AppCompatActivity) getActivity();
+    activity.startSupportActionMode(new ActionMode.Callback() {
+      @Override public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+        addPayment.setVisibility(View.GONE);
+        adapter.multiSelectionMode(true);
+        actionMode.getMenuInflater()
+            .inflate(R.menu.payments_action_mode_delete_menu, menu);
+        actionMode.setTitle("Edit");
+        return true;
+      }
+
+      @Override public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+        return false;
+      }
+
+      @Override public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+        removePaymentsSubject.onNext(adapter.getPaymentMethodsForRemoval());
+        adapter.clearSelectedPayments();
+        actionMode.finish();
+        return true;
+      }
+
+      @Override public void onDestroyActionMode(ActionMode actionMode) {
+        adapter.clearSelectedPayments();
+        adapter.multiSelectionMode(false);
+        addPayment.setVisibility(View.VISIBLE);
+      }
+    });
+  }
+
+  @Override public void hidePaymentMethods(List<Authorization> authorizations) {
+    adapter.removePaymentMethods(authorizations);
   }
 
   public List<Authorization> getMockedPaymentsList(int numberOfMocks) {
@@ -163,12 +201,14 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
       int tmp = rnd.nextInt(100);
       if (tmp < 5) {
         payments.
-            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING, "1234",
-                "http://lorempixel.com/g/40/20", "Paypau", "papa.formigas@ant-lover.br", true));
+            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING,
+                "http://lorempixel.com/g/40/20", "Paypau", "Paypau", "papa.formigas@ant-lover.br",
+                true));
       } else {
         payments.
-            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING, "1234",
-                "http://lorempixel.com/g/40/20", "Paypau", "papa.formigas@ant-lover.br", false));
+            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING,
+                "http://lorempixel.com/g/40/20", "Paypau", "Paypau", "papa.formigas@ant-lover.br",
+                false));
       }
     }
 

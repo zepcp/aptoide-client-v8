@@ -76,7 +76,19 @@ class SavedPaymentPresenter implements Presenter {
         .flatMap(created -> view.actionDeleteMenuClicked()
             .retry())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> view.showPaymentMethodRemoval(), throwable -> {
+        .subscribe(__ -> view.enterPaymentMethodRemovalMode(), throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
+
+    view.getLifecycle()
+        .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
+        .flatMap(created -> view.paymentMethodsToRemove()
+            // TODO: 23/01/2018 remove saved payment methods from billing
+            .doOnNext(view::hidePaymentMethods)
+            .retry())
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(__ -> {
+        }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
   }

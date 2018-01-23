@@ -12,6 +12,8 @@ import rx.subjects.PublishSubject;
 
 interface SavedPaymentView extends View {
 
+  PublishSubject<List<Authorization>> paymentMethodsToRemove();
+
   Observable<Void> actionDeleteMenuClicked();
 
   Observable<Void> onBackPressed();
@@ -24,5 +26,7 @@ interface SavedPaymentView extends View {
 
   void setPaymentMethodSelected(Authorization authorization);
 
-  void showPaymentMethodRemoval();
+  void enterPaymentMethodRemovalMode();
+
+  void hidePaymentMethods(List<Authorization> authorizations);
 }

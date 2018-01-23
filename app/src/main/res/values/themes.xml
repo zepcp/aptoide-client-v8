@@ -19,6 +19,11 @@
 
     <!--toolbar-->
     <item name="toolbarTheme">@style/Toolbar</item>
+    <!--  It should be true otherwise action mode will not overlay toolbar -->
+    <item name="windowActionModeOverlay">true</item>
+    <item name="android:windowActionModeOverlay">true</item>
+    <!--  For Custom Action Mode Background Color/Drawable -->
+    <item name="actionModeBackground">@color/aptoide_color_focused</item>
 
     <!--for settings preference theme -->
     <item name="preferenceTheme">@style/Aptoide.PreferenceThemeOverlay</item>
