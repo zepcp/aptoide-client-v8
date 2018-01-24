@@ -12,7 +12,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
@@ -132,11 +131,16 @@ public abstract class FragmentView extends BaseFragment implements View {
     presenter.present();
   }
 
+  protected void showKeyboard(android.view.View input) {
+    input.requestFocus();
+    ((InputMethodManager) getContext().getSystemService(
+        Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+  }
+
   protected void hideKeyboard() {
-    Activity activity = getActivity();
-    android.view.View view = activity.getCurrentFocus();
+    android.view.View view = getActivity().getCurrentFocus();
     if (view != null) {
-      ((InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE)).
+      ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).
           hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
   }

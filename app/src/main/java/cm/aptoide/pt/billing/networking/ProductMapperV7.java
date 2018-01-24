@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.Price;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetProductsRequest;
@@ -13,12 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductMapperV7 {
-
-  private final BillingIdManager billingIdManager;
-
-  public ProductMapperV7(BillingIdManager billingIdManager) {
-    this.billingIdManager = billingIdManager;
-  }
 
   public List<Product> map(List<GetProductsRequest.ResponseBody.Product> responseList) {
 
@@ -33,7 +26,7 @@ public class ProductMapperV7 {
   }
 
   public Product map(GetProductsRequest.ResponseBody.Product response) {
-    String id = billingIdManager.generateProductId(response.getId());
+    long id = response.getId();
     String sku = response.getSku();
     String icon = response.getIcon();
     String title = response.getTitle();

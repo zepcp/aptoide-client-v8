@@ -12,40 +12,29 @@ import io.realm.annotations.Required;
 public class RealmAuthorization extends RealmObject {
 
   public static final String ID = "id";
+  public static final String CUSTOMER_ID = "customerId";
 
-  @PrimaryKey private String id;
+  @PrimaryKey private long id;
   @Required private String customerId;
-  @Required private String status;
   @Required private String type;
   @Required private String metadata;
-  @Required private String icon;
-  @Required private String name;
-  @Required private String description;
+  private long paymentMethodId;
+  private long transactionId;
 
   public RealmAuthorization() {
   }
 
-  public RealmAuthorization(String id, String customerId, String status, String metadata,
-      String description, String type, String icon, String name) {
+  public RealmAuthorization(long id, String customerId, String metadata, String type,
+      long paymentMethodId, long transactionId) {
     this.id = id;
     this.metadata = metadata;
-    this.status = status;
     this.customerId = customerId;
-    this.description = description;
     this.type = type;
-    this.icon = icon;
-    this.name = name;
+    this.paymentMethodId = paymentMethodId;
+    this.transactionId = transactionId;
   }
 
-  public String getIcon() {
-    return icon;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getId() {
+  public long getId() {
     return id;
   }
 
@@ -57,15 +46,15 @@ public class RealmAuthorization extends RealmObject {
     return metadata;
   }
 
-  public String getStatus() {
-    return status;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
   public String getType() {
     return type;
+  }
+
+  public long getPaymentMethodId() {
+    return paymentMethodId;
+  }
+
+  public long getTransactionId() {
+    return transactionId;
   }
 }

@@ -55,9 +55,8 @@ public class Payment {
     return transaction;
   }
 
-  public static Payment loaded(Merchant merchant, Product product, Purchase purchase,
-      String payload) {
-    return new Payment(merchant, null, product, purchase, Status.LOADED, payload, null);
+  public static Payment withProduct(Merchant merchant, Product product, String payload) {
+    return new Payment(merchant, null, product, null, Status.LOADING, payload, null);
   }
 
   public static Payment loading() {
@@ -68,50 +67,51 @@ public class Payment {
     return new Payment(null, null, null, null, Status.LOADING_ERROR, null, null);
   }
 
-  public static Payment withCustomer(Customer customer) {
-    return new Payment(null, customer, null, null, null, null, null);
+  public static Payment withCustomer(Customer customer, Transaction transaction,
+      Purchase purchase) {
+    return new Payment(null, customer, null, purchase, Status.LOADED, null, transaction);
   }
 
-  public static Payment withTransaction(Transaction transaction) {
-    return new Payment(null, null, null, null, null, null, transaction);
-  }
+  public static Payment consolidate(Payment oldPayment, Payment newPayment) {
 
-  public static Payment consolidate(Payment oldCustomer, Payment newCustomer) {
+    Merchant merchant = oldPayment.merchant;
+    Customer customer = oldPayment.customer;
+    Product product = oldPayment.product;
+    Purchase purchase = oldPayment.purchase;
+    String payload = oldPayment.payload;
+    Transaction transaction = oldPayment.transaction;
+    Status status = newPayment.status;
 
-    Merchant merchant = oldCustomer.merchant;
-    Customer customer = oldCustomer.customer;
-    Product product = oldCustomer.product;
-    Purchase purchase = oldCustomer.purchase;
-    Status status = oldCustomer.status;
-    String payload = oldCustomer.payload;
-    Transaction transaction = oldCustomer.transaction;
-
-    if (newCustomer.merchant != null) {
-      merchant = newCustomer.merchant;
+    if (newPayment.getStatus()
+        .equals(Status.LOADING_ERROR)) {
+      return new Payment(merchant, customer, product, purchase, status, payload, transaction);
     }
 
-    if (newCustomer.customer != null) {
-      customer = newCustomer.customer;
+    if (newPayment.getStatus()
+        .equals(Status.LOADING)) {
+      if (newPayment.merchant != null) {
+        merchant = newPayment.merchant;
+      }
+
+      if (newPayment.product != null) {
+        product = newPayment.product;
+      }
+
+      if (newPayment.payload != null) {
+        payload = newPayment.payload;
+      }
     }
 
-    if (newCustomer.product != null) {
-      product = newCustomer.product;
+    if (newPayment.customer != null) {
+      customer = newPayment.customer;
     }
 
-    if (newCustomer.purchase != null) {
-      purchase = newCustomer.purchase;
+    if (newPayment.purchase != null) {
+      purchase = newPayment.purchase;
     }
 
-    if (newCustomer.status != null) {
-      status = newCustomer.status;
-    }
-
-    if (newCustomer.payload != null) {
-      payload = newCustomer.payload;
-    }
-
-    if (newCustomer.transaction != null) {
-      transaction = newCustomer.transaction;
+    if (newPayment.transaction != null) {
+      transaction = newPayment.transaction;
     }
 
     return new Payment(merchant, customer, product, purchase, status, payload, transaction);

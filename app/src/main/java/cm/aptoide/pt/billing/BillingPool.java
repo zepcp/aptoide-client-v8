@@ -7,16 +7,10 @@ import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
-import cm.aptoide.pt.billing.authorization.AuthorizationService;
-import cm.aptoide.pt.billing.authorization.LocalIdGenerator;
 import cm.aptoide.pt.billing.customer.AccountUserPersistence;
 import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
 import cm.aptoide.pt.billing.networking.AuthorizationMapperV3;
 import cm.aptoide.pt.billing.networking.AuthorizationMapperV7;
-import cm.aptoide.pt.billing.networking.AuthorizationServiceV3;
-import cm.aptoide.pt.billing.networking.AuthorizationServiceV7;
-import cm.aptoide.pt.billing.networking.BillingIdManagerV3;
-import cm.aptoide.pt.billing.networking.BillingIdManagerV7;
 import cm.aptoide.pt.billing.networking.BillingServiceV3;
 import cm.aptoide.pt.billing.networking.BillingServiceV7;
 import cm.aptoide.pt.billing.networking.PaymentMethodMapper;
@@ -26,31 +20,23 @@ import cm.aptoide.pt.billing.networking.PurchaseMapperV3;
 import cm.aptoide.pt.billing.networking.PurchaseMapperV7;
 import cm.aptoide.pt.billing.networking.TransactionMapperV3;
 import cm.aptoide.pt.billing.networking.TransactionMapperV7;
-import cm.aptoide.pt.billing.networking.TransactionServiceV3;
-import cm.aptoide.pt.billing.networking.TransactionServiceV7;
 import cm.aptoide.pt.billing.payment.Adyen;
-import cm.aptoide.pt.billing.payment.AdyenPaymentService;
+import cm.aptoide.pt.billing.payment.CreditCardPaymentService;
 import cm.aptoide.pt.billing.payment.PayPalPaymentService;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
-import cm.aptoide.pt.billing.persistence.InMemoryTransactionPersistence;
 import cm.aptoide.pt.billing.persistence.RealmAuthorizationMapper;
 import cm.aptoide.pt.billing.persistence.RealmAuthorizationPersistence;
 import cm.aptoide.pt.billing.purchase.Base64PurchaseTokenDecoder;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import cm.aptoide.pt.billing.transaction.TransactionFactory;
-import cm.aptoide.pt.billing.transaction.TransactionPersistence;
-import cm.aptoide.pt.billing.transaction.TransactionService;
 import cm.aptoide.pt.crashreports.CrashLogger;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.Database;
-import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v3.BaseBody;
 import cm.aptoide.pt.install.PackageRepository;
 import cm.aptoide.pt.networking.AuthenticationPersistence;
-import cm.aptoide.pt.sync.SyncScheduler;
-import com.jakewharton.rxrelay.PublishRelay;
 import java.util.HashMap;
 import java.util.Map;
 import okhttp3.OkHttpClient;
@@ -68,9 +54,7 @@ public class BillingPool {
   private final Resources resources;
   private final PackageRepository packageRepository;
   private final TokenInvalidator tokenInvalidator;
-  private final SyncScheduler syncScheduler;
   private final ExternalBillingSerializer externalBillingSerializer;
-  private final BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> bodyInterceptorPoolV7;
   private final BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody>
       accountSettingsBodyInterceptorPoolV7;
   private final Converter.Factory converterFactory;
@@ -83,34 +67,23 @@ public class BillingPool {
   private final String marketName;
   private final String payPalIcon;
 
-  private TransactionService transactionServiceV7;
-  private BillingServiceV7 billingServiceV7;
-  private BillingIdManager billingIdManagerV7;
-
-  private TransactionService transactionServiceV3;
+  private BillingService billingServiceV7;
   private BillingService billingServiceV3;
-  private BillingIdManager billingIdManagerV3;
 
   private AuthorizationPersistence authorizationPersistence;
-  private TransactionPersistence transactionPersistence;
   private UserPersistence userPersistence;
   private TransactionFactory transactionFactory;
   private AuthorizationFactory authorizationFactory;
   private PurchaseTokenDecoder purchaseTokenDecoder;
-  private TransactionMapperV3 transactionMapperV3;
-  private LocalIdGenerator localIdGenerator;
   private MerchantVersionProvider merchantVersionCodeProvider;
   private PayPalPaymentService payPalPaymentService;
-  private AdyenPaymentService adyenPaymentService;
-  private AuthorizationService authorizationServiceV3;
-  private AuthorizationService authorizationServiceV7;
+  private CreditCardPaymentService creditCardPaymentService;
 
   public BillingPool(SharedPreferences sharedPreferences,
       BodyInterceptor<BaseBody> bodyInterceptorV3, OkHttpClient httpClient,
       AptoideAccountManager accountManager, Database database, Resources resources,
       PackageRepository packageRepository, TokenInvalidator tokenInvalidator,
-      SyncScheduler syncScheduler, ExternalBillingSerializer externalBillingSerializer,
-      BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> bodyInterceptorPoolV7,
+      ExternalBillingSerializer externalBillingSerializer,
       BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> accountSettingsBodyInterceptorPoolV7,
       HashMap<String, Billing> poll, Converter.Factory converterFactory, CrashReport crashLogger,
       Adyen adyen, PurchaseFactory purchaseFactory, int minimumAPILevelPayPal,
@@ -125,9 +98,7 @@ public class BillingPool {
     this.resources = resources;
     this.packageRepository = packageRepository;
     this.tokenInvalidator = tokenInvalidator;
-    this.syncScheduler = syncScheduler;
     this.externalBillingSerializer = externalBillingSerializer;
-    this.bodyInterceptorPoolV7 = bodyInterceptorPoolV7;
     this.accountSettingsBodyInterceptorPoolV7 = accountSettingsBodyInterceptorPoolV7;
     this.converterFactory = converterFactory;
     this.crashLogger = crashLogger;
@@ -147,14 +118,6 @@ public class BillingPool {
     return pool.get(merchantPackageName);
   }
 
-  public BillingIdManager getIdResolver(String merchantName) {
-    if (merchantName.equals(BuildConfig.APPLICATION_ID)) {
-      return getBillingIdManagerV3();
-    } else {
-      return getBillingIdManagerV7();
-    }
-  }
-
   private Billing create(String merchantPackageName) {
     if (merchantPackageName.equals(BuildConfig.APPLICATION_ID)) {
       return new Billing.Builder().setMerchantPackageName(merchantPackageName)
@@ -162,10 +125,8 @@ public class BillingPool {
           .setUserPersistence(getUserPersistence())
           .setPurchaseTokenDecoder(getPurchaseTokenDecoder())
           .setBillingService(getBillingServiceV3())
-          .setTransactionService(getTransactionServiceV3())
-          .setAuthorizationService(getAuthorizationServiceV3())
           .setAuthorizationPersistence(getAuthorizationPersistence())
-          .registerPaymentService(PaymentMethod.CREDIT_CARD, getAdyenPaymentService())
+          .registerPaymentService(PaymentMethod.CREDIT_CARD, getCreditCardPaymentService())
           .registerPaymentService(PaymentMethod.PAYPAL, getPayPalPaymentService())
           .setPayPalIcon(payPalIcon)
           .build();
@@ -175,10 +136,8 @@ public class BillingPool {
           .setUserPersistence(getUserPersistence())
           .setPurchaseTokenDecoder(getPurchaseTokenDecoder())
           .setBillingService(getBillingServiceV7())
-          .setTransactionService(getTransactionServiceV7())
-          .setAuthorizationService(getAuthorizationServiceV7())
           .setAuthorizationPersistence(getAuthorizationPersistence())
-          .registerPaymentService(PaymentMethod.CREDIT_CARD, getAdyenPaymentService())
+          .registerPaymentService(PaymentMethod.CREDIT_CARD, getCreditCardPaymentService())
           .registerPaymentService(PaymentMethod.PAYPAL, getPayPalPaymentService())
           .setPayPalIcon(payPalIcon)
           .build();
@@ -192,11 +151,11 @@ public class BillingPool {
     return payPalPaymentService;
   }
 
-  private AdyenPaymentService getAdyenPaymentService() {
-    if (adyenPaymentService == null) {
-      adyenPaymentService = new AdyenPaymentService(adyen);
+  private CreditCardPaymentService getCreditCardPaymentService() {
+    if (creditCardPaymentService == null) {
+      creditCardPaymentService = new CreditCardPaymentService(adyen);
     }
-    return adyenPaymentService;
+    return creditCardPaymentService;
   }
 
   private MerchantVersionProvider getMerchantVersionProvider() {
@@ -210,11 +169,11 @@ public class BillingPool {
     if (billingServiceV3 == null) {
       billingServiceV3 =
           new BillingServiceV3(bodyInterceptorV3, httpClient, converterFactory, tokenInvalidator,
-              sharedPreferences, new PurchaseMapperV3(purchaseFactory),
-              new ProductMapperV3(getBillingIdManagerV3()), resources,
-              new PaymentMethod(getBillingIdManagerV3().generateServiceId(1), PaymentMethod.PAYPAL,
-                  "PayPal", null, "", true), getBillingIdManagerV3(),
-              Build.VERSION.SDK_INT, minimumAPILevelPayPal, marketName);
+              sharedPreferences, new PurchaseMapperV3(purchaseFactory), new ProductMapperV3(),
+              new AuthorizationMapperV3(getAuthorizationFactory()), resources,
+              new PaymentMethod(1, PaymentMethod.PAYPAL, "PayPal", null, "", true),
+              Build.VERSION.SDK_INT, minimumAPILevelPayPal, marketName,
+              new TransactionMapperV3(getTransactionFactory()), getTransactionFactory());
     }
     return billingServiceV3;
   }
@@ -224,12 +183,13 @@ public class BillingPool {
       billingServiceV7 =
           new BillingServiceV7(accountSettingsBodyInterceptorPoolV7, httpClient, converterFactory,
               tokenInvalidator, sharedPreferences,
-              new PurchaseMapperV7(externalBillingSerializer, getBillingIdManagerV7(),
-                  purchaseFactory), new ProductMapperV7(getBillingIdManagerV7()),
-              new PaymentMethodMapper(crashLogger, getBillingIdManagerV7(), Build.VERSION.SDK_INT,
-                  minimumAPILevelAdyen, minimumAPILevelPayPal), getBillingIdManagerV7(),
-              purchaseFactory, authenticationPersistence,
-              new AuthorizationMapperV7(getAuthorizationFactory(), getBillingIdManagerV7()));
+              new PurchaseMapperV7(externalBillingSerializer, purchaseFactory),
+              new ProductMapperV7(),
+              new PaymentMethodMapper(crashLogger, Build.VERSION.SDK_INT, minimumAPILevelAdyen,
+                  minimumAPILevelPayPal), purchaseFactory, authenticationPersistence,
+              new AuthorizationMapperV7(getAuthorizationFactory()),
+              new TransactionMapperV7(getTransactionFactory()), getTransactionFactory(),
+              getAuthorizationFactory());
     }
     return billingServiceV7;
   }
@@ -241,68 +201,12 @@ public class BillingPool {
     return purchaseTokenDecoder;
   }
 
-  private AuthorizationService getAuthorizationServiceV3() {
-    if (authorizationServiceV3 == null) {
-      authorizationServiceV3 = new AuthorizationServiceV3(getAuthorizationFactory(),
-          new AuthorizationMapperV3(getAuthorizationFactory()), getTransactionMapperV3(),
-          getTransactionPersistence(), bodyInterceptorV3, httpClient,
-          WebService.getDefaultConverter(), tokenInvalidator, sharedPreferences, resources,
-          getBillingIdManagerV3(), "PayPal", "");
-    }
-    return authorizationServiceV3;
-  }
-
-  private TransactionService getTransactionServiceV7() {
-    if (transactionServiceV7 == null) {
-      transactionServiceV7 = new TransactionServiceV7(
-          new TransactionMapperV7(getTransactionFactory(), getBillingIdManagerV7()),
-          bodyInterceptorPoolV7, WebService.getDefaultConverter(), httpClient, tokenInvalidator,
-          sharedPreferences, getBillingIdManagerV7(), getTransactionFactory(),
-          authenticationPersistence);
-    }
-    return transactionServiceV7;
-  }
-
-  private TransactionService getTransactionServiceV3() {
-    if (transactionServiceV3 == null) {
-      transactionServiceV3 = new TransactionServiceV3(getTransactionMapperV3(), bodyInterceptorV3,
-          WebService.getDefaultConverter(), httpClient, tokenInvalidator, sharedPreferences,
-          getTransactionFactory(), resources, getBillingIdManagerV3());
-    }
-    return transactionServiceV3;
-  }
-
-  private TransactionMapperV3 getTransactionMapperV3() {
-    if (transactionMapperV3 == null) {
-      transactionMapperV3 =
-          new TransactionMapperV3(getTransactionFactory(), getBillingIdManagerV3());
-    }
-    return transactionMapperV3;
-  }
-
   private AuthorizationPersistence getAuthorizationPersistence() {
     if (authorizationPersistence == null) {
-      authorizationPersistence =
-          new RealmAuthorizationPersistence(new HashMap<>(), PublishRelay.create(), database,
-              new RealmAuthorizationMapper(getAuthorizationFactory()), Schedulers.io(),
-              getAuthorizationFactory(), getLocalIdGenerator());
+      authorizationPersistence = new RealmAuthorizationPersistence(database,
+          new RealmAuthorizationMapper(getAuthorizationFactory()), Schedulers.io());
     }
     return authorizationPersistence;
-  }
-
-  private LocalIdGenerator getLocalIdGenerator() {
-    if (localIdGenerator == null) {
-      localIdGenerator = new LocalIdGenerator();
-    }
-    return localIdGenerator;
-  }
-
-  private TransactionPersistence getTransactionPersistence() {
-    if (transactionPersistence == null) {
-      transactionPersistence =
-          new InMemoryTransactionPersistence(new HashMap<>(), PublishRelay.create());
-    }
-    return transactionPersistence;
   }
 
   private AuthorizationFactory getAuthorizationFactory() {
@@ -324,29 +228,5 @@ public class BillingPool {
       transactionFactory = new TransactionFactory();
     }
     return transactionFactory;
-  }
-
-  private BillingIdManager getBillingIdManagerV7() {
-    if (billingIdManagerV7 == null) {
-      billingIdManagerV7 = new BillingIdManagerV7(getLocalIdGenerator());
-    }
-    return billingIdManagerV7;
-  }
-
-  private BillingIdManager getBillingIdManagerV3() {
-    if (billingIdManagerV3 == null) {
-      billingIdManagerV3 = new BillingIdManagerV3(getLocalIdGenerator());
-    }
-    return billingIdManagerV3;
-  }
-
-  public AuthorizationService getAuthorizationServiceV7() {
-    if (authorizationServiceV7 == null) {
-      authorizationServiceV7 = new AuthorizationServiceV7(
-          new AuthorizationMapperV7(getAuthorizationFactory(), getBillingIdManagerV7()), httpClient,
-          WebService.getDefaultConverter(), tokenInvalidator, sharedPreferences,
-          bodyInterceptorPoolV7, getBillingIdManagerV7(), getAuthorizationFactory());
-    }
-    return authorizationServiceV7;
   }
 }

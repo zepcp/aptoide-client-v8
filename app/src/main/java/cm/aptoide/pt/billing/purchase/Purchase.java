@@ -3,12 +3,12 @@ package cm.aptoide.pt.billing.purchase;
 public class Purchase {
 
   private final Status status;
-  private final String productId;
+  private final long productId;
   private final String sku;
   private final String signature;
   private final String signatureData;
 
-  public Purchase(Status status, String productId, String sku, String signature,
+  public Purchase(Status status, long productId, String sku, String signature,
       String signatureData) {
     this.status = status;
     this.productId = productId;
@@ -25,7 +25,7 @@ public class Purchase {
     return status;
   }
 
-  public String getProductId() {
+  public long getProductId() {
     return productId;
   }
 

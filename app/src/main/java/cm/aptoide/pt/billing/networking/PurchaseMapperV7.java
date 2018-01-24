@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
@@ -17,13 +16,10 @@ import java.util.List;
 public class PurchaseMapperV7 {
 
   private final ExternalBillingSerializer serializer;
-  private final BillingIdManager billingIdManager;
   private final PurchaseFactory purchaseFactory;
 
-  public PurchaseMapperV7(ExternalBillingSerializer serializer, BillingIdManager billingIdManager,
-      PurchaseFactory purchaseFactory) {
+  public PurchaseMapperV7(ExternalBillingSerializer serializer, PurchaseFactory purchaseFactory) {
     this.serializer = serializer;
-    this.billingIdManager = billingIdManager;
     this.purchaseFactory = purchaseFactory;
   }
 
@@ -39,8 +35,8 @@ public class PurchaseMapperV7 {
 
   public Purchase map(PurchaseResponse response) {
     try {
-      return purchaseFactory.create(billingIdManager.generatePurchaseId(response.getProduct()
-              .getId()), response.getSignature(), serializer.serializePurchase(response.getData()
+      return purchaseFactory.create(response.getProduct()
+              .getId(), response.getSignature(), serializer.serializePurchase(response.getData()
               .getDeveloperPurchase()), response.getData()
               .getDeveloperPurchase()
               .getPurchaseState() == 0 ? Purchase.Status.COMPLETED : Purchase.Status.FAILED,

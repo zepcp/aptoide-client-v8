@@ -2,7 +2,9 @@ package cm.aptoide.pt.billing.view.card;
 
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.view.BillingNavigator;
+import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
 import rx.Scheduler;
@@ -44,24 +46,47 @@ public class CreditCardAuthorizationPresenter implements Presenter {
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .observeOn(viewScheduler)
+        .doOnNext(customer -> Logger.d("Billing", customer.toString()))
         .subscribe(customer -> {
 
-          if (customer.isAuthenticated() && customer.isPaymentMethodSelected()) {
-
-            if (customer.isAuthorizationSelected()) {
-              if (customer.getSelectedAuthorization()
-                  .isFailed()) {
-                analytics.sendAuthorizationErrorEvent(serviceName);
-              }
-
-              if (customer.getSelectedAuthorization()
-                  .isActive()) {
-                navigator.popView();
-              }
-            }
-          } else {
-            navigator.popView();
+          if (customer.getStatus()
+              .equals(Customer.Status.LOADING)) {
+            view.showLoading();
           }
+
+          if (customer.getStatus()
+              .equals(Customer.Status.LOADED)) {
+
+            if (customer.isAuthenticated() && customer.isPaymentMethodSelected()) {
+
+              if (customer.isAuthorizationSelected()) {
+                if (customer.getSelectedAuthorization()
+                    .isFailed()) {
+                  view.hideLoading();
+                  analytics.sendAuthorizationErrorEvent(serviceName);
+                  view.showUnknownError();
+                }
+
+                if (customer.getSelectedAuthorization()
+                    .isActive()) {
+                  navigator.popView();
+                }
+
+                if (customer.getSelectedAuthorization()
+                    .isProcessing()) {
+                  view.showLoading();
+                }
+              }
+            } else {
+              navigator.popView();
+            }
+          }
+
+          if (customer.getStatus().equals(Customer.Status.LOADING_ERROR)) {
+            view.hideLoading();
+            view.showNetworkError();
+          }
+
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });

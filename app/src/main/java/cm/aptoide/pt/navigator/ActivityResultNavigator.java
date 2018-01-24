@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.view.WindowManager;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
@@ -19,6 +18,7 @@ import cm.aptoide.pt.link.LinksHandlerFactory;
 import cm.aptoide.pt.notification.view.InboxNavigator;
 import cm.aptoide.pt.notification.view.NotificationNavigator;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
+import cm.aptoide.pt.view.BaseActivity;
 import cm.aptoide.pt.view.fragment.FragmentView;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
@@ -26,7 +26,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import rx.Observable;
 
-public abstract class ActivityResultNavigator extends ActivityCustomTabsNavigator
+public abstract class ActivityResultNavigator extends BaseActivity
     implements ActivityNavigator {
 
   @Inject AccountNavigator accountNavigator;
@@ -162,8 +162,7 @@ public abstract class ActivityResultNavigator extends ActivityCustomTabsNavigato
           this,
           ((AptoideApplication) getApplicationContext()).getPurchaseBundleMapper(),
           getActivityNavigator(), getFragmentNavigator(),
-          ((AptoideApplication) getApplicationContext()).getMarketName(), this,
-          ContextCompat.getColor(this, R.color.aptoide_orange));
+          ((AptoideApplication) getApplicationContext()).getMarketName());
     }
     return billingNavigator;
   }

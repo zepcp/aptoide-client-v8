@@ -156,6 +156,8 @@
 
       <ImageView
           android:id="@+id/fragment_payment_authorization_icon"
+          android:layout_alignParentStart="true"
+          android:layout_alignParentLeft="true"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_centerVertical="true"
@@ -167,13 +169,17 @@
 
       <TextView
           android:id="@+id/fragment_payment_authorization_description"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:layout_centerVertical="true"
           android:layout_marginLeft="8dp"
           android:layout_marginStart="8dp"
+          android:layout_marginRight="8dp"
+          android:layout_marginEnd="8dp"
           android:layout_toEndOf="@id/fragment_payment_authorization_icon"
           android:layout_toRightOf="@id/fragment_payment_authorization_icon"
+          android:layout_toStartOf="@+id/fragment_payment_change_text"
+          android:layout_toLeftOf="@+id/fragment_payment_change_text"
           android:fontFamily="sans-serif"
           android:lineSpacingExtra="6sp"
           android:textColor="@color/black_87_alpha"
@@ -183,6 +189,7 @@
           />
 
       <TextView
+          android:id="@+id/fragment_payment_change_text"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_alignParentEnd="true"

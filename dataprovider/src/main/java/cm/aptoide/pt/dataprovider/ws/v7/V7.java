@@ -36,6 +36,7 @@ import cm.aptoide.pt.dataprovider.util.ToRetryThrowable;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.RefreshBody;
 import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.DownloadInstallAnalyticsBaseBody;
+import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateAuthorizationRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateTransactionRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.DeletePurchaseRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetAuthorizationRequest;
@@ -510,8 +511,13 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("inapp/bank/authorization/set")
-    Observable<UpdateAuthorizationRequest.ResponseBody> updateBillingAuthorization(
+    Observable<Response<UpdateAuthorizationRequest.ResponseBody>> updateBillingAuthorization(
         @Body UpdateAuthorizationRequest.RequestBody body,
+        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+
+    @POST("inapp/bank/authorization/set")
+    Observable<Response<CreateAuthorizationRequest.ResponseBody>> createBillingAuthorization(
+        @Body CreateAuthorizationRequest.RequestBody body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @GET("inapp/bank/authorization/getMeta")

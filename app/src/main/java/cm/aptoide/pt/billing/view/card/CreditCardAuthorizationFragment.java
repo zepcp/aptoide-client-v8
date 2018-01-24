@@ -9,18 +9,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.payment.Adyen;
 import cm.aptoide.pt.billing.payment.CreditCard;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
-import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.braintreepayments.cardform.view.CardForm;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
@@ -29,8 +28,6 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     implements CreditCardAuthorizationView {
-
-  private static final String TAG = CreditCardAuthorizationFragment.class.getSimpleName();
 
   private View progressBar;
   private ClickHandler clickHandler;
@@ -42,7 +39,7 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   private BillingNavigator navigator;
   private BillingAnalytics analytics;
   private PublishRelay<Void> backButton;
-  private PublishRelay<Void> keyboardBuyRelay;
+  private PublishRelay<Void> keyboardNextRelay;
 
   public static CreditCardAuthorizationFragment create(Bundle bundle) {
     final CreditCardAuthorizationFragment fragment = new CreditCardAuthorizationFragment();
@@ -57,7 +54,7 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     navigator = ((ActivityResultNavigator) getActivity()).getBillingNavigator();
     analytics = ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
     backButton = PublishRelay.create();
-    keyboardBuyRelay = PublishRelay.create();
+    keyboardNextRelay = PublishRelay.create();
   }
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -88,6 +85,8 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
         .actionLabel(getString(R.string.fragment_credit_card_authorization_next_button))
         .setup(getActivity());
 
+    showKeyboard(cardForm.getCardEditText());
+
     cardForm.setOnCardFormValidListener(valid -> {
       if (valid) {
         nextButton.setEnabled(true);
@@ -97,7 +96,8 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     });
 
     cardForm.setOnCardFormSubmitListener(() -> {
-      keyboardBuyRelay.call(null);
+      hideKeyboard();
+      keyboardNextRelay.call(null);
     });
 
     attachPresenter(new CreditCardAuthorizationPresenter(this, billing, navigator, analytics,
@@ -134,6 +134,14 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     super.onDestroyView();
   }
 
+  @Override public void showNetworkError() {
+    Toast.makeText(getContext(), R.string.connection_error, Toast.LENGTH_SHORT).show();
+  }
+
+  @Override public void showUnknownError() {
+    Toast.makeText(getContext(), R.string.all_message_general_error, Toast.LENGTH_SHORT).show();
+  }
+
   @Override public void showLoading() {
     progressBar.setVisibility(View.VISIBLE);
   }
@@ -143,7 +151,7 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   }
 
   @Override public Observable<CreditCard> saveCreditCardEvent() {
-    return Observable.merge(keyboardBuyRelay, RxView.clicks(nextButton))
+    return Observable.merge(keyboardNextRelay, RxView.clicks(nextButton))
         .map(__ -> new CreditCard(cardForm.getCardNumber(), cardForm.getExpirationMonth(),
             cardForm.getExpirationYear(), cardForm.getCvv()));
   }
@@ -151,28 +159,4 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   @Override public Observable<Void> cancelEvent() {
     return backButton;
   }
-
-  //private PaymentDetails getCreditCard() {
-  //
-  //  final CreditCardPaymentDetails creditCardPaymentDetails =
-  //      new CreditCardPaymentDetails(paymentMethod.getInputDetails());
-  //  try {
-  //    final JSONObject sensitiveData = new JSONObject();
-  //
-  //    sensitiveData.put("holderName", "Checkout Shopper Placeholder");
-  //    sensitiveData.put("number", cardForm.getCardNumber());
-  //    sensitiveData.put("expiryMonth", cardForm.getExpirationMonth());
-  //    sensitiveData.put("expiryYear", cardForm.getExpirationYear());
-  //    sensitiveData.put("generationtime", generationTime);
-  //    sensitiveData.put("cvc", cardForm.getCvv());
-  //    creditCardPaymentDetails.fillCardToken(
-  //        new ClientSideEncrypter(publicKey).encrypt(sensitiveData.toString()));
-  //  } catch (JSONException e) {
-  //    Log.e(TAG, "JSON Exception occurred while generating token.", e);
-  //  } catch (EncrypterException e) {
-  //    Log.e(TAG, "EncrypterException occurred while generating token.", e);
-  //  }
-  //  creditCardPaymentDetails.fillStoreDetails(true);
-  //  return creditCardPaymentDetails;
-  //}
 }

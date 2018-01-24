@@ -66,7 +66,7 @@ public class PurchaseBundleMapper {
       bundle.putString(INAPP_DATA_SIGNATURE, purchase.getSignature());
     }
     bundle.putInt(RESPONSE_CODE, RESULT_OK);
-    bundle.putString(PRODUCT_ID, purchase.getProductId());
+    bundle.putLong(PRODUCT_ID, purchase.getProductId());
     bundle.putString(SKU, purchase.getSku());
     bundle.putString(STATUS, purchase.getStatus().name());
     return bundle;
@@ -75,7 +75,7 @@ public class PurchaseBundleMapper {
   public Purchase map(int resultCode, Bundle data) throws Throwable {
     if (resultCode == Activity.RESULT_OK) {
       if (data != null) {
-        return purchaseFactory.create(data.getString(PRODUCT_ID),
+        return purchaseFactory.create(data.getLong(PRODUCT_ID),
             data.getString(INAPP_DATA_SIGNATURE), data.getString(INAPP_PURCHASE_DATA),
             Purchase.Status.valueOf(data.getString(STATUS)), data.getString(SKU));
       }

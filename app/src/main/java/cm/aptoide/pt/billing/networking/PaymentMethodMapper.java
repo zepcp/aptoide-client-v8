@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.crashreports.CrashLogger;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
@@ -15,15 +14,13 @@ import java.util.List;
 public class PaymentMethodMapper {
 
   private final CrashLogger crashLogger;
-  private final BillingIdManager billingIdManager;
   private final int currentAPILevel;
   private final int minimumAPILevelAdyen;
   private final int minimumAPILevelPayPal;
 
-  public PaymentMethodMapper(CrashLogger crashLogger, BillingIdManager billingIdManager,
-      int currentAPILevel, int minimumAPILevelAdyen, int minimumAPILevelPayPal) {
+  public PaymentMethodMapper(CrashLogger crashLogger, int currentAPILevel, int minimumAPILevelAdyen,
+      int minimumAPILevelPayPal) {
     this.crashLogger = crashLogger;
-    this.billingIdManager = billingIdManager;
     this.currentAPILevel = currentAPILevel;
     this.minimumAPILevelAdyen = minimumAPILevelAdyen;
     this.minimumAPILevelPayPal = minimumAPILevelPayPal;
@@ -46,7 +43,7 @@ public class PaymentMethodMapper {
     switch (response.getName()) {
       case PaymentMethod.PAYPAL:
         if (currentAPILevel >= minimumAPILevelPayPal) {
-          return new PaymentMethod(billingIdManager.generateServiceId(response.getId()),
+          return new PaymentMethod(response.getId(),
               response.getName(), response.getLabel(), response.getDescription(),
               response.getIcon(), response.isDefaultService());
         }
@@ -54,7 +51,7 @@ public class PaymentMethodMapper {
             "PayPal not supported in Android API lower than " + minimumAPILevelPayPal);
       case PaymentMethod.CREDIT_CARD:
         if (currentAPILevel >= minimumAPILevelAdyen) {
-          return new PaymentMethod(billingIdManager.generateServiceId(response.getId()),
+          return new PaymentMethod(response.getId(),
               response.getName(), response.getLabel(), response.getDescription(),
               response.getIcon(), response.isDefaultService());
         }

@@ -63,45 +63,52 @@ public class PaymentPresenter implements Presenter {
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(payment -> {
-          if (!payment.getCustomer()
-              .isAuthenticated()) {
-            navigator.navigateToCustomerAuthenticationView(merchantName);
-          } else {
-            if (payment.getStatus()
-                .equals(Payment.Status.LOADED)) {
+
+          if (payment.getStatus()
+              .equals(Payment.Status.LOADING)) {
+            view.showLoading();
+          }
+
+          if (payment.getStatus()
+              .equals(Payment.Status.LOADING_ERROR)) {
+            view.hideLoading();
+            view.showNetworkError();
+          }
+
+          if (payment.getStatus()
+              .equals(Payment.Status.LOADED)) {
+
+            if (payment.getCustomer()
+                .isAuthenticated()) {
+
               view.hideLoading();
-            }
 
-            if (payment.getStatus()
-                .equals(Payment.Status.LOADING) || payment.getStatus()
-                .equals(Payment.Status.PROCESSING)) {
-              view.showLoading();
-            }
+              if (payment.getStatus()
+                  .equals(Payment.Status.PROCESSING)) {
+                view.showLoading();
+              }
 
-            if (payment.getStatus()
-                .equals(Payment.Status.COMPLETED)) {
-              analytics.sendPaymentSuccessEvent();
-              navigator.popViewWithResult(payment.getPurchase());
-            }
+              if (payment.getStatus()
+                  .equals(Payment.Status.COMPLETED)) {
+                analytics.sendPaymentSuccessEvent();
+                navigator.popViewWithResult(payment.getPurchase());
+              }
 
-            if (payment.getStatus()
-                .equals(Payment.Status.FAILED)) {
-              view.hideLoading();
-              view.showUnknownError();
-              analytics.sendPaymentErrorEvent();
-            }
+              if (payment.getStatus()
+                  .equals(Payment.Status.FAILED)) {
+                view.hideLoading();
+                view.showUnknownError();
+                analytics.sendPaymentErrorEvent();
+              }
 
-            if (payment.getStatus()
-                .equals(Payment.Status.LOADING_ERROR)) {
-              view.hideLoading();
-              view.showNetworkError();
+              view.showMerchant(payment.getMerchant()
+                  .getName());
+              view.showProduct(payment.getProduct());
+              view.showAuthorization(payment.getCustomer()
+                  .getSelectedAuthorization());
+            } else {
+              navigator.navigateToCustomerAuthenticationView(merchantName);
             }
-
-            view.showMerchant(payment.getMerchant()
-                .getName());
-            view.showProduct(payment.getProduct());
-            view.showAuthorization(payment.getCustomer()
-                .getSelectedAuthorization());
           }
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);

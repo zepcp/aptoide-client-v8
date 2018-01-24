@@ -1,6 +1,5 @@
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.transaction.Transaction;
 import cm.aptoide.pt.billing.transaction.TransactionFactory;
 import cm.aptoide.pt.dataprovider.model.v3.ErrorResponse;
@@ -10,18 +9,15 @@ import java.util.List;
 public class TransactionMapperV3 {
 
   private final TransactionFactory transactionFactory;
-  private final BillingIdManager billingIdManager;
 
-  public TransactionMapperV3(TransactionFactory transactionFactory,
-      BillingIdManager billingIdManager) {
+  public TransactionMapperV3(TransactionFactory transactionFactory) {
     this.transactionFactory = transactionFactory;
-    this.billingIdManager = billingIdManager;
   }
 
-  public Transaction map(String customerId, String transactionId,
-      TransactionResponse transactionResponse, String productId) {
+  public Transaction map(String customerId, long transactionId,
+      TransactionResponse transactionResponse, long productId) {
 
-    final String serviceId = billingIdManager.generateServiceId(1);
+    final long serviceId = 1;
     if (transactionResponse.hasErrors()) {
       return getErrorTransaction(transactionResponse.getErrors(), customerId, transactionId,
           serviceId, productId);
@@ -50,7 +46,7 @@ public class TransactionMapperV3 {
   }
 
   private Transaction getErrorTransaction(List<ErrorResponse> errors, String customerId,
-      String transactionId, String serviceId, String productId) {
+      long transactionId, long serviceId, long productId) {
 
     Transaction transaction = transactionFactory.create(transactionId, customerId, productId,
             Transaction.Status.FAILED, serviceId);

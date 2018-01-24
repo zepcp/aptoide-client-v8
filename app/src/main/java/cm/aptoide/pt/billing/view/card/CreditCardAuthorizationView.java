@@ -13,4 +13,8 @@ public interface CreditCardAuthorizationView extends View {
   Observable<CreditCard> saveCreditCardEvent();
 
   Observable<Void> cancelEvent();
+
+  void showNetworkError();
+
+  void showUnknownError();
 }

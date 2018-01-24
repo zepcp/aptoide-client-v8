@@ -237,7 +237,7 @@ public class PostFragment extends FragmentView implements PostView {
             aptoideApplication.getTokenInvalidator());
 
     setUpToolbar();
-    showKeyboard();
+    showKeyboard(userInput);
     final PostLocalAccessor postLocalAccessor = new PostLocalAccessor(installedRepository);
     AptoideAccountManager accountManager = aptoideApplication.getAccountManager();
     PostUrlProvider urlProvider;
@@ -256,12 +256,6 @@ public class PostFragment extends FragmentView implements PostView {
         ((ActivityResultNavigator) getContext()).getAccountNavigator(), tabNavigator, analytics);
     ((BackButtonActivity) getActivity()).registerClickHandler(presenter);
     attachPresenter(presenter);
-  }
-
-  private void showKeyboard() {
-    InputMethodManager imm =
-        (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-    imm.showSoftInput(userInput, InputMethodManager.SHOW_IMPLICIT);
   }
 
   private void setUpToolbar() {

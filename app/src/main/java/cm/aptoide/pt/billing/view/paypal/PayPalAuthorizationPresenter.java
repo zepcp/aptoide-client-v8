@@ -61,7 +61,7 @@ public class PayPalAuthorizationPresenter implements Presenter {
         .doOnNext(__ -> view.hideLoading())
         .doOnNext(authorization -> billingNavigator.navigateToPayPalForResult(PAY_APP_REQUEST_CODE,
             authorization.getPrice()
-                .getCurrency(), authorization.getDescription(), authorization.getPrice()
+                .getCurrency(), authorization.getProductDescription(), authorization.getPrice()
                 .getAmount()))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {

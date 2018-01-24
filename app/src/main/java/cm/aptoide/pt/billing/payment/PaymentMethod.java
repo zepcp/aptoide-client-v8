@@ -10,14 +10,14 @@ public class PaymentMethod {
   public static final String PAYPAL = "PAYPAL";
   public static final String CREDIT_CARD = "ADYEN";
 
-  private final String id;
+  private final long id;
   private final String type;
   private final String name;
   private final String description;
   private final String icon;
   private final boolean defaultPaymentMethod;
 
-  public PaymentMethod(String id, String type, String name, String description, String icon,
+  public PaymentMethod(long id, String type, String name, String description, String icon,
       boolean defaultPaymentMethod) {
     this.id = id;
     this.type = type;
@@ -27,7 +27,7 @@ public class PaymentMethod {
     this.defaultPaymentMethod = defaultPaymentMethod;
   }
 
-  public String getId() {
+  public long getId() {
     return id;
   }
 
@@ -49,5 +49,26 @@ public class PaymentMethod {
 
   public boolean isDefault() {
     return defaultPaymentMethod;
+  }
+
+  @Override public String toString() {
+    return "PaymentMethod{"
+        + "id="
+        + id
+        + ", type='"
+        + type
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + ", description='"
+        + description
+        + '\''
+        + ", icon='"
+        + icon
+        + '\''
+        + ", defaultPaymentMethod="
+        + defaultPaymentMethod
+        + '}';
   }
 }

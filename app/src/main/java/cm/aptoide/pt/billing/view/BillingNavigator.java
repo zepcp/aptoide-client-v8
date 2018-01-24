@@ -2,10 +2,7 @@ package cm.aptoide.pt.billing.view;
 
 import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.ColorInt;
-import android.support.customtabs.CustomTabsIntent;
 import android.widget.Toast;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
@@ -15,7 +12,6 @@ import cm.aptoide.pt.billing.view.login.PaymentLoginFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentMethodsFragment;
 import cm.aptoide.pt.navigator.ActivityNavigator;
-import cm.aptoide.pt.navigator.CustomTabsNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.navigator.Result;
 import com.paypal.android.sdk.payments.PayPalConfiguration;
@@ -28,25 +24,19 @@ import rx.Observable;
 
 public class BillingNavigator {
 
-  private static final int CUSTOMER_AUTHORIZATION_REQUEST_CODE = 2001;
   private final Context context;
   private final PurchaseBundleMapper bundleMapper;
   private final ActivityNavigator activityNavigator;
   private final FragmentNavigator fragmentNavigator;
   private final String marketName;
-  private final CustomTabsNavigator customTabsNavigator;
-  private final int customTabsToolbarColor;
 
   public BillingNavigator(Context context, PurchaseBundleMapper bundleMapper, ActivityNavigator activityNavigator,
-      FragmentNavigator fragmentNavigator, String marketName,
-      CustomTabsNavigator customTabsNavigator, @ColorInt int customTabsToolbarColor) {
+      FragmentNavigator fragmentNavigator, String marketName) {
     this.context = context;
     this.bundleMapper = bundleMapper;
     this.activityNavigator = activityNavigator;
     this.fragmentNavigator = fragmentNavigator;
     this.marketName = marketName;
-    this.customTabsNavigator = customTabsNavigator;
-    this.customTabsToolbarColor = customTabsToolbarColor;
   }
 
   public void navigateToCustomerAuthenticationView(String merchantName) {
@@ -135,16 +125,6 @@ public class BillingNavigator {
       default:
         return new BillingNavigator.PayPalResult(BillingNavigator.PayPalResult.ERROR, null);
     }
-  }
-
-  public void navigateToUriForResult(String redirectUrl) {
-    customTabsNavigator.navigateToCustomTabs(
-        new CustomTabsIntent.Builder().setToolbarColor(customTabsToolbarColor)
-            .build(), Uri.parse(redirectUrl));
-  }
-
-  public Observable<Uri> uriResults() {
-    return customTabsNavigator.customTabResults();
   }
 
   public void navigateToPaymentView(String merchantName) {

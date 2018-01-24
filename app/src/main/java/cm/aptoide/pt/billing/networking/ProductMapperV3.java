@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.Price;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.dataprovider.model.v3.PaidApp;
@@ -13,12 +12,6 @@ import cm.aptoide.pt.dataprovider.model.v3.PaymentServiceResponse;
 import cm.aptoide.pt.dataprovider.ws.v3.V3;
 
 public class ProductMapperV3 {
-
-  private final BillingIdManager billingIdManager;
-
-  public ProductMapperV3(BillingIdManager billingIdManager) {
-    this.billingIdManager = billingIdManager;
-  }
 
   public Product map(PaidApp response) {
 
@@ -42,8 +35,8 @@ public class ProductMapperV3 {
           .getDescription();
       final Price price = new Price(payment.getAmount(), currency, payment.getSymbol());
 
-      return new Product(billingIdManager.generateProductId(response.getPath()
-          .getAppId()), icon, title, description, price, "");
+      return new Product(response.getPath()
+          .getAppId(), icon, title, description, price, "");
     }
 
     throw new IllegalArgumentException(V3.getErrorMessage(response));
