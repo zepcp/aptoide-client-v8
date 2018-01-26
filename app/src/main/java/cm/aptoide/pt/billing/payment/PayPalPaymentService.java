@@ -11,8 +11,8 @@ public class PayPalPaymentService implements PaymentService<String> {
 
   @Override
   public Single<Transaction> pay(String customerId, long productId, long authorizationId,
-      BillingService billingService) {
-    return billingService.createTransaction(customerId, productId, authorizationId);
+      BillingService billingService, String payload) {
+    return billingService.createTransaction(customerId, authorizationId, productId, payload);
   }
 
   @Override public Single<Authorization> authorize(String customerId, String payKey,

@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import cm.aptoide.pt.billing.BillingService;
 import cm.aptoide.pt.billing.Merchant;
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
@@ -17,7 +16,6 @@ import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import cm.aptoide.pt.billing.transaction.Transaction;
-import cm.aptoide.pt.billing.transaction.TransactionFactory;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
@@ -39,7 +37,6 @@ import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Completable;
-import rx.Observable;
 import rx.Single;
 
 public class BillingServiceV7 implements BillingService {
@@ -56,16 +53,13 @@ public class BillingServiceV7 implements BillingService {
   private final AuthenticationPersistence authenticationPersistence;
   private final AuthorizationMapperV7 authorizationMapper;
   private final TransactionMapperV7 transactionMapper;
-  private final TransactionFactory transactionFactory;
-  private final AuthorizationFactory authorizationFactory;
 
   public BillingServiceV7(BodyInterceptor<BaseBody> bodyInterceptorV7, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, PurchaseMapperV7 purchaseMapper,
       ProductMapperV7 productMapperV7, PaymentMethodMapper serviceMapper,
       PurchaseFactory purchaseFactory, AuthenticationPersistence authenticationPersistence,
-      AuthorizationMapperV7 authorizationMapper, TransactionMapperV7 transactionMapper,
-      TransactionFactory transactionFactory, AuthorizationFactory authorizationFactory) {
+      AuthorizationMapperV7 authorizationMapper, TransactionMapperV7 transactionMapper) {
     this.httpClient = httpClient;
     this.converterFactory = converterFactory;
     this.tokenInvalidator = tokenInvalidator;
@@ -78,8 +72,6 @@ public class BillingServiceV7 implements BillingService {
     this.authenticationPersistence = authenticationPersistence;
     this.authorizationMapper = authorizationMapper;
     this.transactionMapper = transactionMapper;
-    this.transactionFactory = transactionFactory;
-    this.authorizationFactory = authorizationFactory;
   }
 
   @Override public Single<List<PaymentMethod>> getPaymentMethods() {
@@ -199,42 +191,20 @@ public class BillingServiceV7 implements BillingService {
                 authentication.getAccessToken(), customerId)
                 .observe())
         .toSingle()
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-
-            if (response.body() != null && response.body()
-                .isOk()) {
-              return Single.just(authorizationMapper.map(response.body()
-                  .getData()
-                  .getList()));
-            }
-          }
-          return Single.error(new IllegalStateException(V7.getErrorMessage(response.body())));
-        });
+        .flatMap(response -> authorizationMapper.map(response));
   }
 
-  @Override public Single<PayPalAuthorization> updatePayPalAuthorization(String customerId,
-      long transactionId, String payKey, long paymentMethodId, long authorizationId) {
-    return UpdateAuthorizationRequest.ofPayPal(transactionId, payKey, sharedPreferences, httpClient,
+  @Override
+  public Single<PayPalAuthorization> updatePayPalAuthorization(String customerId, String payKey,
+      long paymentMethodId, long authorizationId) {
+    return UpdateAuthorizationRequest.of(authorizationId, payKey, sharedPreferences, httpClient,
         converterFactory, bodyInterceptorV7, tokenInvalidator)
         .observe(true, false)
-        .toSingle()
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-            final UpdateAuthorizationRequest.ResponseBody responseBody = response.body();
-            if (responseBody != null && responseBody.isOk()) {
-              return Single.just(
-                  (PayPalAuthorization) authorizationMapper.map(responseBody.getData()));
-            }
-          }
-
-          return Single.just(
-              new PayPalAuthorization(authorizationId, customerId, Authorization.Status.FAILED,
-                  null, null, null, null, "", false, Authorization.PAYPAL_SDK, null,
-                  paymentMethodId, transactionId));
-        });
+        .flatMapSingle(
+            response -> authorizationMapper.map(authorizationId, customerId, paymentMethodId,
+                Authorization.PAYPAL_SDK, response))
+        .cast(PayPalAuthorization.class)
+        .toSingle();
   }
 
   @Override public Single<Transaction> getTransaction(String customerId, long productId) {
@@ -244,40 +214,17 @@ public class BillingServiceV7 implements BillingService {
             authentication.getAccessToken(), customerId)
             .observe())
         .toSingle()
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-
-            final GetTransactionRequest.ResponseBody responseBody = response.body();
-            if (responseBody != null && responseBody.isOk()) {
-              return Single.just(transactionMapper.map(responseBody.getData()));
-            }
-            return Single.error(new IllegalArgumentException(V7.getErrorMessage(responseBody)));
-          }
-
-          if (response.code() == 404) {
-            return Single.just(
-                transactionFactory.create(-1, customerId, productId, Transaction.Status.NEW, -1));
-          }
-
-          return Single.just(
-              transactionFactory.create(-1, customerId, productId, Transaction.Status.FAILED, -1));
-        });
+        .flatMap(response -> transactionMapper.map(response, -1, customerId, -1, productId));
   }
 
-  @Override public Single<Transaction> createTransaction(String customerId, long productId,
-      long authorizationId) {
+  @Override public Single<Transaction> createTransaction(String customerId, long authorizationId,
+      long productId, String payload) {
     return CreateTransactionRequest.of(productId, authorizationId, bodyInterceptorV7, httpClient,
-        converterFactory, tokenInvalidator, sharedPreferences)
+        converterFactory, tokenInvalidator, sharedPreferences, payload)
         .observe(true, false)
         .toSingle()
-        .flatMap(response -> {
-          if (response != null && response.isOk()) {
-            return Single.just(transactionMapper.map(response.getData()));
-          }
-          return Single.just(
-              transactionFactory.create(-1, customerId, productId, Transaction.Status.FAILED, -1));
-        });
+        .flatMap(response -> transactionMapper.map(response, -1, customerId, authorizationId,
+            productId));
   }
 
   @Override
@@ -287,23 +234,12 @@ public class BillingServiceV7 implements BillingService {
 
   @Override public Single<CreditCardAuthorization> updateCreditCardAuthorization(String customerId,
       long authorizationId, String metadata, long paymentMethodId) {
-    return UpdateAuthorizationRequest.ofAdyen(authorizationId, metadata, sharedPreferences,
-        httpClient, converterFactory, bodyInterceptorV7, tokenInvalidator)
+    return UpdateAuthorizationRequest.of(authorizationId, metadata, sharedPreferences, httpClient,
+        converterFactory, bodyInterceptorV7, tokenInvalidator)
         .observe(true, false)
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-            final UpdateAuthorizationRequest.ResponseBody responseBody = response.body();
-            if (responseBody != null && responseBody.isOk()) {
-              return Observable.just(authorizationMapper.map(responseBody.getData()));
-            }
-          }
-
-          return Observable.just(
-              authorizationFactory.create(authorizationId, customerId, Authorization.ADYEN_SDK,
-                  Authorization.Status.FAILED, null, null, null, null, null, null, null, false,
-                  paymentMethodId, -1));
-        })
+        .flatMapSingle(
+            response -> authorizationMapper.map(authorizationId, customerId, paymentMethodId,
+                Authorization.ADYEN_SDK, response))
         .cast(CreditCardAuthorization.class)
         .toSingle();
   }
@@ -313,22 +249,8 @@ public class BillingServiceV7 implements BillingService {
     return CreateAuthorizationRequest.ofAdyen(token, sharedPreferences, httpClient,
         converterFactory, bodyInterceptorV7, tokenInvalidator, paymentMethodId)
         .observe(true, false)
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-
-            final CreateAuthorizationRequest.ResponseBody responseBody = response.body();
-
-            if (responseBody != null && responseBody.isOk()) {
-              return Observable.just(authorizationMapper.map(responseBody.getData()));
-            }
-          }
-
-          return Observable.just(
-              authorizationFactory.create(-1, customerId, Authorization.ADYEN_SDK,
-                  Authorization.Status.FAILED, token, null, null, null, null, null, null, false,
-                  paymentMethodId, -1));
-        })
+        .flatMapSingle(response -> authorizationMapper.map(-1, customerId, paymentMethodId,
+            Authorization.ADYEN_SDK, response))
         .cast(CreditCardAuthorization.class)
         .toSingle();
   }

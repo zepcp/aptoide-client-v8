@@ -41,6 +41,10 @@ public class Purchase {
     return Status.COMPLETED.equals(status);
   }
 
+  public boolean isFailed() {
+    return Status.FAILED.equals(status);
+  }
+
   public static enum Status {
     COMPLETED, FAILED
   }

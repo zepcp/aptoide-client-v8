@@ -3,17 +3,17 @@ package cm.aptoide.pt.dataprovider.ws.v7.billing;
 import android.content.SharedPreferences;
 import cm.aptoide.pt.dataprovider.BuildConfig;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
-import cm.aptoide.pt.dataprovider.model.v7.BaseV7Response;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
+import retrofit2.Response;
 import rx.Observable;
 
 public class CreateTransactionRequest
-    extends V7<CreateTransactionRequest.ResponseBody, CreateTransactionRequest.RequestBody> {
+    extends V7<Response<GetTransactionRequest.ResponseBody>, CreateTransactionRequest.RequestBody> {
 
   private CreateTransactionRequest(RequestBody body, String baseHost, OkHttpClient httpClient,
       Converter.Factory converterFactory, BodyInterceptor bodyInterceptor,
@@ -29,18 +29,20 @@ public class CreateTransactionRequest
         + "/api/7/";
   }
 
-  public static CreateTransactionRequest of(long productId, long paymentMethodId,
+  public static CreateTransactionRequest of(long productId, long authorizationId,
       BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
-      SharedPreferences sharedPreferences) {
+      SharedPreferences sharedPreferences, String payload) {
     final RequestBody body = new RequestBody();
     body.setProductId(productId);
-    body.setAuthorizationId(paymentMethodId);
+    body.setAuthorizationId(authorizationId);
+    body.setPayload(payload);
     return new CreateTransactionRequest(body, getHost(sharedPreferences), httpClient,
         converterFactory, bodyInterceptor, tokenInvalidator);
   }
 
-  @Override protected Observable<ResponseBody> loadDataFromNetwork(Interfaces interfaces,
+  @Override protected Observable<Response<GetTransactionRequest.ResponseBody>> loadDataFromNetwork(
+      Interfaces interfaces,
       boolean bypassCache) {
     return interfaces.createBillingTransaction(body, bypassCache);
   }
@@ -49,6 +51,7 @@ public class CreateTransactionRequest
 
     private long productId;
     private long authorizationId;
+    private String payload;
 
     public long getProductId() {
       return productId;
@@ -66,18 +69,12 @@ public class CreateTransactionRequest
       this.authorizationId = authorizationId;
     }
 
-  }
-
-  public static class ResponseBody extends BaseV7Response {
-
-    private GetTransactionRequest.ResponseBody.Transaction data;
-
-    public GetTransactionRequest.ResponseBody.Transaction getData() {
-      return data;
+    public String getPayload() {
+      return payload;
     }
 
-    public void setData(GetTransactionRequest.ResponseBody.Transaction data) {
-      this.data = data;
+    public void setPayload(String payload) {
+      this.payload = payload;
     }
   }
 }

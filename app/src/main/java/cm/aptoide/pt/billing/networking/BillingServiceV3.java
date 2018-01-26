@@ -109,8 +109,7 @@ public class BillingServiceV3 implements BillingService {
     return Single.error(new IllegalStateException("Not implemented."));
   }
 
-  @Override public Single<PayPalAuthorization> updatePayPalAuthorization(String customerId,
-      long transactionId, String payKey, long paymentMethodId, long authorizationId) {
+  @Override public Single<PayPalAuthorization> updatePayPalAuthorization(String customerId, String payKey, long paymentMethodId, long authorizationId) {
     return Single.error(new IllegalStateException("Not implemented!"));
   }
 
@@ -146,18 +145,18 @@ public class BillingServiceV3 implements BillingService {
                   .map(transactionResponse -> transactionMapper.map(customerId, productId,
                       transactionResponse, productId));
             }
-            return Single.just(transactionFactory.create(productId, customerId, productId,
-                Transaction.Status.COMPLETED, 1));
+            return Single.just(transactionFactory.create(productId, customerId, 1, productId,
+                Transaction.Status.COMPLETED));
           }
 
           return Single.just(
-              transactionFactory.create(productId, customerId, productId, Transaction.Status.FAILED,
-                  1));
+              transactionFactory.create(productId, customerId, 1,
+                  productId, Transaction.Status.FAILED));
         });
   }
 
-  @Override public Single<Transaction> createTransaction(String customerId, long productId,
-      long authorizationId) {
+  @Override public Single<Transaction> createTransaction(String customerId, long authorizationId,
+      long productId, String payload) {
     return GetApkInfoRequest.of(productId, bodyInterceptorV3, httpClient, converterFactory,
         tokenInvalidator, sharedPreferences, resources)
         .observe(true)
@@ -166,14 +165,14 @@ public class BillingServiceV3 implements BillingService {
 
           if (response.isOk()) {
             if (response.isPaid()) {
-              return transactionFactory.create(productId, customerId, productId,
-                  Transaction.Status.PENDING_SERVICE_AUTHORIZATION, 1);
+              return transactionFactory.create(productId, customerId, 1, productId,
+                  Transaction.Status.PENDING_SERVICE_AUTHORIZATION);
             }
-            return transactionFactory.create(productId, customerId, productId,
-                Transaction.Status.COMPLETED, 1);
+            return transactionFactory.create(productId, customerId, 1, productId,
+                Transaction.Status.COMPLETED);
           }
-          return transactionFactory.create(productId, customerId, productId,
-              Transaction.Status.FAILED, 1);
+          return transactionFactory.create(productId, customerId, 1, productId,
+              Transaction.Status.FAILED);
         });
   }
 

@@ -4,25 +4,25 @@ public class Transaction {
 
   private final long id;
   private final String customerId;
+  private final long authorizationId;
   private final long productId;
   private final Status status;
-  private final long paymentMethodId;
 
   public Transaction(long id, Status status, String customerId, long productId,
-      long paymentMethodId) {
+      long authorizationId) {
     this.status = status;
     this.id = id;
     this.customerId = customerId;
     this.productId = productId;
-    this.paymentMethodId = paymentMethodId;
+    this.authorizationId = authorizationId;
   }
 
   public String getCustomerId() {
     return customerId;
   }
 
-  public long getPaymentMethodId() {
-    return paymentMethodId;
+  public long getAuthorizationId() {
+    return authorizationId;
   }
 
   public long getProductId() {

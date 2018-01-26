@@ -21,10 +21,10 @@ public class PaymentServiceAdapter {
     this.authorizationPersistence = authorizationPersistence;
   }
 
-  public Single<Transaction> pay(String type, long paymentMethodId, String customerId,
-      long productId) {
+  public Single<Transaction> pay(String type, long authorizationId, String customerId,
+      long productId, String payload) {
     return adapters.get(type)
-        .pay(customerId, productId, paymentMethodId, billingService);
+        .pay(customerId, productId, authorizationId, billingService, payload);
   }
 
   public <T> Single<Authorization> authorize(String type, T metadata, String customerId,

@@ -18,8 +18,8 @@ public class CreditCardPaymentService implements PaymentService<CreditCard> {
 
   @Override
   public Single<Transaction> pay(String customerId, long productId, long authorizationId,
-      BillingService billingService) {
-    return billingService.createTransaction(customerId, productId, authorizationId);
+      BillingService billingService, String payload) {
+    return billingService.createTransaction(customerId, authorizationId, productId, payload);
   }
 
   @Override public Single<Authorization> authorize(String customerId, CreditCard creditCard,
@@ -32,31 +32,24 @@ public class CreditCardPaymentService implements PaymentService<CreditCard> {
         .flatMap(authorization -> {
 
           if (authorization.isPending()) {
-            return updateCreditCardAuthorization(creditCard, authorizationPersistence,
-                authorization.getSession(), authorization.getId(), authorization.getCustomerId(),
-                authorization.getStatus(), authorization.getIcon(), authorization.getName(),
-                authorization.getDescription(), authorization.isDefault(), authorization.getType(),
-                authorization.getPaymentMethodId());
+            return adyen.openSession(authorization.getSession())
+                .andThen(adyen.registerCreditCard(creditCard))
+                .flatMap(payload -> {
+
+                  final CreditCardAuthorization cardAuthorization =
+                      new CreditCardAuthorization(authorization.getId(),
+                          authorization.getCustomerId(), authorization.getStatus(),
+                          authorization.getSession(), payload,
+                          authorization.getIcon(), authorization.getName(),
+                          authorization.getDescription(), authorization.isDefault(),
+                          authorization.getType(), authorization.getPaymentMethodId());
+
+                  return authorizationPersistence.saveAuthorization(cardAuthorization)
+                      .andThen(Single.just(cardAuthorization));
+                });
           }
 
           return Single.just(authorization);
-        });
-  }
-
-  private Single<CreditCardAuthorization> updateCreditCardAuthorization(CreditCard creditCard,
-      AuthorizationPersistence authorizationPersistence, String session, long id, String customerId,
-      Authorization.Status status, String icon, String name, String description,
-      boolean defaultAuthorization, String type, long paymentMethodId) {
-    return adyen.openSession(session)
-        .andThen(adyen.registerCreditCard(creditCard))
-        .flatMap(payload -> {
-
-          final CreditCardAuthorization cardAuthorization =
-              new CreditCardAuthorization(id, customerId, status, session, payload, icon, name,
-                  description, defaultAuthorization, type, paymentMethodId);
-
-          return authorizationPersistence.saveAuthorization(cardAuthorization)
-              .andThen(Single.just(cardAuthorization));
         });
   }
 }

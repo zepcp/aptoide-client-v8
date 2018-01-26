@@ -83,19 +83,16 @@ public class PaymentPresenter implements Presenter {
 
               view.hideLoading();
 
-              if (payment.getStatus()
-                  .equals(Payment.Status.PROCESSING)) {
+              if (payment.isProcessing()) {
                 view.showLoading();
               }
 
-              if (payment.getStatus()
-                  .equals(Payment.Status.COMPLETED)) {
+              if (payment.isCompleted()) {
                 analytics.sendPaymentSuccessEvent();
                 navigator.popViewWithResult(payment.getPurchase());
               }
 
-              if (payment.getStatus()
-                  .equals(Payment.Status.FAILED)) {
+              if (payment.isFailed()) {
                 view.hideLoading();
                 view.showUnknownError();
                 analytics.sendPaymentErrorEvent();

@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.billing.authorization;
 
-public class Authorization {
+public abstract class Authorization {
 
   public static final String PAYPAL_SDK = "PAYPAL_SDK";
   public static final String ADYEN_SDK = "ADYEN_SDK";

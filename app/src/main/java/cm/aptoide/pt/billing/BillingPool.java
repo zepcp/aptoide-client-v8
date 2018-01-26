@@ -188,8 +188,7 @@ public class BillingPool {
               new PaymentMethodMapper(crashLogger, Build.VERSION.SDK_INT, minimumAPILevelAdyen,
                   minimumAPILevelPayPal), purchaseFactory, authenticationPersistence,
               new AuthorizationMapperV7(getAuthorizationFactory()),
-              new TransactionMapperV7(getTransactionFactory()), getTransactionFactory(),
-              getAuthorizationFactory());
+              new TransactionMapperV7(getTransactionFactory()));
     }
     return billingServiceV7;
   }

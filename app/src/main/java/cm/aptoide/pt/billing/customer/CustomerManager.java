@@ -26,7 +26,7 @@ public class CustomerManager {
 
   public CustomerManager(PublishSubject<Action> actions, UserPersistence userPersistence,
       BillingService billingService, AuthorizationPersistence authorizationPersistence,
-      Authorization payPalAuthorization, PaymentServiceAdapter serviceAdapter) {
+      PayPalAuthorization payPalAuthorization, PaymentServiceAdapter serviceAdapter) {
     this.actions = actions;
     this.userPersistence = userPersistence;
     this.billingService = billingService;
@@ -132,8 +132,8 @@ public class CustomerManager {
                                 authorization.getPayload(), authorization.getPaymentMethodId())),
                     authorizations.ofType(PayPalAuthorization.class)
                         .flatMapSingle(authorization -> billingService.updatePayPalAuthorization(
-                            authorization.getCustomerId(), authorization.getTransactionId(),
-                            authorization.getPayKey(), authorization.getPaymentMethodId(),
+                            authorization.getCustomerId(), authorization.getPayKey(),
+                            authorization.getPaymentMethodId(),
                             authorization.getId()))))
                 .flatMapSingle(authorization -> authorizationPersistence.removeAuthorization(
                     authorization.getId())

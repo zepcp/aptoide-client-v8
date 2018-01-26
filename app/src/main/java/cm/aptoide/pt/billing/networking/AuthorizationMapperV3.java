@@ -63,9 +63,9 @@ public class AuthorizationMapperV3 {
         status = Authorization.Status.FAILED;
     }
 
-    return authorizationFactory.create(authorizationId, customerId, Authorization.PAYPAL_SDK,
-        status, null, price, productDescription, null, icon, name, null, true,
-        transactionResponse.getServiceId(), transactionId);
+    return authorizationFactory.create(authorizationId, customerId,
+        transactionResponse.getServiceId(), icon, name, null, Authorization.PAYPAL_SDK, true,
+        status, null, price, productDescription, null);
   }
 
   private Authorization getErrorAuthorization(String customerId, long paymentMethodId,
@@ -73,9 +73,8 @@ public class AuthorizationMapperV3 {
       String productDescription, List<ErrorResponse> errors) {
 
     Authorization authorization =
-        authorizationFactory.create(authorizationId, customerId, type, Authorization.Status.FAILED,
-            null, price, productDescription, null, icon, name, null, true, paymentMethodId,
-            transactionId);
+        authorizationFactory.create(authorizationId, customerId, paymentMethodId, icon, name, null,
+            type, true, Authorization.Status.FAILED, null, price, productDescription, null);
 
     if (errors == null || errors.isEmpty()) {
       return authorization;
@@ -86,21 +85,23 @@ public class AuthorizationMapperV3 {
     if ("PRODUCT-204".equals(error.code)
         || "PRODUCT-209".equals(error.code)
         || "PRODUCT-214".equals(error.code)) {
-      authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PENDING, null, price, productDescription, null, icon, name, null,
-          true, paymentMethodId, transactionId);
+      authorization =
+          authorizationFactory.create(authorizationId, customerId, paymentMethodId, icon, name,
+              null, type, true, Authorization.Status.PENDING, null, price, productDescription,
+              null);
     }
 
     if ("PRODUCT-200".equals(error.code)) {
-      authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.ACTIVE, null, price, productDescription, null, icon, name, null,
-          true, paymentMethodId, transactionId);
+      authorization =
+          authorizationFactory.create(authorizationId, customerId, paymentMethodId, icon, name,
+              null, type, true, Authorization.Status.ACTIVE, null, price, productDescription, null);
     }
 
     if ("PRODUCT-216".equals(error.code)) {
-      authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PROCESSING, null, price, productDescription, null, icon, name, null,
-          true, paymentMethodId, transactionId);
+      authorization =
+          authorizationFactory.create(authorizationId, customerId, paymentMethodId, icon, name,
+              null, type, true, Authorization.Status.PROCESSING, null, price, productDescription,
+              null);
     }
 
     return authorization;

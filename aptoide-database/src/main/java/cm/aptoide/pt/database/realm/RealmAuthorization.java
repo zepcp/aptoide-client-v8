@@ -19,19 +19,17 @@ public class RealmAuthorization extends RealmObject {
   @Required private String type;
   @Required private String metadata;
   private long paymentMethodId;
-  private long transactionId;
 
   public RealmAuthorization() {
   }
 
   public RealmAuthorization(long id, String customerId, String metadata, String type,
-      long paymentMethodId, long transactionId) {
+      long paymentMethodId) {
     this.id = id;
     this.metadata = metadata;
     this.customerId = customerId;
     this.type = type;
     this.paymentMethodId = paymentMethodId;
-    this.transactionId = transactionId;
   }
 
   public long getId() {
@@ -54,7 +52,4 @@ public class RealmAuthorization extends RealmObject {
     return paymentMethodId;
   }
 
-  public long getTransactionId() {
-    return transactionId;
-  }
 }

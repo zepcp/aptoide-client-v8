@@ -39,7 +39,6 @@ import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.DownloadInstallAnalyticsBa
 import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateAuthorizationRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateTransactionRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.DeletePurchaseRequest;
-import cm.aptoide.pt.dataprovider.ws.v7.billing.GetAuthorizationRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetAuthorizationsRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetMerchantRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetProductsRequest;
@@ -498,7 +497,7 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Query("user_id") String customerId);
 
     @POST("inapp/bank/transaction/set")
-    Observable<CreateTransactionRequest.ResponseBody> createBillingTransaction(
+    Observable<Response<GetTransactionRequest.ResponseBody>> createBillingTransaction(
         @Body CreateTransactionRequest.RequestBody body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
@@ -511,7 +510,7 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @POST("inapp/bank/authorization/set")
-    Observable<Response<UpdateAuthorizationRequest.ResponseBody>> updateBillingAuthorization(
+    Observable<Response<CreateAuthorizationRequest.ResponseBody>> updateBillingAuthorization(
         @Body UpdateAuthorizationRequest.RequestBody body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
@@ -521,7 +520,7 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
     @GET("inapp/bank/authorization/getMeta")
-    Observable<Response<GetAuthorizationRequest.ResponseBody>> getBillingAuthorization(
+    Observable<Response<CreateAuthorizationRequest.ResponseBody>> getBillingAuthorization(
         @Query("transaction_id") long transactionId, @Header("Authorization") String authorization,
         @Query("user_id") String customerId);
 

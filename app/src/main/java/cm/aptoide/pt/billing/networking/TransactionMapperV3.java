@@ -42,14 +42,15 @@ public class TransactionMapperV3 {
         status = Transaction.Status.FAILED;
     }
 
-    return transactionFactory.create(transactionId, customerId, productId, status, serviceId);
+    return transactionFactory.create(transactionId, customerId, serviceId, productId, status);
   }
 
   private Transaction getErrorTransaction(List<ErrorResponse> errors, String customerId,
       long transactionId, long serviceId, long productId) {
 
-    Transaction transaction = transactionFactory.create(transactionId, customerId, productId,
-            Transaction.Status.FAILED, serviceId);
+    Transaction transaction = transactionFactory.create(transactionId, customerId, serviceId,
+        productId,
+            Transaction.Status.FAILED);
 
     if (errors == null || errors.isEmpty()) {
       return transaction;
@@ -60,18 +61,18 @@ public class TransactionMapperV3 {
     if ("PRODUCT-204".equals(error.code)
         || "PRODUCT-209".equals(error.code)
         || "PRODUCT-214".equals(error.code)) {
-      transaction = transactionFactory.create(transactionId, customerId, productId,
-          Transaction.Status.PENDING_SERVICE_AUTHORIZATION, serviceId);
+      transaction = transactionFactory.create(transactionId, customerId, serviceId, productId,
+          Transaction.Status.PENDING_SERVICE_AUTHORIZATION);
     }
 
     if ("PRODUCT-200".equals(error.code)) {
-      transaction = transactionFactory.create(transactionId, customerId, productId,
-          Transaction.Status.COMPLETED, serviceId);
+      transaction = transactionFactory.create(transactionId, customerId, serviceId, productId,
+          Transaction.Status.COMPLETED);
     }
 
     if ("PRODUCT-216".equals(error.code) || "SYS-1".equals(error.code)) {
-      transaction = transactionFactory.create(transactionId, customerId, productId,
-          Transaction.Status.PROCESSING, serviceId);
+      transaction = transactionFactory.create(transactionId, customerId, serviceId, productId,
+          Transaction.Status.PROCESSING);
     }
 
     return transaction;

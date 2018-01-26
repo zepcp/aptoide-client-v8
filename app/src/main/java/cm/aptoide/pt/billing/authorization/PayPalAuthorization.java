@@ -12,17 +12,15 @@ public class PayPalAuthorization extends Authorization {
   private final String payKey;
   private final Price price;
   private final String productDescription;
-  private final long transactionId;
 
   public PayPalAuthorization(long id, String customerId, Status status, String payKey, Price price,
       String description, String icon, String name, boolean defaultAuthorization, String type,
-      String productDescription, long paymentMethodId, long transactionId) {
+      String productDescription, long paymentMethodId) {
     super(id, customerId, status, icon, name, type, description, defaultAuthorization,
         paymentMethodId);
     this.payKey = payKey;
     this.price = price;
     this.productDescription = productDescription;
-    this.transactionId = transactionId;
   }
 
   public Price getPrice() {
@@ -37,7 +35,4 @@ public class PayPalAuthorization extends Authorization {
     return productDescription;
   }
 
-  public long getTransactionId() {
-    return transactionId;
-  }
 }

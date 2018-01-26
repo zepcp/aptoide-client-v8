@@ -7,6 +7,7 @@ package cm.aptoide.pt.billing;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
+import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.customer.CustomerManager;
 import cm.aptoide.pt.billing.payment.Payment;
@@ -141,18 +142,35 @@ public class Billing {
 
   private Observable.Transformer<CreateTransaction, Payment> createTransaction() {
     return createTransaction -> createTransaction.flatMap(__ -> paymentObservable.first()
-        .flatMap(payment -> serviceAdapter.pay(payment.getCustomer()
-            .getSelectedPaymentMethod()
-            .getType(), payment.getCustomer()
-            .getSelectedPaymentMethod()
-            .getId(), payment.getCustomer()
-            .getId(), payment.getProduct()
-            .getId())
-            .toObservable()
-            .map(transaction -> Payment.withProduct(payment.getMerchant(), payment.getProduct(),
-                payment.getPayload()))
-            .onErrorReturn(throwable -> Payment.error())
-            .startWith(Payment.loading())));
+        .flatMap(payment -> {
+
+          if (payment.getStatus()
+              .equals(Payment.Status.LOADED)) {
+
+            return serviceAdapter.pay(payment.getCustomer()
+                .getSelectedPaymentMethod()
+                .getType(), payment.getCustomer()
+                .getSelectedAuthorization()
+                .getId(), payment.getCustomer()
+                .getId(), payment.getProduct()
+                .getId(), payment.getPayload())
+                .flatMap(transaction -> {
+                  if (transaction.isCompleted()) {
+                    return billingService.getPurchase(payment.getProduct()
+                        .getId())
+                        .map(purchase -> Payment.withCustomer(payment.getCustomer(), transaction,
+                            purchase));
+                  }
+                  return Single.just(
+                      Payment.withCustomer(payment.getCustomer(), transaction, null));
+                })
+                .toObservable()
+                .onErrorReturn(throwable -> Payment.error())
+                .startWith(Payment.loading());
+          }
+
+          return Observable.just(Payment.error());
+        }));
   }
 
   public Single<List<Product>> getProducts(List<String> skus) {
@@ -287,8 +305,8 @@ public class Billing {
       final CustomerManager customerManager =
           new CustomerManager(PublishSubject.create(), userPersistence, billingService,
               authorizationPersistence,
-              new Authorization(-1, null, null, payPalIcon, "PayPal", Authorization.PAYPAL_SDK,
-                  null, true, 1), serviceAdapter);
+              new PayPalAuthorization(-1, null, null, null, null, null, payPalIcon, "PayPal", true,
+                  Authorization.PAYPAL_SDK, null, 1), serviceAdapter);
 
       return new Billing(merchantPackageName, billingService, tokenDecoder, versionProvider,
           serviceAdapter, PublishSubject.create(), customerManager);

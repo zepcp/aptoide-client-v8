@@ -29,8 +29,7 @@ public interface BillingService {
 
   Single<List<Authorization>> getAuthorizations(String customerId);
 
-  Single<PayPalAuthorization> updatePayPalAuthorization(String customerId, long transactionId,
-      String payKey, long paymentMethodId, long authorizationId);
+  Single<PayPalAuthorization> updatePayPalAuthorization(String customerId, String payKey, long paymentMethodId, long authorizationId);
 
   Single<PayPalAuthorization> createPayPalAuthorization(String customerId, String token);
 
@@ -42,6 +41,6 @@ public interface BillingService {
 
   Single<Transaction> getTransaction(String customerId, long productId);
 
-  Single<Transaction> createTransaction(String customerId, long productId,
-      long authorizationId);
+  Single<Transaction> createTransaction(String customerId, long authorizationId, long productId,
+      String payload);
 }

@@ -21,7 +21,6 @@ public class RealmAuthorizationMapper {
 
     String type = null;
     String metadata = null;
-    long transactionId = -1;
 
     if (authorization instanceof CreditCardAuthorization) {
       type = Authorization.ADYEN_SDK;
@@ -31,16 +30,15 @@ public class RealmAuthorizationMapper {
     if (authorization instanceof PayPalAuthorization) {
       type = Authorization.PAYPAL_SDK;
       metadata = ((PayPalAuthorization) authorization).getPayKey();
-      transactionId = ((PayPalAuthorization) authorization).getTransactionId();
     }
 
     if (type == null) {
       throw new IllegalArgumentException(
-          "Unsupported Authorization. Can not map to RealmAuthorization");
+          "Unsupported authorization type. Can not map to RealmAuthorization");
     }
 
     return new RealmAuthorization(authorization.getId(), authorization.getCustomerId(), metadata,
-        type, authorization.getPaymentMethodId(), transactionId);
+        type, authorization.getPaymentMethodId());
   }
 
   public List<Authorization> map(RealmResults<RealmAuthorization> realmAuthorizations) {
@@ -49,10 +47,9 @@ public class RealmAuthorizationMapper {
 
     for (RealmAuthorization realmAuthorization : realmAuthorizations) {
       authorizations.add(authorizationFactory.create(realmAuthorization.getId(),
-          realmAuthorization.getCustomerId(), realmAuthorization.getType(),
-          Authorization.Status.PROCESSING, realmAuthorization.getMetadata(), null, null, null, null,
-          null, null, false, realmAuthorization.getPaymentMethodId(),
-          realmAuthorization.getTransactionId()));
+          realmAuthorization.getCustomerId(), realmAuthorization.getPaymentMethodId(), null, null,
+          null, realmAuthorization.getType(), false, Authorization.Status.PROCESSING,
+          realmAuthorization.getMetadata(), null, null, null));
     }
     return authorizations;
   }

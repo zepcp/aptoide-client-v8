@@ -51,8 +51,20 @@ public class Payment {
     return payload;
   }
 
-  public Transaction getTransaction() {
-    return transaction;
+  public boolean isProcessing() {
+    return transaction != null && transaction.isProcessing();
+  }
+
+  public boolean isCompleted() {
+    return transaction != null
+        && transaction.isCompleted()
+        && purchase != null
+        && purchase.isCompleted();
+  }
+
+  public boolean isFailed() {
+    return (transaction != null && transaction.isFailed()) || (purchase != null
+        && purchase.isFailed());
   }
 
   public static Payment withProduct(Merchant merchant, Product product, String payload) {
@@ -118,6 +130,6 @@ public class Payment {
   }
 
   public static enum Status {
-    LOADING, LOADING_ERROR, LOADED, PROCESSING, FAILED, COMPLETED, PENDING_AUTHORIZATION
+    LOADING, LOADING_ERROR, LOADED
   }
 }

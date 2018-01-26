@@ -86,13 +86,13 @@ public class CreateAuthorizationRequest
 
   public static class ResponseBody extends BaseV7Response {
 
-    private GetAuthorizationRequest.ResponseBody.Authorization data;
+    private GetAuthorizationsRequest.ResponseBody.Authorization data;
 
-    public GetAuthorizationRequest.ResponseBody.Authorization getData() {
+    public GetAuthorizationsRequest.ResponseBody.Authorization getData() {
       return data;
     }
 
-    public void setData(GetAuthorizationRequest.ResponseBody.Authorization data) {
+    public void setData(GetAuthorizationsRequest.ResponseBody.Authorization data) {
       this.data = data;
     }
   }
