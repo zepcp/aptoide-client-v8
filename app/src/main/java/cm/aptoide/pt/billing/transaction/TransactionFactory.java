@@ -2,8 +2,8 @@ package cm.aptoide.pt.billing.transaction;
 
 public class TransactionFactory {
 
-  public SimpleTransaction create(String id, String customerId, String productId,
-      Transaction.Status status, String serviceId) {
-    return new SimpleTransaction(id, status, customerId, productId, serviceId);
+  public Transaction create(long id, String customerId, long productId,
+      Transaction.Status status, long paymentMethodId) {
+    return new Transaction(id, status, customerId, productId, paymentMethodId);
   }
 }

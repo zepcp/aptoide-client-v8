@@ -9,14 +9,14 @@ import cm.aptoide.pt.billing.Price;
 
 public class Product {
 
-  private final String id;
+  private final long id;
   private final String icon;
   private final String title;
   private final String description;
   private final Price price;
   private final String sku;
 
-  public Product(String id, String icon, String title, String description, Price price, String sku) {
+  public Product(long id, String icon, String title, String description, Price price, String sku) {
     this.id = id;
     this.icon = icon;
     this.title = title;
@@ -25,7 +25,7 @@ public class Product {
     this.sku = sku;
   }
 
-  public String getId() {
+  public long getId() {
     return id;
   }
 

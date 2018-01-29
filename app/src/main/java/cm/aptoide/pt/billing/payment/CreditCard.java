@@ -2,13 +2,12 @@ package cm.aptoide.pt.billing.payment;
 
 public class CreditCard {
 
-  private final String cardNumber;
-  private final String expirationMonth;
-  private final String expirationYear;
-  private final String cvv;
+  private String cardNumber;
+  private String expirationMonth;
+  private String expirationYear;
+  private String cvv;
 
-  public CreditCard(String cardNumber, String expirationMonth, String expirationYear,
-      String cvv) {
+  public CreditCard(String cardNumber, String expirationMonth, String expirationYear, String cvv) {
     this.cardNumber = cardNumber;
     this.expirationMonth = expirationMonth;
     this.expirationYear = expirationYear;
@@ -30,4 +29,5 @@ public class CreditCard {
   public String getCvv() {
     return cvv;
   }
+
 }

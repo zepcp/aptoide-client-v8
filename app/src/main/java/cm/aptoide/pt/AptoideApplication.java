@@ -27,7 +27,6 @@ import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.BillingPool;
 import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
 import cm.aptoide.pt.billing.payment.Adyen;
@@ -101,7 +100,6 @@ import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreUtilsProxy;
 import cm.aptoide.pt.sync.SyncScheduler;
 import cm.aptoide.pt.sync.alarm.SyncStorage;
-import cm.aptoide.pt.sync.rx.RxSyncScheduler;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
@@ -270,9 +268,6 @@ public abstract class AptoideApplication extends Application {
         .addLogger(new CrashlyticsCrashLogger(crashlytics))
         .addLogger(new ConsoleLogger());
     Logger.setDBG(ToolboxManager.isDebug(getDefaultSharedPreferences()) || BuildConfig.DEBUG);
-
-
-    getBilling(BuildConfig.APPLICATION_ID).setup();
 
     try {
       PRNGFixes.apply();
@@ -581,10 +576,8 @@ public abstract class AptoideApplication extends Application {
       billingPool =
           new BillingPool(getDefaultSharedPreferences(), getBodyInterceptorV3(), getDefaultClient(),
               getAccountManager(), getDatabase(), getResources(), getPackageRepository(),
-              getTokenInvalidator(),
-              new RxSyncScheduler(new HashMap<>(), CrashReport.getInstance()),
-              getInAppBillingSerializer(),
-              getBodyInterceptorPoolV7(), getAccountSettingsBodyInterceptorPoolV7(),
+              getTokenInvalidator(), getInAppBillingSerializer(),
+              getAccountSettingsBodyInterceptorPoolV7(),
               new HashMap<>(), WebService.getDefaultConverter(), CrashReport.getInstance(),
               getAdyen(), getPurchaseFactory(), Build.VERSION_CODES.JELLY_BEAN,
               Build.VERSION_CODES.JELLY_BEAN, getAuthenticationPersistence(), getMarketName(),
@@ -598,10 +591,6 @@ public abstract class AptoideApplication extends Application {
       adyen = new Adyen(this, Charset.forName("UTF-8"), Schedulers.io(), PublishRelay.create());
     }
     return adyen;
-  }
-
-  public BillingIdManager getIdResolver(String merchantName) {
-    return getBillingPool().getIdResolver(merchantName);
   }
 
   public Database getDatabase() {

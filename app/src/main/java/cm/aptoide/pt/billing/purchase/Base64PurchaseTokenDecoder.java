@@ -5,8 +5,8 @@ import okio.ByteString;
 
 public class Base64PurchaseTokenDecoder implements PurchaseTokenDecoder {
 
-  @Override public String decode(String purchaseToken) {
-    return ByteString.decodeBase64(purchaseToken)
-        .utf8();
+  @Override public long decode(String purchaseToken) {
+    return Long.valueOf(ByteString.decodeBase64(purchaseToken)
+        .utf8());
   }
 }

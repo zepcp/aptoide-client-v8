@@ -5,7 +5,6 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.BillingIdManager;
 import cm.aptoide.pt.billing.Price;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
@@ -16,12 +15,9 @@ import java.util.List;
 public class AuthorizationMapperV7 {
 
   private final AuthorizationFactory authorizationFactory;
-  private final BillingIdManager billingIdManager;
 
-  public AuthorizationMapperV7(AuthorizationFactory authorizationFactory,
-      BillingIdManager billingIdManager) {
+  public AuthorizationMapperV7(AuthorizationFactory authorizationFactory) {
     this.authorizationFactory = authorizationFactory;
-    this.billingIdManager = billingIdManager;
   }
 
   public Authorization map(GetAuthorizationRequest.ResponseBody.Authorization response) {
@@ -35,17 +31,18 @@ public class AuthorizationMapperV7 {
     }
 
     final GetAuthorizationRequest.ResponseBody.Authorization.Metadata metadata = response.getData();
-    String description = null;
+    String productDescription = null;
     String session = null;
     if (metadata != null) {
-      description = metadata.getDescription();
+      productDescription = metadata.getDescription();
       session = metadata.getSession();
     }
 
-    return authorizationFactory.create(billingIdManager.generateAuthorizationId(response.getId()),
+    return authorizationFactory.create(response.getId(),
         String.valueOf(response.getUser()
             .getId()), response.getType(), Authorization.Status.valueOf(response.getStatus()), null,
-        price, description, session, response.getIcon(), response.getName());
+        price, productDescription, session, response.getIcon(), response.getName(),
+        response.getDescription(), response.isDefaultAuthorization(), response.getServiceId(), -1);
   }
 
   public List<Authorization> map(

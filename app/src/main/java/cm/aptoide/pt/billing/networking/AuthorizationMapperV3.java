@@ -22,10 +22,10 @@ public class AuthorizationMapperV3 {
     this.authorizationFactory = authorizationFactory;
   }
 
-  public Authorization map(String authorizationId, String customerId, String transactionId,
-      TransactionResponse transactionResponse, PaidApp paidApp, String icon, String name) {
+  public Authorization map(String customerId, long authorizationId, long transactionId,
+      PaidApp paidApp, String icon, String name, TransactionResponse transactionResponse) {
 
-    final String description = paidApp.getApp()
+    final String productDescription = paidApp.getApp()
         .getName();
 
     final List<PaymentServiceResponse> paymentServiceResponses = paidApp.getPayment()
@@ -39,8 +39,9 @@ public class AuthorizationMapperV3 {
     }
 
     if (transactionResponse.hasErrors()) {
-      return getErrorAuthorization(transactionResponse.getErrors(), authorizationId, transactionId,
-          customerId, Authorization.PAYPAL_SDK, description, price, icon, name);
+      return getErrorAuthorization(customerId, 1, authorizationId, transactionId,
+          Authorization.PAYPAL_SDK, name, icon, price, productDescription,
+          transactionResponse.getErrors());
     }
 
     Authorization.Status status;
@@ -63,16 +64,18 @@ public class AuthorizationMapperV3 {
     }
 
     return authorizationFactory.create(authorizationId, customerId, Authorization.PAYPAL_SDK,
-        status, null, price, description, null, icon, name);
+        status, null, price, productDescription, null, icon, name, null, true,
+        transactionResponse.getServiceId(), transactionId);
   }
 
-  private Authorization getErrorAuthorization(List<ErrorResponse> errors, String authorizationId,
-      String transactionId, String customerId, String type, String description, Price price,
-      String icon, String name) {
+  private Authorization getErrorAuthorization(String customerId, long paymentMethodId,
+      long authorizationId, long transactionId, String type, String name, String icon, Price price,
+      String productDescription, List<ErrorResponse> errors) {
 
     Authorization authorization =
         authorizationFactory.create(authorizationId, customerId, type, Authorization.Status.FAILED,
-            null, price, description, null, icon, name);
+            null, price, productDescription, null, icon, name, null, true, paymentMethodId,
+            transactionId);
 
     if (errors == null || errors.isEmpty()) {
       return authorization;
@@ -84,17 +87,20 @@ public class AuthorizationMapperV3 {
         || "PRODUCT-209".equals(error.code)
         || "PRODUCT-214".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PENDING, null, price, description, null, icon, name);
+          Authorization.Status.PENDING, null, price, productDescription, null, icon, name, null,
+          true, paymentMethodId, transactionId);
     }
 
     if ("PRODUCT-200".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.ACTIVE, null, price, description, null, icon, name);
+          Authorization.Status.ACTIVE, null, price, productDescription, null, icon, name, null,
+          true, paymentMethodId, transactionId);
     }
 
     if ("PRODUCT-216".equals(error.code)) {
       authorization = authorizationFactory.create(authorizationId, customerId, type,
-          Authorization.Status.PROCESSING, null, price, description, null, icon, name);
+          Authorization.Status.PROCESSING, null, price, productDescription, null, icon, name, null,
+          true, paymentMethodId, transactionId);
     }
 
     return authorization;

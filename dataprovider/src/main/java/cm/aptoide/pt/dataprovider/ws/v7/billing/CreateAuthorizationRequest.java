@@ -14,10 +14,10 @@ import retrofit2.Converter;
 import retrofit2.Response;
 import rx.Observable;
 
-public class UpdateAuthorizationRequest
-    extends V7<Response<UpdateAuthorizationRequest.ResponseBody>, UpdateAuthorizationRequest.RequestBody> {
+public class CreateAuthorizationRequest
+    extends V7<Response<CreateAuthorizationRequest.ResponseBody>, CreateAuthorizationRequest.RequestBody> {
 
-  private UpdateAuthorizationRequest(RequestBody body, String baseHost, OkHttpClient httpClient,
+  private CreateAuthorizationRequest(RequestBody body, String baseHost, OkHttpClient httpClient,
       Converter.Factory converterFactory, BodyInterceptor bodyInterceptor,
       TokenInvalidator tokenInvalidator) {
     super(body, baseHost, httpClient, converterFactory, bodyInterceptor, tokenInvalidator);
@@ -31,42 +31,28 @@ public class UpdateAuthorizationRequest
         + "/api/7/";
   }
 
-  public static UpdateAuthorizationRequest ofPayPal(long transactionId, String payKey,
+  public static CreateAuthorizationRequest ofAdyen(String token,
       SharedPreferences sharedPreferences, OkHttpClient httpClient,
       Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptorV7,
-      TokenInvalidator tokenInvalidator) {
+      TokenInvalidator tokenInvalidator, long paymentMethodId) {
     final RequestBody requestBody = new RequestBody();
-    requestBody.setTransactionId(transactionId);
+    requestBody.setServiceId(paymentMethodId);
     final RequestBody.Data data = new RequestBody.Data();
-    data.setPayKey(payKey);
+    data.setToken(token);
     requestBody.setServiceData(data);
-    return new UpdateAuthorizationRequest(requestBody, getHost(sharedPreferences), httpClient,
-        converterFactory, bodyInterceptorV7, tokenInvalidator);
-  }
-
-  public static UpdateAuthorizationRequest ofAdyen(long authorizationId, String payload,
-      SharedPreferences sharedPreferences, OkHttpClient httpClient,
-      Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptorV7,
-      TokenInvalidator tokenInvalidator) {
-    final RequestBody requestBody = new RequestBody();
-    requestBody.setAuthorizationId(authorizationId);
-    final RequestBody.Data data = new RequestBody.Data();
-    data.setPayKey(payload);
-    requestBody.setServiceData(data);
-    return new UpdateAuthorizationRequest(requestBody, getHost(sharedPreferences), httpClient,
+    return new CreateAuthorizationRequest(requestBody, getHost(sharedPreferences), httpClient,
         converterFactory, bodyInterceptorV7, tokenInvalidator);
   }
 
   @Override protected Observable<Response<ResponseBody>> loadDataFromNetwork(Interfaces interfaces,
       boolean bypassCache) {
-    return interfaces.updateBillingAuthorization(body, bypassCache);
+    return interfaces.createBillingAuthorization(body, bypassCache);
   }
 
   public static class RequestBody extends BaseBody {
 
-    private Long transactionId;
-    private Long authorizationId;
-    private Data serviceData;
+    @JsonProperty("service_id") private long serviceId;
+    @JsonProperty("service_data") private Data serviceData;
 
     public Data getServiceData() {
       return serviceData;
@@ -76,33 +62,25 @@ public class UpdateAuthorizationRequest
       this.serviceData = serviceData;
     }
 
-    public Long getTransactionId() {
-      return transactionId;
-    }
-
-    public void setTransactionId(Long transactionId) {
-      this.transactionId = transactionId;
-    }
-
-    public Long getAuthorizationId() {
-      return authorizationId;
-    }
-
-    public void setAuthorizationId(Long authorizationId) {
-      this.authorizationId = authorizationId;
-    }
-
     public static class Data {
-      @JsonProperty("paykey") private String payKey;
 
-      public String getPayKey() {
-        return payKey;
+      private String token;
+
+      public String getToken() {
+        return token;
       }
 
-      public void setPayKey(String payKey) {
-        this.payKey = payKey;
+      public void setToken(String token) {
+        this.token = token;
       }
+    }
 
+    public long getServiceId() {
+      return serviceId;
+    }
+
+    public void setServiceId(long serviceId) {
+      this.serviceId = serviceId;
     }
   }
 

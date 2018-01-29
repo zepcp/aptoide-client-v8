@@ -1,7 +1,8 @@
 package cm.aptoide.pt.billing.payment;
 
+import adyen.com.adyencse.encrypter.ClientSideEncrypter;
+import adyen.com.adyencse.encrypter.exception.EncrypterException;
 import android.content.Context;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import com.adyen.core.PaymentRequest;
 import com.adyen.core.interfaces.PaymentDataCallback;
@@ -12,6 +13,7 @@ import com.adyen.core.interfaces.PaymentRequestListener;
 import com.adyen.core.interfaces.UriCallback;
 import com.adyen.core.models.PaymentMethod;
 import com.adyen.core.models.PaymentRequestResult;
+import com.adyen.core.models.paymentdetails.CreditCardPaymentDetails;
 import com.adyen.core.models.paymentdetails.InputDetail;
 import com.adyen.core.models.paymentdetails.PaymentDetails;
 import com.jakewharton.rxrelay.PublishRelay;
@@ -19,6 +21,8 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
 import rx.Completable;
 import rx.Observable;
 import rx.Scheduler;
@@ -43,108 +47,120 @@ public class Adyen {
     this.status = paymentRequestStatus;
   }
 
-  public Single<String> createToken() {
-    cancelPreviousToken();
+  public Single<String> createSession() {
+
+    paymentStatus = new PaymentStatus(status);
+    detailsStatus = new DetailsStatus(status, Collections.emptyList());
+    paymentRequest = new PaymentRequest(context, paymentStatus, detailsStatus);
+    paymentRequest.start();
+
     return getStatus().filter(status -> status.getToken() != null)
         .map(status -> status.getToken())
         .first()
         .toSingle();
   }
 
-  public Completable createPayment(String session) {
-    return getStatus().first()
-        .toSingle()
+  public Completable openSession(String session) {
+    return getStatus().takeUntil(status -> status.getDetailsCallback() != null)
         .flatMapCompletable(status -> {
-          if (status.getDataCallback() == null) {
-            return Completable.error(
-                new IllegalStateException("Not possible to create payment no callback available."));
+
+          if (status.getDetailsCallback() != null) {
+            // Ready to listen to credit card details.
+            return Completable.complete();
           }
-          status.getDataCallback()
-              .completionWithPaymentData(session.getBytes(dataCharset));
+
+          if (status.getServices() != null && status.getServiceCallback() != null) {
+            // Ready to select payment method. We always use credit card for now.
+            return getAdyenPaymentMethod(status.getServices(), PaymentMethod.Type.CARD).doOnNext(
+                method -> status.getServiceCallback()
+                    .completionWithPaymentMethod(method))
+                .toCompletable();
+          }
+
+          if (status.getDataCallback() != null) {
+            // Ready to open session.
+            status.getDataCallback()
+                .completionWithPaymentData(session.getBytes(dataCharset));
+          }
           return Completable.complete();
-        });
+        })
+        .toCompletable();
   }
 
-  public Completable selectPaymentService(PaymentMethod service) {
-    return getStatus().first()
-        .toSingle()
-        .flatMapCompletable(status -> {
-          if (status.getServiceCallback() == null) {
-            return Completable.error(new IllegalStateException(
-                "Not possible to select payment service no callback available."));
-          }
-          status.getServiceCallback()
-              .completionWithPaymentMethod(service);
-          return Completable.complete();
-        });
+  public void closeSession() {
+
+    if (paymentRequest != null) {
+      detailsStatus.clearStatus();
+      paymentStatus.clearStatus();
+      paymentRequest.cancel();
+    }
   }
 
-  public Completable finishUri(Uri uri) {
-    return getStatus().first()
-        .toSingle()
-        .flatMapCompletable(status -> {
-          if (status.getUriCallback() == null) {
-            return Completable.error(new IllegalStateException(
-                "Not possible to select payment service no callback available."));
-          }
-          status.getUriCallback()
-              .completionWithUri(uri);
-          return Completable.complete();
-        });
-  }
+  public Single<String> registerCreditCard(CreditCard creditCard) {
+    return getStatus().flatMap(status -> {
 
-  public Completable finishPayment(PaymentDetails details) {
-    return getStatus().first()
-        .toSingle()
-        .flatMapCompletable(status -> {
-          if (status.getDetailsCallback() == null) {
-            return Completable.error(new IllegalStateException(
-                "Not possible to finish payment with details no callback available."));
-          }
-          status.getDetailsCallback()
-              .completionWithPaymentDetails(details);
-          return Completable.complete();
-        });
-  }
+      if (status.getResult() != null) {
+        if (status.getResult()
+            .getError() != null) {
+          return Observable.error(status.getResult()
+              .getError());
+        }
 
-  public Single<PaymentRequestResult> getPaymentResult() {
-    return getStatus().filter(status -> status.getResult() != null)
-        .map(status -> status.getResult())
+        if (status.getResult()
+            .isProcessed()) {
+          return Observable.just(status.getResult()
+              .getPayment()
+              .getPayload());
+        }
+      }
+
+      if (status.getRedirectUrl() != null || status.getUriCallback() != null) {
+        return Observable.error(
+            new IllegalStateException("Not possible to register credit card 3D secure required."));
+      }
+
+      if (status.getDetailsCallback() == null) {
+        return Observable.error(new IllegalStateException(
+            "Not possible to register credit card callbacks unavailable."));
+      }
+
+      return getAdyenPaymentMethod(status.getServices(), PaymentMethod.Type.CARD).flatMapSingle(
+          paymentMethod -> Single.fromCallable(
+              () -> fromCreditCard(creditCard, paymentMethod.getInputDetails(),
+                  status.getPaymentRequest()
+                      .getPublicKey(), status.getPaymentRequest()
+                      .getGenerationTime())))
+          .doOnNext(details -> status.getDetailsCallback()
+              .completionWithPaymentDetails(details))
+          .ignoreElements()
+          .cast(String.class);
+    })
         .first()
         .toSingle();
   }
 
-  public Single<PaymentRequest> getPaymentData() {
-    return getStatus().filter(status -> status.getPaymentRequest() != null)
-        .map(status -> status.getPaymentRequest())
-        .first()
-        .toSingle();
+  private PaymentDetails fromCreditCard(CreditCard creditCard, Collection<InputDetail> inputDetails,
+      String publicKey, String generationTime) throws JSONException, EncrypterException {
+    final CreditCardPaymentDetails creditCardPaymentDetails =
+        new CreditCardPaymentDetails(inputDetails);
+    final JSONObject sensitiveData = new JSONObject();
+
+    sensitiveData.put("holderName", "Checkout Shopper Placeholder");
+    sensitiveData.put("number", creditCard.getCardNumber());
+    sensitiveData.put("expiryMonth", creditCard.getExpirationMonth());
+    sensitiveData.put("expiryYear", creditCard.getExpirationYear());
+    sensitiveData.put("generationtime", generationTime);
+    sensitiveData.put("cvc", creditCard.getCvv());
+    creditCardPaymentDetails.fillCardToken(
+        new ClientSideEncrypter(publicKey).encrypt(sensitiveData.toString()));
+    creditCardPaymentDetails.fillStoreDetails(true);
+    return creditCardPaymentDetails;
   }
 
-  public Single<String> getRedirectUrl() {
-    return getStatus().filter(status -> status.getRedirectUrl() != null)
-        .map(status -> status.getRedirectUrl())
-        .first()
-        .toSingle();
-  }
-
-  public Single<PaymentMethod> getCreditCardPaymentService() {
-    return getStatus().flatMap(
-        status -> getRecurringPaymentService(status.getRecurringServices()).switchIfEmpty(
-            getPaymentService(status.getServices(), PaymentMethod.Type.CARD)))
-        .first()
-        .toSingle();
-  }
-
-  private Observable<PaymentMethod> getPaymentService(List<PaymentMethod> services,
+  private Observable<PaymentMethod> getAdyenPaymentMethod(List<PaymentMethod> services,
       String paymentType) {
     return Observable.from(services)
         .filter(service -> paymentType.equals(service.getType()))
-        .take(1);
-  }
-
-  private Observable<PaymentMethod> getRecurringPaymentService(List<PaymentMethod> services) {
-    return Observable.from(services)
         .take(1);
   }
 
@@ -152,25 +168,10 @@ public class Adyen {
     return status.startWith((AdyenPaymentStatus) null)
         .map(event -> new AdyenPaymentStatus(paymentStatus.getToken(),
             paymentStatus.getDataCallback(), paymentStatus.getResult(),
-            detailsStatus.getServiceCallback(), detailsStatus.getRecurringServices(),
-            detailsStatus.getServices(), detailsStatus.getDetailsCallback(),
-            detailsStatus.getPaymentRequest(), detailsStatus.getRedirectUrl(),
-            detailsStatus.getUriCallback()))
+            detailsStatus.getServiceCallback(), detailsStatus.getServices(),
+            detailsStatus.getDetailsCallback(), detailsStatus.getPaymentRequest(),
+            detailsStatus.getRedirectUrl(), detailsStatus.getUriCallback()))
         .subscribeOn(scheduler);
-  }
-
-  private void cancelPreviousToken() {
-
-    if (paymentRequest != null) {
-      detailsStatus.clearStatus();
-      paymentStatus.clearStatus();
-      paymentRequest.cancel();
-    }
-
-    paymentStatus = new PaymentStatus(status);
-    detailsStatus = new DetailsStatus(status, Collections.emptyList(), Collections.emptyList());
-    paymentRequest = new PaymentRequest(context, paymentStatus, detailsStatus);
-    paymentRequest.start();
   }
 
   public static class PaymentStatus implements PaymentRequestListener {
@@ -220,30 +221,25 @@ public class Adyen {
     }
   }
 
-  public static class DetailsStatus implements PaymentRequestDetailsListener {
+  private static class DetailsStatus implements PaymentRequestDetailsListener {
 
     private PublishRelay<AdyenPaymentStatus> status;
     private PaymentMethodCallback serviceCallback;
     private List<PaymentMethod> services;
-    private List<PaymentMethod> recurringServices;
     private PaymentDetailsCallback detailsCallback;
     private PaymentRequest paymentRequest;
     private UriCallback uriCallback;
     private String redirectUrl;
 
-    public DetailsStatus(PublishRelay<AdyenPaymentStatus> status, List<PaymentMethod> services,
-        List<PaymentMethod> recurringServices) {
+    public DetailsStatus(PublishRelay<AdyenPaymentStatus> status, List<PaymentMethod> services) {
       this.status = status;
       this.services = services;
-      this.recurringServices = recurringServices;
     }
 
     @Override public void onPaymentMethodSelectionRequired(@NonNull PaymentRequest paymentRequest,
         @NonNull List<PaymentMethod> recurringServices, @NonNull List<PaymentMethod> otherServices,
         @NonNull PaymentMethodCallback paymentMethodCallback) {
       this.serviceCallback = paymentMethodCallback;
-      this.recurringServices =
-          recurringServices != null ? recurringServices : Collections.emptyList();
       this.services = otherServices != null ? otherServices : Collections.emptyList();
       notifyStatus();
     }
@@ -277,10 +273,6 @@ public class Adyen {
 
     public PaymentRequest getPaymentRequest() {
       return paymentRequest;
-    }
-
-    public List<PaymentMethod> getRecurringServices() {
-      return recurringServices;
     }
 
     public UriCallback getUriCallback() {

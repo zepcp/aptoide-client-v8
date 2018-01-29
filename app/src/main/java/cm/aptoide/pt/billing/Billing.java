@@ -7,15 +7,13 @@ package cm.aptoide.pt.billing;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
-import cm.aptoide.pt.billing.authorization.AuthorizationService;
 import cm.aptoide.pt.billing.customer.Customer;
-import cm.aptoide.pt.billing.customer.User;
+import cm.aptoide.pt.billing.customer.CustomerManager;
 import cm.aptoide.pt.billing.payment.Payment;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.payment.PaymentServiceAdapter;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
-import cm.aptoide.pt.billing.transaction.TransactionService;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import java.util.HashMap;
 import java.util.List;
@@ -28,44 +26,32 @@ import rx.subjects.PublishSubject;
 public class Billing {
 
   private final BillingService billingService;
-  private final UserPersistence userPersistence;
   private final PurchaseTokenDecoder tokenDecoder;
   private final String merchantPackageName;
   private final MerchantVersionProvider versionProvider;
   private final PaymentServiceAdapter serviceAdapter;
   private final PublishSubject<Action> actions;
-  private final Observable<Customer> customer;
-  private final Observable<Payment> payment;
-  private final Authorization payPalAuthorization;
+  private final CustomerManager customerManager;
+  private final Observable<Payment> paymentObservable;
   private boolean setup;
 
   private Billing(String merchantPackageName, BillingService billingService,
-      UserPersistence userPersistence, PurchaseTokenDecoder tokenDecoder,
-      MerchantVersionProvider versionProvider, PaymentServiceAdapter serviceAdapter,
-      PublishSubject<Action> actions, Authorization payPalAuthorization) {
+      PurchaseTokenDecoder tokenDecoder, MerchantVersionProvider versionProvider,
+      PaymentServiceAdapter serviceAdapter, PublishSubject<Action> actions,
+      CustomerManager customerManager) {
     this.billingService = billingService;
-    this.userPersistence = userPersistence;
     this.tokenDecoder = tokenDecoder;
     this.merchantPackageName = merchantPackageName;
     this.versionProvider = versionProvider;
     this.serviceAdapter = serviceAdapter;
     this.actions = actions;
+    this.customerManager = customerManager;
     this.setup = false;
-    this.payPalAuthorization = payPalAuthorization;
-    this.customer = actions.publish(published -> Observable.merge(
-        published.ofType(LoadCustomer.class)
-            .compose(loadCustomer()), published.ofType(SelectPaymentMethod.class)
-            .compose(selectPaymentMethod()), published.ofType(ClearPaymentMethod.class)
-            .compose(clearPaymentMethod())))
-        .scan(Customer.loading(),
-            (oldCustomer, newCustomer) -> Customer.consolidate(oldCustomer, newCustomer))
-        .replay(1)
-        .autoConnect();
-    this.payment = actions.publish(published -> Observable.merge(
+    this.paymentObservable = actions.publish(published -> Observable.merge(
         published.ofType(SelectProduct.class)
             .compose(selectProduct()), published.ofType(CreateTransaction.class)
-            .compose(createTransaction()), published.ofType(SelectCustomer.class)
-            .compose(selectCustomer())))
+            .compose(createTransaction()), published.ofType(LoadPurchase.class)
+            .compose(loadPurchase())))
         .scan(Payment.loading(),
             (oldPayment, newPayment) -> Payment.consolidate(oldPayment, newPayment))
         .replay(1)
@@ -78,38 +64,26 @@ public class Billing {
       return;
     }
 
-    payment.subscribe(__ -> {
-    }, throwable -> {
-      throw new OnErrorNotImplementedException(throwable);
-    });
+    customerManager.setup();
 
-    customer.subscribe(customer -> {
-      actions.onNext(new SelectCustomer(customer));
-    }, throwable -> {
-      throw new OnErrorNotImplementedException(throwable);
-    });
-
-    userPersistence.getUser()
-        .subscribe(user -> actions.onNext(new LoadCustomer(user)), throwable -> {
+    Observable.combineLatest(customerManager.getCustomer(),
+        paymentObservable.distinct(payment -> payment.getProduct()),
+        (customer, payment) -> new LoadPurchase(payment.getProduct(), customer))
+        .subscribe(loadPurchase -> {
+          actions.onNext(loadPurchase);
+        }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
 
     setup = true;
   }
 
-  private Observable.Transformer<SelectPaymentMethod, Customer> selectPaymentMethod() {
-    return select -> select.map(data -> data.getPaymentMethod())
-        .map(paymentMethod -> {
-          if (paymentMethod.getType()
-              .equals(PaymentMethod.PAYPAL)) {
-            return Customer.withAuthorization(paymentMethod, payPalAuthorization);
-          }
-          return Customer.withPaymentMethod(paymentMethod);
-        });
+  public Observable<Payment> getPayment() {
+    return paymentObservable;
   }
 
-  private Observable.Transformer<ClearPaymentMethod, Customer> clearPaymentMethod() {
-    return select -> select.map(data -> Customer.withoutPaymentMethod());
+  public Observable<Customer> getCustomer() {
+    return customerManager.getCustomer();
   }
 
   public Single<Merchant> getMerchant() {
@@ -117,82 +91,68 @@ public class Billing {
         .flatMap(versionCode -> billingService.getMerchant(merchantPackageName, versionCode));
   }
 
-  public Observable<Customer> getCustomer() {
-    return customer;
+  public <T> void authorize(T data) {
+    customerManager.authorize(data);
   }
 
-  public Observable<Payment> getPayment() {
-    return payment;
+  public void selectPaymentMethod(PaymentMethod paymentMethod) {
+    customerManager.selectPaymentMethod(paymentMethod);
   }
 
-  private Observable.Transformer<LoadCustomer, Customer> loadCustomer() {
-    return load -> load.map(data -> data.getUser())
-        .flatMap(user -> {
-          if (user.isAuthenticated()) {
-            return Single.zip(billingService.getPaymentMethods(),
-                billingService.getAuthorizations(user.getId()),
-                (paymentMethods, authorizations) -> Customer.authenticated(paymentMethods,
-                    authorizations, getDefaultAuthorization(authorizations),
-                    getDefaultPaymentMethod(paymentMethods), user.getId()))
-                .toObservable()
-                .startWith(Customer.loading());
-          }
-          return Observable.just(Customer.notAuthenticated());
-        })
-        .onErrorReturn(throwable -> Customer.error());
+  public void clearPaymentMethodSelection() {
+    customerManager.clearPaymentMethodSelection();
   }
 
-  private Observable.Transformer<SelectCustomer, Payment> selectCustomer() {
-    return selectCustomer -> selectCustomer.map(data -> {
+  private Observable.Transformer<LoadPurchase, Payment> loadPurchase() {
+    return loadPurchase -> loadPurchase.flatMap(data -> {
+
       if (data.getCustomer()
           .getStatus()
-          .equals(Customer.Status.LOADING_ERROR)) {
-        return Payment.error();
+          .equals(Customer.Status.LOADED) && data.getProduct() != null) {
+
+        if (data.getCustomer()
+            .isAuthenticated()) {
+
+          return Single.zip(billingService.getPurchase(data.getProduct()
+                  .getId()), billingService.getTransaction(data.getCustomer()
+                  .getId(), data.getProduct()
+                  .getId()),
+              (purchase, transaction) -> Payment.withCustomer(data.getCustomer(), transaction,
+                  purchase))
+              .toObservable()
+              .onErrorReturn(throwable -> Payment.error())
+              .startWith(Payment.loading());
+        }
+
+        return Observable.just(Payment.withCustomer(data.getCustomer(), null, null));
       }
-      return Payment.withCustomer(data.getCustomer());
+
+      return Observable.empty();
     });
   }
 
   private Observable.Transformer<SelectProduct, Payment> selectProduct() {
-    return selectProduct -> selectProduct.flatMap(data -> getMerchant().flatMap(
-        merchant -> billingService.getProduct(data.getSku(), merchantPackageName)
-            .flatMap(product -> billingService.getPurchase(product.getId())
-                .map(purchase -> Payment.loaded(merchant, product, purchase, data.getPayload()))))
-        .toObservable()
+    return selectProduct -> selectProduct.flatMapSingle(data -> Single.zip(getMerchant(),
+        billingService.getProduct(data.getSku(), merchantPackageName),
+        (merchant, product) -> Payment.withProduct(merchant, product, data.getPayload())))
         .onErrorReturn(throwable -> Payment.error())
-        .startWith(Payment.loading()));
+        .startWith(Payment.loading());
   }
 
   private Observable.Transformer<CreateTransaction, Payment> createTransaction() {
-    return createTransaction -> createTransaction.flatMap(__ -> payment.first()
-        .flatMap(payment -> serviceAdapter.createTransaction(payment.getCustomer()
+    return createTransaction -> createTransaction.flatMap(__ -> paymentObservable.first()
+        .flatMap(payment -> serviceAdapter.pay(payment.getCustomer()
             .getSelectedPaymentMethod()
             .getType(), payment.getCustomer()
             .getSelectedPaymentMethod()
-            .getId(), payment.getPayload(), payment.getCustomer()
+            .getId(), payment.getCustomer()
             .getId(), payment.getProduct()
             .getId())
             .toObservable()
-            .map(transaction -> Payment.withTransaction(transaction))
+            .map(transaction -> Payment.withProduct(payment.getMerchant(), payment.getProduct(),
+                payment.getPayload()))
             .onErrorReturn(throwable -> Payment.error())
             .startWith(Payment.loading())));
-  }
-
-  private PaymentMethod getDefaultPaymentMethod(List<PaymentMethod> paymentMethods) {
-    for (PaymentMethod paymentMethod : paymentMethods) {
-      if (paymentMethod.isDefault()) {
-        return paymentMethod;
-      }
-    }
-    return null;
-  }
-  private Authorization getDefaultAuthorization(List<Authorization> authorizations) {
-    for (Authorization authorization : authorizations) {
-      if (authorization.isDefault()) {
-        return authorization;
-      }
-    }
-    return null;
   }
 
   public Single<List<Product>> getProducts(List<String> skus) {
@@ -207,10 +167,6 @@ public class Billing {
     return billingService.deletePurchase(tokenDecoder.decode(purchaseToken));
   }
 
-  public <T> void authorize(T data) {
-    actions.onNext(new AuthorizePayment<T>(data));
-  }
-
   public void pay() {
     actions.onNext(new CreateTransaction());
   }
@@ -219,28 +175,11 @@ public class Billing {
     actions.onNext(new SelectProduct(sku, payload));
   }
 
-  public void selectPaymentMethod(PaymentMethod paymentMethod) {
-    actions.onNext(new SelectPaymentMethod(paymentMethod));
-  }
-
-  public void clearPaymentMethodSelection() {
-    actions.onNext(new ClearPaymentMethod());
-  }
-
   private static class Action {
   }
 
-  private static class LoadCustomer extends Action {
+  public static class CreateTransaction extends Action {
 
-    private final User user;
-
-    private LoadCustomer(User user) {
-      this.user = user;
-    }
-
-    public User getUser() {
-      return user;
-    }
   }
 
   private static class SelectProduct extends Action {
@@ -262,50 +201,23 @@ public class Billing {
     }
   }
 
-  private static class AuthorizePayment<T> extends Action {
+  public static class LoadPurchase extends Action {
 
-    private final T data;
-
-    public AuthorizePayment(T data) {
-      this.data = data;
-    }
-
-    public T getData() {
-      return data;
-    }
-  }
-
-  public static class SelectPaymentMethod extends Action {
-
-    private final PaymentMethod paymentMethod;
-
-    public SelectPaymentMethod(PaymentMethod paymentMethod) {
-      this.paymentMethod = paymentMethod;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-      return paymentMethod;
-    }
-  }
-
-  public static class ClearPaymentMethod extends Action {
-  }
-
-  public static class SelectCustomer extends Action {
-
+    private final Product product;
     private final Customer customer;
 
-    public SelectCustomer(Customer customer) {
+    public LoadPurchase(Product product, Customer customer) {
+      this.product = product;
       this.customer = customer;
     }
 
     public Customer getCustomer() {
       return customer;
     }
-  }
 
-  public static class CreateTransaction extends Action {
-
+    public Product getProduct() {
+      return product;
+    }
   }
 
   public static class Builder {
@@ -316,8 +228,6 @@ public class Billing {
     private String merchantPackageName;
     private MerchantVersionProvider versionProvider;
     private Map<String, PaymentService> services;
-    private TransactionService transactionService;
-    private AuthorizationService authorizationService;
     private AuthorizationPersistence authorizationPersistence;
     private String payPalIcon;
 
@@ -350,16 +260,6 @@ public class Billing {
       return this;
     }
 
-    public Builder setTransactionService(TransactionService transactionService) {
-      this.transactionService = transactionService;
-      return this;
-    }
-
-    public Builder setAuthorizationService(AuthorizationService authorizationService) {
-      this.authorizationService = authorizationService;
-      return this;
-    }
-
     public Builder setAuthorizationPersistence(AuthorizationPersistence authorizationPersistence) {
       this.authorizationPersistence = authorizationPersistence;
       return this;
@@ -381,12 +281,17 @@ public class Billing {
         throw new IllegalStateException("Register at least 1 payment service");
       }
 
-      return new Billing(merchantPackageName, billingService, userPersistence, tokenDecoder,
-          versionProvider,
-          new PaymentServiceAdapter(services, authorizationService, transactionService,
-              authorizationPersistence),
-          PublishSubject.create(), new Authorization(null, null, null, payPalIcon, "PayPal",
-              Authorization.PAYPAL_SDK, null, true));
+      final PaymentServiceAdapter serviceAdapter =
+          new PaymentServiceAdapter(services, billingService, authorizationPersistence);
+
+      final CustomerManager customerManager =
+          new CustomerManager(PublishSubject.create(), userPersistence, billingService,
+              authorizationPersistence,
+              new Authorization(-1, null, null, payPalIcon, "PayPal", Authorization.PAYPAL_SDK,
+                  null, true, 1), serviceAdapter);
+
+      return new Billing(merchantPackageName, billingService, tokenDecoder, versionProvider,
+          serviceAdapter, PublishSubject.create(), customerManager);
     }
   }
 }

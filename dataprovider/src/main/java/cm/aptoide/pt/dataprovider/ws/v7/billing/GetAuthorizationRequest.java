@@ -8,6 +8,7 @@ import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.preferences.toolbox.ToolboxManager;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import retrofit2.Response;
@@ -70,13 +71,15 @@ public class GetAuthorizationRequest
 
       private long id;
       private String type;
-      private long serviceId;
+      @JsonProperty("service_id") private long serviceId;
       private Price price;
       private User user;
       private String status;
       private Metadata data;
       private String icon;
       private String name;
+      private String description;
+      @JsonProperty("is_default") private boolean defaultAuthorization;
 
       public long getId() {
         return id;
@@ -148,6 +151,22 @@ public class GetAuthorizationRequest
 
       public String getName() {
         return name;
+      }
+
+      public String getDescription() {
+        return description;
+      }
+
+      public void setDescription(String description) {
+        this.description = description;
+      }
+
+      public boolean isDefaultAuthorization() {
+        return defaultAuthorization;
+      }
+
+      public void setDefaultAuthorization(boolean defaultAuthorization) {
+        this.defaultAuthorization = defaultAuthorization;
       }
 
       public static class User {

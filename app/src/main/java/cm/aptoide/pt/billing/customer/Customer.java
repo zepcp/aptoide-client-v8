@@ -15,7 +15,7 @@ public class Customer {
   private final PaymentMethod selectedPaymentMethod;
   private final Status status;
 
-  public Customer(String id, boolean authenticated, List<PaymentMethod> paymentMethods,
+  public Customer(String id, Boolean authenticated, List<PaymentMethod> paymentMethods,
       List<Authorization> authorizations, Authorization selectedAuthorization,
       PaymentMethod selectedPaymentMethod, Status status) {
     this.id = id;
@@ -64,12 +64,12 @@ public class Customer {
   }
 
   public static Customer loading() {
-    return new Customer(null, false, Collections.emptyList(), Collections.emptyList(), null, null,
+    return new Customer(null, null, null, null, null, null,
         Status.LOADING);
   }
 
   public static Customer error() {
-    return new Customer(null, false, Collections.emptyList(), Collections.emptyList(), null, null,
+    return new Customer(null, null, null, null, null, null,
         Status.LOADING_ERROR);
   }
 
@@ -81,20 +81,21 @@ public class Customer {
   }
 
   public static Customer notAuthenticated() {
-    return new Customer(null, false, null, null, null, null, Status.LOADED);
+    return new Customer(null, false, Collections.emptyList(), Collections.emptyList(), null, null,
+        Status.LOADED);
   }
 
   public static Customer withPaymentMethod(PaymentMethod selectedPaymentMethod) {
-    return new Customer(null, true, null, null, null, selectedPaymentMethod, null);
+    return new Customer(null, null, null, null, null, selectedPaymentMethod, Status.LOADED);
   }
 
   public static Customer withoutPaymentMethod() {
-    return new Customer(null, true, null, null, null, null, null);
+    return new Customer(null, null, null, null, null, null, Status.LOADED);
   }
 
   public static Customer withAuthorization(PaymentMethod paymentMethod,
       Authorization authorization) {
-    return new Customer(null, true, null, null, authorization, paymentMethod, null);
+    return new Customer(null, null, null, null, authorization, paymentMethod, Status.LOADED);
   }
 
   public static Customer consolidate(Customer oldCustomer, Customer newCustomer) {
@@ -103,7 +104,19 @@ public class Customer {
     Boolean authenticated = oldCustomer.authenticated;
     List<PaymentMethod> paymentMethods = oldCustomer.paymentMethods;
     List<Authorization> authorizations = oldCustomer.authorizations;
-    Status status = oldCustomer.status;
+    Authorization selectedAuthorization = oldCustomer.selectedAuthorization;
+    PaymentMethod selectedPaymentMethod = oldCustomer.selectedPaymentMethod;
+    Status status = newCustomer.status;
+
+    if (newCustomer.getStatus()
+        .equals(Status.LOADING_ERROR) || newCustomer.getStatus()
+        .equals(Status.LOADING)) {
+      return new Customer(id, authenticated, paymentMethods, authorizations,
+          selectedAuthorization, selectedPaymentMethod, status);
+    }
+
+    selectedAuthorization = newCustomer.selectedAuthorization;
+    selectedPaymentMethod = newCustomer.selectedPaymentMethod;
 
     if (newCustomer.id != null) {
       id = newCustomer.id;
@@ -121,12 +134,32 @@ public class Customer {
       authorizations = newCustomer.authorizations;
     }
 
-    if (newCustomer.status != null) {
-      status = newCustomer.status;
+    if (selectedAuthorization != null && !authorizations.contains(selectedAuthorization)) {
+      authorizations.add(selectedAuthorization);
     }
 
     return new Customer(id, authenticated, paymentMethods, authorizations,
-        newCustomer.selectedAuthorization, newCustomer.selectedPaymentMethod, status);
+        selectedAuthorization, selectedPaymentMethod, status);
+  }
+
+  @Override public String toString() {
+    return "Customer{"
+        + "id='"
+        + id
+        + '\''
+        + ", authenticated="
+        + authenticated
+        + ", paymentMethods="
+        + paymentMethods
+        + ", authorizations="
+        + authorizations
+        + ", selectedAuthorization="
+        + selectedAuthorization
+        + ", selectedPaymentMethod="
+        + selectedPaymentMethod
+        + ", status="
+        + status
+        + '}';
   }
 
   public enum Status {

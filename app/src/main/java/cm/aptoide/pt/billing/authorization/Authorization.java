@@ -9,7 +9,7 @@ public class Authorization {
 
   public static final String PAYPAL_SDK = "PAYPAL_SDK";
   public static final String ADYEN_SDK = "ADYEN_SDK";
-  private final String id;
+  private final long id;
   private final String customerId;
   private final Status status;
   private final String icon;
@@ -17,9 +17,10 @@ public class Authorization {
   private final String type;
   private final String description;
   private final boolean defaultAuthorization;
+  private final long paymentMethodId;
 
-  public Authorization(String id, String customerId, Status status, String icon, String name,
-      String type, String description, boolean defaultAuthorization) {
+  public Authorization(long id, String customerId, Status status, String icon, String name,
+      String type, String description, boolean defaultAuthorization, long paymentMethodId) {
     this.id = id;
     this.customerId = customerId;
     this.status = status;
@@ -28,18 +29,15 @@ public class Authorization {
     this.type = type;
     this.description = description;
     this.defaultAuthorization = defaultAuthorization;
+    this.paymentMethodId = paymentMethodId;
   }
 
-  public String getId() {
+  public long getId() {
     return id;
   }
 
   public String getCustomerId() {
     return customerId;
-  }
-
-  public boolean isPending() {
-    return Status.PENDING.equals(status);
   }
 
   public String getIcon() {
@@ -59,11 +57,7 @@ public class Authorization {
   }
 
   public boolean isProcessing() {
-    return Status.PENDING_SYNC.equals(status) || Status.PROCESSING.equals(status);
-  }
-
-  public boolean isPendingSync() {
-    return Status.PENDING_SYNC.equals(status);
+    return Status.PROCESSING.equals(status) || Status.PENDING.equals(status);
   }
 
   public boolean isFailed() {
@@ -74,10 +68,6 @@ public class Authorization {
     return Status.ACTIVE.equals(status) || Status.REDEEMED.equals(status);
   }
 
-  public boolean isRedeemed() {
-    return Status.REDEEMED.equals(status);
-  }
-
   public Status getStatus() {
     return status;
   }
@@ -86,7 +76,58 @@ public class Authorization {
     return defaultAuthorization;
   }
 
+  public long getPaymentMethodId() {
+    return paymentMethodId;
+  }
+
+  public boolean isPending() {
+    return Status.PENDING.equals(status);
+  }
+
   public enum Status {
-    NEW, PENDING, PENDING_SYNC, PROCESSING, REDEEMED, ACTIVE, FAILED, EXPIRED
+    PENDING, PROCESSING, REDEEMED, ACTIVE, FAILED, EXPIRED
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Authorization that = (Authorization) o;
+
+    if (id != that.id) return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return (int) (id ^ (id >>> 32));
+  }
+
+  @Override public String toString() {
+    return "Authorization{"
+        + "id="
+        + id
+        + ", customerId='"
+        + customerId
+        + '\''
+        + ", status="
+        + status
+        + ", icon='"
+        + icon
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + ", type='"
+        + type
+        + '\''
+        + ", description='"
+        + description
+        + '\''
+        + ", defaultAuthorization="
+        + defaultAuthorization
+        + ", paymentMethodId="
+        + paymentMethodId
+        + '}';
   }
 }

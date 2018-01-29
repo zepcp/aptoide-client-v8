@@ -9,15 +9,20 @@ import cm.aptoide.pt.billing.Price;
 
 public class PayPalAuthorization extends Authorization {
 
-  private final String metadata;
+  private final String payKey;
   private final Price price;
+  private final String productDescription;
+  private final long transactionId;
 
-  public PayPalAuthorization(String id, String customerId, Status status, String metadata,
-      Price price, String description, String icon, String name, boolean defaultAuthorization,
-      String type) {
-    super(id, customerId, status, icon, name, type, description, defaultAuthorization);
-    this.metadata = metadata;
+  public PayPalAuthorization(long id, String customerId, Status status, String payKey, Price price,
+      String description, String icon, String name, boolean defaultAuthorization, String type,
+      String productDescription, long paymentMethodId, long transactionId) {
+    super(id, customerId, status, icon, name, type, description, defaultAuthorization,
+        paymentMethodId);
+    this.payKey = payKey;
     this.price = price;
+    this.productDescription = productDescription;
+    this.transactionId = transactionId;
   }
 
   public Price getPrice() {
@@ -25,6 +30,14 @@ public class PayPalAuthorization extends Authorization {
   }
 
   public String getPayKey() {
-    return metadata;
+    return payKey;
+  }
+
+  public String getProductDescription() {
+    return productDescription;
+  }
+
+  public long getTransactionId() {
+    return transactionId;
   }
 }
