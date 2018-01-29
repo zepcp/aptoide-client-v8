@@ -3,7 +3,7 @@
  * Modified by Marcelo Benites on 06/01/2017.
  */
 
-package cm.aptoide.pt.billing;
+package cm.aptoide.pt.billing.customer;
 
 import cm.aptoide.pt.billing.customer.User;
 import rx.Observable;

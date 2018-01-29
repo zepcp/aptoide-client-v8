@@ -18,6 +18,7 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.view.BillingActivity;
@@ -30,6 +31,7 @@ import cm.aptoide.pt.view.spannable.SpannableFactory;
 import com.bumptech.glide.Glide;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -41,35 +43,26 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   private TextView merchantNameText;
   private Button buyButton;
   private TextView productPrice;
-  private ClickHandler handler;
-  private PublishRelay<Void> cancelRelay;
-
   private RxAlertDialog networkErrorDialog;
   private RxAlertDialog unknownErrorDialog;
-  private SpannableFactory spannableFactory;
   private Toolbar toolbar;
-
-  private Billing billing;
-  private BillingAnalytics billingAnalytics;
-  private BillingNavigator billingNavigator;
   private ImageView authorizationIcon;
   private TextView authorizationDescription;
   private View authorizationContainer;
+
+  @Inject BillingAnalytics billingAnalytics;
+  @Inject BillingNavigator billingNavigator;
+  @Inject BillingFactory billingFactory;
+
+  private Billing billing;
+  private ClickHandler handler;
+  private SpannableFactory spannableFactory;
+  private PublishRelay<Void> cancelRelay;
 
   public static Fragment create(Bundle bundle) {
     final PaymentFragment fragment = new PaymentFragment();
     fragment.setArguments(bundle);
     return fragment;
-  }
-
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    billing = ((AptoideApplication) getContext().getApplicationContext()).getBilling(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
-    billingAnalytics =
-        ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
-    billingNavigator = ((ActivityResultNavigator) getContext()).getBillingNavigator();
-    cancelRelay = PublishRelay.create();
   }
 
   @Nullable @Override
@@ -80,6 +73,11 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    billing = billingFactory.create(
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+    spannableFactory = new SpannableFactory();
+    cancelRelay = PublishRelay.create();
     setHasOptionsMenu(true);
     toolbar = (Toolbar) view.findViewById(R.id.fragment_payment_toolbar);
     ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
@@ -87,8 +85,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
         .setDisplayHomeAsUpEnabled(true);
 
     productIcon = (ImageView) view.findViewById(R.id.include_payment_product_icon);
-
-    spannableFactory = new SpannableFactory();
     progressView = view.findViewById(R.id.fragment_payment_global_progress_bar);
 
     productIcon = (ImageView) view.findViewById(R.id.include_payment_product_icon);
@@ -132,7 +128,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
 
   @Override public void onDestroyView() {
     unregisterClickHandler(handler);
-    spannableFactory = null;
     progressView = null;
     productIcon = null;
     productName = null;
@@ -143,6 +138,10 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     networkErrorDialog = null;
     unknownErrorDialog.dismiss();
     unknownErrorDialog = null;
+    billing = null;
+    cancelRelay = null;
+    handler = null;
+    spannableFactory = null;
     super.onDestroyView();
   }
 

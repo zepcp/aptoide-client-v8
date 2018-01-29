@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.Price;
+import cm.aptoide.pt.billing.product.Price;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.dataprovider.model.v3.PaidApp;
 import cm.aptoide.pt.dataprovider.model.v3.PaymentServiceResponse;

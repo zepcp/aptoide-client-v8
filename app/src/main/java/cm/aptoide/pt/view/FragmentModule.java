@@ -97,10 +97,6 @@ import rx.schedulers.Schedulers;
         fragment.getResources());
   }
 
-  @FragmentScope @Provides AccountErrorMapper provideAccountErrorMapper() {
-    return new AccountErrorMapper(fragment.getContext(), new ErrorsMapper());
-  }
-
   @FragmentScope @Provides ManageStoreErrorMapper provideManageStoreErrorMapper() {
     return new ManageStoreErrorMapper(fragment.getResources(), new ErrorsMapper());
   }

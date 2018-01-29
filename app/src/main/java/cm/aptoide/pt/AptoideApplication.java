@@ -20,18 +20,11 @@ import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.AccountSettingsBodyInterceptorV7;
 import cm.aptoide.pt.account.AndroidAccountProvider;
 import cm.aptoide.pt.account.LoginPreferences;
-import cm.aptoide.pt.account.view.store.StoreManager;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.ads.MinimalAdMapper;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.billing.Billing;
-import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.BillingPool;
-import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
-import cm.aptoide.pt.billing.payment.Adyen;
-import cm.aptoide.pt.billing.purchase.PurchaseFactory;
-import cm.aptoide.pt.billing.view.PaymentThrowableCodeMapper;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
 import cm.aptoide.pt.crashreports.ConsoleLogger;
 import cm.aptoide.pt.crashreports.CrashReport;
@@ -93,8 +86,6 @@ import cm.aptoide.pt.social.data.ReadPostsPersistence;
 import cm.aptoide.pt.social.data.TimelineRepository;
 import cm.aptoide.pt.social.data.TimelineResponseCardMapper;
 import cm.aptoide.pt.spotandshare.AccountGroupNameProvider;
-import cm.aptoide.pt.spotandshare.ShareApps;
-import cm.aptoide.pt.spotandshare.SpotAndShareAnalytics;
 import cm.aptoide.pt.spotandshare.group.GroupNameProvider;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreUtilsProxy;
@@ -118,12 +109,10 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.facebook.CallbackManager;
 import com.facebook.appevents.AppEventsLogger;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flurry.android.FlurryAgent;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -151,7 +140,6 @@ public abstract class AptoideApplication extends Application {
   private static FragmentProvider fragmentProvider;
   private static ActivityProvider activityProvider;
   private static DisplayableWidgetMapping displayableWidgetMapping;
-  private static ShareApps shareApps;
   private static boolean autoUpdateWasCalled = false;
   @Inject Database database;
   @Inject AptoideDownloadManager downloadManager;
@@ -165,13 +153,10 @@ public abstract class AptoideApplication extends Application {
   @Inject IdsRepository idsRepository;
   @Inject GoogleApiClient googleSignInClient;
   @Inject @Named("default") OkHttpClient defaultClient;
-  @Inject @Named("web-socket") OkHttpClient webSocketClient;
   @Inject @Named("user-agent") Interceptor userAgentInterceptor;
   @Inject AndroidAccountProvider androidAccountProvider;
-  @Inject ObjectMapper nonNullObjectMapper;
   @Inject RequestBodyFactory requestBodyFactory;
   @Inject RootAvailabilityManager rootAvailabilityManager;
-  @Inject StoreManager storeManager;
   @Inject AuthenticationPersistence authenticationPersistence;
   @Inject CallbackManager facebookCallbackManager;
   @Inject AccountAnalytics accountAnalytics;
@@ -203,10 +188,7 @@ public abstract class AptoideApplication extends Application {
   @Inject TrendingManager trendingManager;
   private LeakTool leakTool;
   private String aptoideMd5sum;
-  private BillingAnalytics billingAnalytics;
-  private ExternalBillingSerializer inAppBillingSerialzer;
-  private PurchaseBundleMapper purchaseBundleMapper;
-  private PaymentThrowableCodeMapper paymentThrowableCodeMapper;
+  @Inject PurchaseBundleMapper purchaseBundleMapper;
   private NotificationCenter notificationCenter;
   private EntryPointChooser entryPointChooser;
   private FileManager fileManager;
@@ -214,11 +196,8 @@ public abstract class AptoideApplication extends Application {
   private TimelineRepositoryFactory timelineRepositoryFactory;
   private BehaviorRelay<Map<Integer, Result>> fragmentResultRelay;
   private Map<Integer, Result> fragmentResulMap;
-  private BillingPool billingPool;
   private NotLoggedInShareAnalytics notLoggedInShareAnalytics;
   private BodyInterceptor<BaseBody> accountSettingsBodyInterceptorWebV7;
-  private Adyen adyen;
-  private PurchaseFactory purchaseFactory;
   private SparseArray<InstallManager> installManagers;
   private ApplicationComponent applicationComponent;
   private AppCenter appCenter;
@@ -228,6 +207,7 @@ public abstract class AptoideApplication extends Application {
   private TimelineAnalytics timelineAnalytics;
   private NotificationAnalytics notificationAnalytics;
   @Inject SearchSuggestionManager searchSuggestionManager;
+  @Inject BillingFactory billingFactory;
 
   public static FragmentProvider getFragmentProvider() {
     return fragmentProvider;
@@ -249,10 +229,6 @@ public abstract class AptoideApplication extends Application {
     AptoideApplication.autoUpdateWasCalled = autoUpdateWasCalled;
   }
 
-  public static ShareApps getShareApps() {
-    return shareApps;
-  }
-
   public LeakTool getLeakTool() {
     if (leakTool == null) {
       leakTool = new LeakTool();
@@ -263,6 +239,9 @@ public abstract class AptoideApplication extends Application {
   @Override public void onCreate() {
 
     getApplicationComponent().inject(this);
+
+    billingFactory.create(BuildConfig.APPLICATION_ID)
+        .setup();
 
     CrashReport.getInstance()
         .addLogger(new CrashlyticsCrashLogger(crashlytics))
@@ -296,7 +275,6 @@ public abstract class AptoideApplication extends Application {
     fragmentProvider = createFragmentProvider();
     activityProvider = createActivityProvider();
     displayableWidgetMapping = createDisplayableWidgetMapping();
-    shareApps = new ShareApps(new SpotAndShareAnalytics(Analytics.getInstance()));
 
     //
     // do not erase this code. it is useful to figure out when someone forgot to attach an error handler when subscribing and the app
@@ -476,10 +454,6 @@ public abstract class AptoideApplication extends Application {
     return notificationProvider;
   }
 
-  public StoreManager getStoreManager() {
-    return storeManager;
-  }
-
   public abstract NotificationSyncScheduler getNotificationSyncScheduler();
 
   public SharedPreferences getDefaultSharedPreferences() {
@@ -559,40 +533,6 @@ public abstract class AptoideApplication extends Application {
     return securePreferences;
   }
 
-  public BillingAnalytics getBillingAnalytics() {
-    if (billingAnalytics == null) {
-      billingAnalytics =
-          new BillingAnalytics(Analytics.getInstance(), AppEventsLogger.newLogger(this));
-    }
-    return billingAnalytics;
-  }
-
-  public Billing getBilling(String merchantPackageName) {
-    return getBillingPool().get(merchantPackageName);
-  }
-
-  public BillingPool getBillingPool() {
-    if (billingPool == null) {
-      billingPool =
-          new BillingPool(getDefaultSharedPreferences(), getBodyInterceptorV3(), getDefaultClient(),
-              getAccountManager(), getDatabase(), getResources(), getPackageRepository(),
-              getTokenInvalidator(), getInAppBillingSerializer(),
-              getAccountSettingsBodyInterceptorPoolV7(),
-              new HashMap<>(), WebService.getDefaultConverter(), CrashReport.getInstance(),
-              getAdyen(), getPurchaseFactory(), Build.VERSION_CODES.JELLY_BEAN,
-              Build.VERSION_CODES.JELLY_BEAN, getAuthenticationPersistence(), getMarketName(),
-              "android.resource://" + getPackageName() + "/" + R.drawable.ic_paypal);
-    }
-    return billingPool;
-  }
-
-  public Adyen getAdyen() {
-    if (adyen == null) {
-      adyen = new Adyen(this, Charset.forName("UTF-8"), Schedulers.io(), PublishRelay.create());
-    }
-    return adyen;
-  }
-
   public Database getDatabase() {
     return database;
   }
@@ -601,26 +541,8 @@ public abstract class AptoideApplication extends Application {
     return packageRepository;
   }
 
-  public PaymentThrowableCodeMapper getPaymentThrowableCodeMapper() {
-    if (paymentThrowableCodeMapper == null) {
-      paymentThrowableCodeMapper = new PaymentThrowableCodeMapper();
-    }
-    return paymentThrowableCodeMapper;
-  }
-
   public PurchaseBundleMapper getPurchaseBundleMapper() {
-    if (purchaseBundleMapper == null) {
-      purchaseBundleMapper =
-          new PurchaseBundleMapper(getPaymentThrowableCodeMapper(), getPurchaseFactory());
-    }
     return purchaseBundleMapper;
-  }
-
-  public ExternalBillingSerializer getInAppBillingSerializer() {
-    if (inAppBillingSerialzer == null) {
-      inAppBillingSerialzer = new ExternalBillingSerializer();
-    }
-    return inAppBillingSerialzer;
   }
 
   private void clearFileCache() {
@@ -951,13 +873,6 @@ public abstract class AptoideApplication extends Application {
     return appCenter;
   }
 
-  public PurchaseFactory getPurchaseFactory() {
-    if (purchaseFactory == null) {
-      purchaseFactory = new PurchaseFactory();
-    }
-    return purchaseFactory;
-  }
-
   public ReadPostsPersistence getReadPostsPersistence() {
     if (readPostsPersistence == null) {
       readPostsPersistence = new ReadPostsPersistence(new ArrayList<>());
@@ -997,14 +912,6 @@ public abstract class AptoideApplication extends Application {
               getDefaultSharedPreferences(), new AptoideInstallParser());
     }
     return notificationAnalytics;
-  }
-
-  public ObjectMapper getNonNullObjectMapper() {
-    return nonNullObjectMapper;
-  }
-
-  public OkHttpClient getDefaultWebSocketClient() {
-    return webSocketClient;
   }
 
   public IdsRepository getIdsRepository() {

@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.external.ExternalBillingSerializer;
+import cm.aptoide.pt.billing.binder.BillingBinderSerializer;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.PurchaseResponse;
@@ -15,10 +15,10 @@ import java.util.List;
 
 public class PurchaseMapperV7 {
 
-  private final ExternalBillingSerializer serializer;
+  private final BillingBinderSerializer serializer;
   private final PurchaseFactory purchaseFactory;
 
-  public PurchaseMapperV7(ExternalBillingSerializer serializer, PurchaseFactory purchaseFactory) {
+  public PurchaseMapperV7(BillingBinderSerializer serializer, PurchaseFactory purchaseFactory) {
     this.serializer = serializer;
     this.purchaseFactory = purchaseFactory;
   }

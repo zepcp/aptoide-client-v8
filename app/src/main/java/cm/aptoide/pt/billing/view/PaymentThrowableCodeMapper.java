@@ -5,20 +5,19 @@
 
 package cm.aptoide.pt.billing.view;
 
-import cm.aptoide.pt.billing.external.ExternalBillingBinder;
+import cm.aptoide.pt.billing.binder.BillingBinder;
 import java.io.IOException;
 
 public class PaymentThrowableCodeMapper {
-
   public int map(Throwable throwable) {
-    int errorCode = ExternalBillingBinder.RESULT_ERROR;
+    int errorCode = BillingBinder.RESULT_ERROR;
 
     if (throwable instanceof IOException) {
-      errorCode = ExternalBillingBinder.RESULT_SERVICE_UNAVAILABLE;
+      errorCode = BillingBinder.RESULT_SERVICE_UNAVAILABLE;
     }
 
     if (throwable instanceof IllegalArgumentException) {
-      errorCode = ExternalBillingBinder.RESULT_DEVELOPER_ERROR;
+      errorCode = BillingBinder.RESULT_DEVELOPER_ERROR;
     }
 
     return errorCode;
@@ -28,11 +27,11 @@ public class PaymentThrowableCodeMapper {
 
     Throwable throwable = new IllegalStateException("Unknown error code " + errorCode);
 
-    if (errorCode == ExternalBillingBinder.RESULT_SERVICE_UNAVAILABLE) {
+    if (errorCode == BillingBinder.RESULT_SERVICE_UNAVAILABLE) {
       throwable = new IOException();
     }
 
-    if (errorCode == ExternalBillingBinder.RESULT_DEVELOPER_ERROR) {
+    if (errorCode == BillingBinder.RESULT_DEVELOPER_ERROR) {
       throwable = new IllegalArgumentException();
     }
 

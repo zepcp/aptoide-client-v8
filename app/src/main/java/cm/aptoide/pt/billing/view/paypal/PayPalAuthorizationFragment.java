@@ -12,11 +12,13 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -25,9 +27,11 @@ public class PayPalAuthorizationFragment extends PermissionServiceFragment imple
   private ProgressBar progressBar;
   private RxAlertDialog networkErrorDialog;
 
+  @Inject BillingAnalytics billingAnalytics;
+  @Inject BillingNavigator billingNavigator;
+  @Inject BillingFactory billingFactory;
+
   private Billing billing;
-  private BillingAnalytics billingAnalytics;
-  private BillingNavigator billingNavigator;
 
   public static Fragment create(Bundle bundle) {
     final PayPalAuthorizationFragment fragment = new PayPalAuthorizationFragment();
@@ -35,17 +39,12 @@ public class PayPalAuthorizationFragment extends PermissionServiceFragment imple
     return fragment;
   }
 
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    billing = ((AptoideApplication) getContext().getApplicationContext()).getBilling(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
-    billingAnalytics =
-        ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
-    billingNavigator = ((ActivityResultNavigator) getContext()).getBillingNavigator();
-  }
-
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    billing = billingFactory.create(
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+
     progressBar = (ProgressBar) view.findViewById(R.id.fragment_paypal_progress_bar);
 
     networkErrorDialog =
@@ -74,6 +73,7 @@ public class PayPalAuthorizationFragment extends PermissionServiceFragment imple
     progressBar = null;
     networkErrorDialog.dismiss();
     networkErrorDialog = null;
+    billing = null;
     super.onDestroyView();
   }
 

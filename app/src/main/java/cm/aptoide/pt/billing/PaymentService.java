@@ -1,7 +1,7 @@
 package cm.aptoide.pt.billing;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
+import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.billing.transaction.Transaction;
 import rx.Single;
 

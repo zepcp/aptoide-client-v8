@@ -34,8 +34,6 @@ public abstract class ActivityResultNavigator extends BaseActivity
   private FragmentNavigator fragmentNavigator;
   private BehaviorRelay<Map<Integer, Result>> fragmentResultRelay;
   private Map<Integer, Result> fragmentResultMap;
-  private BillingNavigator billingNavigator;
-  private ScreenOrientationManager screenOrientationManager;
   private MyAccountNavigator myAccountNavigator;
   private InboxNavigator inboxNavigator;
   private NotificationNavigator notificationNavigator;
@@ -154,25 +152,6 @@ public abstract class ActivityResultNavigator extends BaseActivity
 
   public AccountNavigator getAccountNavigator() {
     return accountNavigator;
-  }
-
-  public BillingNavigator getBillingNavigator() {
-    if (billingNavigator == null) {
-      billingNavigator = new BillingNavigator(
-          this,
-          ((AptoideApplication) getApplicationContext()).getPurchaseBundleMapper(),
-          getActivityNavigator(), getFragmentNavigator(),
-          ((AptoideApplication) getApplicationContext()).getMarketName());
-    }
-    return billingNavigator;
-  }
-
-  public ScreenOrientationManager getScreenOrientationManager() {
-    if (screenOrientationManager == null) {
-      screenOrientationManager =
-          new ScreenOrientationManager(this, (WindowManager) this.getSystemService(WINDOW_SERVICE));
-    }
-    return screenOrientationManager;
   }
 
   public MyAccountNavigator getMyAccountNavigator() {

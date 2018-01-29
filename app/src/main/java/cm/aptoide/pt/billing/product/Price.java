@@ -3,7 +3,7 @@
  * Modified by Marcelo Benites on 18/08/2016.
  */
 
-package cm.aptoide.pt.billing;
+package cm.aptoide.pt.billing.product;
 
 public class Price {
 

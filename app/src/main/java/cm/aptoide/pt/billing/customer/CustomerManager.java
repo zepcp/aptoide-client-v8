@@ -1,9 +1,7 @@
 package cm.aptoide.pt.billing.customer;
 
 import cm.aptoide.pt.billing.BillingService;
-import cm.aptoide.pt.billing.UserPersistence;
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
 import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
@@ -23,6 +21,7 @@ public class CustomerManager {
   private final AuthorizationPersistence authorizationPersistence;
   private final Authorization payPalAuthorization;
   private final PaymentServiceAdapter serviceAdapter;
+  private boolean setup;
 
   public CustomerManager(PublishSubject<Action> actions, UserPersistence userPersistence,
       BillingService billingService, AuthorizationPersistence authorizationPersistence,
@@ -46,7 +45,11 @@ public class CustomerManager {
         .autoConnect();
   }
 
-  public void setup() {
+  public synchronized void setup() {
+
+    if (setup) {
+      return;
+    }
 
     customerObservable.subscribe();
 
@@ -60,6 +63,8 @@ public class CustomerManager {
         .subscribe(user -> actions.onNext(new LoadCustomer(user)), throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
+
+    setup = true;
   }
 
   public Observable<Customer> getCustomer() {

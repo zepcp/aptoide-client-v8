@@ -1,5 +1,6 @@
 package cm.aptoide.pt;
 
+import cm.aptoide.pt.iab.InAppBillingService;
 import cm.aptoide.pt.install.InstallService;
 import cm.aptoide.pt.toolbox.ToolboxContentProvider;
 import cm.aptoide.pt.view.ActivityComponent;
@@ -16,4 +17,6 @@ import javax.inject.Singleton;
   void inject(ToolboxContentProvider toolboxContentProvider);
 
   void inject(InstallService installService);
+
+  void inject(InAppBillingService inAppBillingService);
 }

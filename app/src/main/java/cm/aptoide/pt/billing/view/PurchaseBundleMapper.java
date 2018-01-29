@@ -7,14 +7,14 @@ package cm.aptoide.pt.billing.view;
 
 import android.app.Activity;
 import android.os.Bundle;
-import cm.aptoide.pt.billing.external.ExternalBillingBinder;
+import cm.aptoide.pt.billing.binder.BillingBinder;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static cm.aptoide.pt.billing.external.ExternalBillingBinder.RESPONSE_CODE;
-import static cm.aptoide.pt.billing.external.ExternalBillingBinder.RESULT_OK;
+import static cm.aptoide.pt.billing.binder.BillingBinder.RESPONSE_CODE;
+import static cm.aptoide.pt.billing.binder.BillingBinder.RESULT_OK;
 
 public class PurchaseBundleMapper {
 
@@ -87,7 +87,7 @@ public class PurchaseBundleMapper {
       }
     }
 
-    throw throwableCodeMapper.map(ExternalBillingBinder.RESULT_ERROR);
+    throw throwableCodeMapper.map(BillingBinder.RESULT_ERROR);
   }
 
   public Bundle map(Throwable throwable) {
@@ -98,7 +98,7 @@ public class PurchaseBundleMapper {
 
   public Bundle mapCancellation() {
     final Bundle bundle = new Bundle();
-    bundle.putInt(RESPONSE_CODE, ExternalBillingBinder.RESULT_USER_CANCELLED);
+    bundle.putInt(RESPONSE_CODE, BillingBinder.RESULT_USER_CANCELLED);
     return bundle;
   }
 }

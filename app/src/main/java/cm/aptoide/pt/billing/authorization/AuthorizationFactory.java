@@ -1,6 +1,6 @@
 package cm.aptoide.pt.billing.authorization;
 
-import cm.aptoide.pt.billing.Price;
+import cm.aptoide.pt.billing.product.Price;
 
 public class AuthorizationFactory {
 

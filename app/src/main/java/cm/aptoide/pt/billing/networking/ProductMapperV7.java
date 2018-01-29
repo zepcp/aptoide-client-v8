@@ -5,7 +5,7 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.Price;
+import cm.aptoide.pt.billing.product.Price;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetProductsRequest;
 import java.util.ArrayList;

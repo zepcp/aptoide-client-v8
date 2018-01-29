@@ -1,5 +1,6 @@
-package cm.aptoide.pt.billing.authorization;
+package cm.aptoide.pt.billing.customer;
 
+import cm.aptoide.pt.billing.authorization.Authorization;
 import java.util.List;
 import rx.Completable;
 import rx.Single;

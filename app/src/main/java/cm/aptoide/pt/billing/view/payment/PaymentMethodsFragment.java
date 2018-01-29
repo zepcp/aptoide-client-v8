@@ -13,19 +13,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
-import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import cm.aptoide.pt.view.spannable.SpannableFactory;
 import com.jakewharton.rxrelay.PublishRelay;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subjects.PublishSubject;
@@ -33,29 +33,23 @@ import rx.subjects.PublishSubject;
 public class PaymentMethodsFragment extends PermissionServiceFragment
     implements PaymentMethodsView {
 
-  private Billing billing;
-  private BillingNavigator navigator;
-  private PublishRelay<Void> backButton;
-  private ClickHandler handler;
-
   private Toolbar toolbar;
   private RecyclerView list;
   private PaymentAdapter adapter;
   private TextView noPaymentsMessage;
   private View progressBarContainer;
 
+  @Inject BillingNavigator navigator;
+  @Inject BillingFactory billingFactory;
+
+  private Billing billing;
+  private PublishRelay<Void> backButton;
+  private ClickHandler handler;
+
   public static Fragment create(Bundle bundle) {
     PaymentMethodsFragment fragment = new PaymentMethodsFragment();
     fragment.setArguments(bundle);
     return fragment;
-  }
-
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    billing = ((AptoideApplication) getContext().getApplicationContext()).getBilling(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
-    navigator = ((ActivityResultNavigator) getActivity()).getBillingNavigator();
-    backButton = PublishRelay.create();
   }
 
   @Nullable @Override
@@ -66,6 +60,13 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
+    getFragmentComponent(savedInstanceState).inject(this);
+
+    billing = billingFactory.create(
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+    backButton = PublishRelay.create();
+
     setHasOptionsMenu(true);
     toolbar = (Toolbar) view.findViewById(R.id.fragment_payment_methods_toolbar);
     ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
@@ -105,6 +106,9 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
     toolbar = null;
     adapter = null;
     list = null;
+    billing = null;
+    backButton = null;
+    handler = null;
     super.onDestroyView();
   }
 

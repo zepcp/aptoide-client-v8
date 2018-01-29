@@ -15,6 +15,7 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.payment.CreditCard;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
@@ -23,6 +24,7 @@ import cm.aptoide.pt.permission.PermissionServiceFragment;
 import com.braintreepayments.cardform.view.CardForm;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -35,9 +37,11 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   private Button nextButton;
   private Toolbar toolbar;
 
+  @Inject BillingFactory billingFactory;
+  @Inject BillingNavigator navigator;
+  @Inject BillingAnalytics analytics;
+
   private Billing billing;
-  private BillingNavigator navigator;
-  private BillingAnalytics analytics;
   private PublishRelay<Void> backButton;
   private PublishRelay<Void> keyboardNextRelay;
 
@@ -47,18 +51,16 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     return fragment;
   }
 
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    billing = ((AptoideApplication) getContext().getApplicationContext()).getBilling(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
-    navigator = ((ActivityResultNavigator) getActivity()).getBillingNavigator();
-    analytics = ((AptoideApplication) getContext().getApplicationContext()).getBillingAnalytics();
-    backButton = PublishRelay.create();
-    keyboardNextRelay = PublishRelay.create();
-  }
-
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
+    getFragmentComponent(savedInstanceState).inject(this);
+
+    backButton = PublishRelay.create();
+    keyboardNextRelay = PublishRelay.create();
+    billing = billingFactory.create(
+        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+
     setHasOptionsMenu(true);
     toolbar = (Toolbar) view.findViewById(R.id.fragment_credit_card_authorization_toolbar);
     ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
@@ -131,6 +133,9 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     cardForm.setOnCardFormSubmitListener(null);
     cardForm.setOnCardFormValidListener(null);
     cardForm = null;
+    backButton = null;
+    keyboardNextRelay = null;
+    billing = null;
     super.onDestroyView();
   }
 

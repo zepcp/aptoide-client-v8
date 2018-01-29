@@ -25,10 +25,10 @@ import cm.aptoide.pt.account.view.AccountErrorMapper;
 import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.account.view.GooglePlayServicesFragment;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.jakewharton.rxbinding.view.RxView;
@@ -36,6 +36,7 @@ import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxrelay.PublishRelay;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import java.util.Arrays;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -51,20 +52,12 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
       "cm.aptoide.pt.billing.view.login.extra.FACEBOOK_DIALOG_VISIBLE";
   private static final String EXTRA_PROGRESS_VISIBLE =
       "cm.aptoide.pt.billing.view.login.extra.PROGRESS_VISIBLE";
-  private ClickHandler handler;
-  private PublishRelay<Void> backButtonRelay;
-  private PublishRelay<Void> upNavigationRelay;
-  private PublishRelay<Void> passwordKeyboardGoRelay;
+
   private Button facebookButton;
   private Button googleButton;
   private ProgressDialog progressDialog;
-  private AccountNavigator accountNavigator;
-  private AptoideAccountManager accountManager;
-  private CrashReport crashReport;
   private RxAlertDialog facebookEmailRequiredDialog;
   private View rootView;
-  private AccountErrorMapper errorMapper;
-
   private View aptoideLoginSignUpSeparator;
   private View aptoideLoginSignUpButtonContainer;
   private Button aptoideJoinToggle;
@@ -72,39 +65,36 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
   private View usernamePasswordContainer;
   private View aptoideSignUpContainer;
   private View aptoideLoginContainer;
-  private boolean usernamePasswordContainerVisible;
-  private boolean loginVisible;
   private View recoverPasswordButton;
   private Button aptoideLoginButton;
   private Button aptoideSignUpButton;
   private EditText usernameEditText;
   private EditText passwordEditText;
   private Button passwordShowHideToggle;
+
+  @Inject BillingNavigator billingNavigator;
+  @Inject AccountNavigator accountNavigator;
+  @Inject BillingAnalytics billingAnalytics;
+  @Inject AptoideAccountManager accountManager;
+  @Inject ScreenOrientationManager orientationManager;
+  @Inject AccountErrorMapper errorMapper;
+
+  private ClickHandler handler;
+  private PublishRelay<Void> backButtonRelay;
+  private PublishRelay<Void> upNavigationRelay;
+  private PublishRelay<Void> passwordKeyboardGoRelay;
+  private CrashReport crashReport;
+
+  private boolean usernamePasswordContainerVisible;
+  private boolean loginVisible;
   private boolean passwordVisible;
   private boolean progressVisible;
   private boolean facebookEmailRequiredDialogVisible;
-  private ScreenOrientationManager orientationManager;
-  private BillingNavigator billingNavigator;
 
   public static Fragment create(Bundle bundle) {
     final PaymentLoginFragment fragment = new PaymentLoginFragment();
     fragment.setArguments(bundle);
     return fragment;
-  }
-
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    backButtonRelay = PublishRelay.create();
-    upNavigationRelay = PublishRelay.create();
-    passwordKeyboardGoRelay = PublishRelay.create();
-    accountNavigator = ((ActivityResultNavigator) getContext()).getAccountNavigator();
-    billingNavigator = ((ActivityResultNavigator) getContext()).getBillingNavigator();
-    accountManager =
-        ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
-    crashReport = CrashReport.getInstance();
-    errorMapper = new AccountErrorMapper(getContext(), new ErrorsMapper());
-    orientationManager = ((ActivityResultNavigator) getContext()).getScreenOrientationManager();
-    setHasOptionsMenu(true);
   }
 
   @Override public void onResume() {
@@ -148,6 +138,12 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    setHasOptionsMenu(true);
+    getFragmentComponent(savedInstanceState).inject(this);
+    crashReport = CrashReport.getInstance();
+    backButtonRelay = PublishRelay.create();
+    upNavigationRelay = PublishRelay.create();
+    passwordKeyboardGoRelay = PublishRelay.create();
 
     rootView = getActivity().findViewById(android.R.id.content);
 
@@ -246,7 +242,7 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
         new PaymentLoginPresenter(this, Arrays.asList("email", "user_friends"),
             accountNavigator, Arrays.asList("email"), accountManager, crashReport, errorMapper,
             AndroidSchedulers.mainThread(), orientationManager, application.getAccountAnalytics(),
-            application.getBillingAnalytics(), billingNavigator,
+            billingAnalytics, billingNavigator,
             getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)));
   }
 
@@ -272,6 +268,11 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
     usernameEditText = null;
     passwordEditText = null;
     passwordShowHideToggle = null;
+    handler = null;
+    backButtonRelay = null;
+    upNavigationRelay = null;
+    passwordKeyboardGoRelay = null;
+    crashReport = null;
     super.onDestroyView();
   }
 

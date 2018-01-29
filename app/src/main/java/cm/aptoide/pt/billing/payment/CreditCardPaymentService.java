@@ -3,7 +3,7 @@ package cm.aptoide.pt.billing.payment;
 import cm.aptoide.pt.billing.BillingService;
 import cm.aptoide.pt.billing.PaymentService;
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
+import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
 import cm.aptoide.pt.billing.transaction.Transaction;
 import rx.Single;

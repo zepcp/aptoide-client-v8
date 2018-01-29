@@ -1,7 +1,6 @@
 package cm.aptoide.pt.billing.customer;
 
 import cm.aptoide.accountmanager.AptoideAccountManager;
-import cm.aptoide.pt.billing.UserPersistence;
 import rx.Observable;
 
 public class AccountUserPersistence implements UserPersistence {

@@ -3,7 +3,7 @@
  * Modified by Marcelo Benites on 11/08/2016.
  */
 
-package cm.aptoide.pt.billing.external;
+package cm.aptoide.pt.billing.binder;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -12,9 +12,9 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.RemoteException;
-import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.PaymentThrowableCodeMapper;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import rx.Single;
 
-public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
+public class BillingBinder extends AptoideInAppBillingService.Stub {
 
   public static final int RESULT_OK = 0;
   public static final int RESULT_USER_CANCELLED = 1;
@@ -52,21 +52,22 @@ public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
   public static final String SERVICES_LIST = "SERVICES_LIST";
 
   private final Context context;
-  private final ExternalBillingSerializer serializer;
+  private final BillingBinderSerializer serializer;
   private final PaymentThrowableCodeMapper errorCodeFactory;
   private final PurchaseBundleMapper purchaseBundleMapper;
   private final PackageManager packageManager;
   private final CrashReport crashReport;
   private final int supportedApiVersion;
   private final BillingAnalytics analytics;
+  private final BillingFactory billingFactory;
 
   private Billing billing;
   private String merchantName;
 
-  public ExternalBillingBinder(Context context, ExternalBillingSerializer serializer,
+  public BillingBinder(Context context, BillingBinderSerializer serializer,
       PaymentThrowableCodeMapper errorCodeFactory, PurchaseBundleMapper purchaseBundleMapper,
       CrashReport crashReport, int apiVersion, BillingAnalytics analytics,
-      PackageManager packageManager) {
+      PackageManager packageManager, BillingFactory billingFactory) {
     this.context = context;
     this.serializer = serializer;
     this.errorCodeFactory = errorCodeFactory;
@@ -75,12 +76,13 @@ public class ExternalBillingBinder extends AptoideInAppBillingService.Stub {
     this.crashReport = crashReport;
     this.supportedApiVersion = apiVersion;
     this.analytics = analytics;
+    this.billingFactory = billingFactory;
   }
 
   @Override public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
       throws RemoteException {
     merchantName = packageManager.getPackagesForUid(Binder.getCallingUid())[0];
-    billing = ((AptoideApplication) context.getApplicationContext()).getBilling(merchantName);
+    billing = billingFactory.create(merchantName);
     billing.setup();
     return super.onTransact(code, data, reply, flags);
   }

@@ -6,7 +6,7 @@
 package cm.aptoide.pt.billing.persistence;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.authorization.AuthorizationPersistence;
+import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.database.accessors.Database;
 import cm.aptoide.pt.database.realm.RealmAuthorization;
 import io.realm.Realm;

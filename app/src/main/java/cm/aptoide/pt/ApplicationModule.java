@@ -30,10 +30,12 @@ import cm.aptoide.pt.account.AndroidAccountDataMigration;
 import cm.aptoide.pt.account.AndroidAccountManagerPersistence;
 import cm.aptoide.pt.account.AndroidAccountProvider;
 import cm.aptoide.pt.account.DatabaseStoreDataPersist;
+import cm.aptoide.pt.account.ErrorsMapper;
 import cm.aptoide.pt.account.FacebookSignUpAdapter;
 import cm.aptoide.pt.account.GoogleSignUpAdapter;
 import cm.aptoide.pt.account.LoginPreferences;
 import cm.aptoide.pt.account.MatureContentPersistence;
+import cm.aptoide.pt.account.view.AccountErrorMapper;
 import cm.aptoide.pt.account.view.store.StoreManager;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.ads.AdsRepository;
@@ -42,6 +44,24 @@ import cm.aptoide.pt.ads.PackageRepositoryVersionCodeProvider;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.TrackerFilter;
+import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
+import cm.aptoide.pt.billing.MerchantPackageRepositoryVersionProvider;
+import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
+import cm.aptoide.pt.billing.binder.BillingBinderSerializer;
+import cm.aptoide.pt.billing.customer.AccountUserPersistence;
+import cm.aptoide.pt.billing.networking.V7V3BillingServiceFactory;
+import cm.aptoide.pt.billing.payment.Adyen;
+import cm.aptoide.pt.billing.payment.CreditCardPaymentService;
+import cm.aptoide.pt.billing.payment.PayPalPaymentService;
+import cm.aptoide.pt.billing.payment.PaymentMethod;
+import cm.aptoide.pt.billing.persistence.RealmAuthorizationMapper;
+import cm.aptoide.pt.billing.persistence.RealmAuthorizationPersistence;
+import cm.aptoide.pt.billing.purchase.Base64PurchaseTokenDecoder;
+import cm.aptoide.pt.billing.purchase.PurchaseFactory;
+import cm.aptoide.pt.billing.transaction.TransactionFactory;
+import cm.aptoide.pt.billing.view.PaymentThrowableCodeMapper;
+import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.accessors.Database;
@@ -153,6 +173,7 @@ import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -209,6 +230,63 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
   @Singleton @Provides InstallerAnalytics provideInstallerAnalytics(Answers answers,
       AppEventsLogger appEventsLogger) {
     return new InstallFabricEvents(Analytics.getInstance(), answers, appEventsLogger);
+  }
+
+  @Singleton @Provides BillingFactory provideBillingFactory(
+      @Named("default") SharedPreferences sharedPreferences, @Named("defaultInterceptorV3")
+      BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v3.BaseBody> bodyInterceptorV3,
+      @Named("default") OkHttpClient defaultClient, AptoideAccountManager accountManager,
+      Database database, PackageRepository packageRepository, TokenInvalidator tokenInvalidator,
+      @Named("account-settings-pool-v7")
+          BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> accountSettingsBodyInterceptorPoolV7,
+      Converter.Factory converterFactory, AuthenticationPersistence authenticationPersistence,
+      PurchaseFactory purchaseFactory, BillingBinderSerializer billingBinderSerializer) {
+
+    return new BillingFactory.Builder().setMerchantVersionProvider(
+        new MerchantPackageRepositoryVersionProvider(packageRepository))
+        .setUserPersistence(new AccountUserPersistence(accountManager))
+        .setPurchaseTokenDecoder(new Base64PurchaseTokenDecoder())
+        .setAuthorizationPersistence(new RealmAuthorizationPersistence(database,
+            new RealmAuthorizationMapper(new AuthorizationFactory()), Schedulers.io()))
+        .registerPaymentService(PaymentMethod.CREDIT_CARD, new CreditCardPaymentService(
+            new Adyen(application, Charset.forName("UTF-8"), Schedulers.io(),
+                PublishRelay.create())))
+        .registerPaymentService(PaymentMethod.PAYPAL, new PayPalPaymentService())
+        .setPayPalIcon(
+            "android.resource://" + application.getPackageName() + "/" + R.drawable.ic_paypal)
+        .setBillingServiceFactory(
+            new V7V3BillingServiceFactory(bodyInterceptorV3, defaultClient, converterFactory,
+                tokenInvalidator, sharedPreferences, purchaseFactory, new AuthorizationFactory(),
+                application.getResources(), Build.VERSION_CODES.JELLY_BEAN, marketName,
+                new TransactionFactory(), accountSettingsBodyInterceptorPoolV7,
+                billingBinderSerializer, CrashReport.getInstance(), Build.VERSION_CODES.JELLY_BEAN,
+                authenticationPersistence))
+        .build();
+  }
+
+  @Singleton @Provides BillingBinderSerializer provideBillingBinderSerializer() {
+    return new BillingBinderSerializer();
+  }
+
+  @Singleton @Provides PurchaseBundleMapper providePurchaseBundleMapper(
+      PaymentThrowableCodeMapper paymentThrowableCodeMapper, PurchaseFactory purchaseFactory) {
+    return new PurchaseBundleMapper(paymentThrowableCodeMapper, purchaseFactory);
+  }
+
+  @Singleton @Provides AccountErrorMapper provideAccountErrorMapper() {
+    return new AccountErrorMapper(application, new ErrorsMapper());
+  }
+
+  @Singleton @Provides BillingAnalytics provideBillingAnalytics() {
+    return new BillingAnalytics(Analytics.getInstance(), AppEventsLogger.newLogger(application));
+  }
+
+  @Singleton @Provides PurchaseFactory providePurchaseFactory() {
+    return new PurchaseFactory();
+  }
+
+  @Singleton @Provides PaymentThrowableCodeMapper providePaymentThrowableCodeMapper() {
+    return new PaymentThrowableCodeMapper();
   }
 
   @Singleton @Provides AptoideDownloadManager provideAptoideDownloadManager(

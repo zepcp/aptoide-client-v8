@@ -20,6 +20,8 @@ import cm.aptoide.pt.account.view.user.ManageUserNavigator;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.pt.billing.view.BillingNavigator;
+import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.dataprovider.WebService;
@@ -34,6 +36,7 @@ import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.install.installer.RootInstallationRetryHandler;
 import cm.aptoide.pt.link.AptoideInstallParser;
 import cm.aptoide.pt.navigator.ActivityNavigator;
+import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.navigator.FragmentResultNavigator;
 import cm.aptoide.pt.navigator.Result;
@@ -176,6 +179,12 @@ import static com.facebook.FacebookSdk.getApplicationContext;
     return new AccountNavigator(fragmentNavigator, accountManager, ((ActivityNavigator) activity),
         LoginManager.getInstance(), callbackManager, googleApiClient, PublishRelay.create(),
         defaultStoreName, defaultTheme, "http://m.aptoide.com/account/password-recovery");
+  }
+
+  @ActivityScope @Provides BillingNavigator provideBillingNavigator(
+      FragmentNavigator fragmentNavigator, PurchaseBundleMapper purchaseBundleMapper) {
+    return new BillingNavigator(activity, purchaseBundleMapper, (ActivityResultNavigator) activity,
+        fragmentNavigator, marketName);
   }
 
   @ActivityScope @Provides ScreenOrientationManager provideScreenOrientationManager() {

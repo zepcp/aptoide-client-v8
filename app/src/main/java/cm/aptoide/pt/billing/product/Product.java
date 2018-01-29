@@ -5,8 +5,6 @@
 
 package cm.aptoide.pt.billing.product;
 
-import cm.aptoide.pt.billing.Price;
-
 public class Product {
 
   private final long id;
