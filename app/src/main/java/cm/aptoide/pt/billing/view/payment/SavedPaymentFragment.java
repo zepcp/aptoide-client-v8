@@ -201,14 +201,14 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
       int tmp = rnd.nextInt(100);
       if (tmp < 5) {
         payments.
-            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING,
+            add(new Authorization(1, "Paypau", Authorization.Status.PROCESSING,
                 "http://lorempixel.com/g/40/20", "Paypau", "Paypau", "papa.formigas@ant-lover.br",
-                true));
+                true, 1));
       } else {
         payments.
-            add(new Authorization("Paypau", "Paypau", Authorization.Status.PROCESSING,
+            add(new Authorization(2, "Paypau", Authorization.Status.PROCESSING,
                 "http://lorempixel.com/g/40/20", "Paypau", "Paypau", "papa.formigas@ant-lover.br",
-                false));
+                false, 1));
       }
     }
 
