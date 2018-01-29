@@ -15,30 +15,20 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.accountmanager.AptoideCredentials;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.account.ErrorsMapper;
-import cm.aptoide.pt.account.view.AccountErrorMapper;
-import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.account.view.GooglePlayServicesFragment;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.view.BillingActivity;
-import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxrelay.PublishRelay;
 import com.trello.rxlifecycle.android.FragmentEvent;
-import java.util.Arrays;
 import javax.inject.Inject;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class PaymentLoginFragment extends GooglePlayServicesFragment implements PaymentLoginView {
 
@@ -72,18 +62,12 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
   private EditText passwordEditText;
   private Button passwordShowHideToggle;
 
-  @Inject BillingNavigator billingNavigator;
-  @Inject AccountNavigator accountNavigator;
-  @Inject BillingAnalytics billingAnalytics;
-  @Inject AptoideAccountManager accountManager;
-  @Inject ScreenOrientationManager orientationManager;
-  @Inject AccountErrorMapper errorMapper;
+  @Inject PaymentLoginPresenter presenter;
 
   private ClickHandler handler;
   private PublishRelay<Void> backButtonRelay;
   private PublishRelay<Void> upNavigationRelay;
   private PublishRelay<Void> passwordKeyboardGoRelay;
-  private CrashReport crashReport;
 
   private boolean usernamePasswordContainerVisible;
   private boolean loginVisible;
@@ -140,7 +124,6 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
     super.onViewCreated(view, savedInstanceState);
     setHasOptionsMenu(true);
     getFragmentComponent(savedInstanceState).inject(this);
-    crashReport = CrashReport.getInstance();
     backButtonRelay = PublishRelay.create();
     upNavigationRelay = PublishRelay.create();
     passwordKeyboardGoRelay = PublishRelay.create();
@@ -238,12 +221,7 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
       togglePasswordVisibility(savedInstanceState.getBoolean(EXTRA_PASSWORD_VISIBLE));
     }
 
-    attachPresenter(
-        new PaymentLoginPresenter(this, Arrays.asList("email", "user_friends"),
-            accountNavigator, Arrays.asList("email"), accountManager, crashReport, errorMapper,
-            AndroidSchedulers.mainThread(), orientationManager, application.getAccountAnalytics(),
-            billingAnalytics, billingNavigator,
-            getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)));
+    attachPresenter(presenter);
   }
 
   @Override public void onDestroyView() {
@@ -272,7 +250,6 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
     backButtonRelay = null;
     upNavigationRelay = null;
     passwordKeyboardGoRelay = null;
-    crashReport = null;
     super.onDestroyView();
   }
 

@@ -39,10 +39,8 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
   private TextView noPaymentsMessage;
   private View progressBarContainer;
 
-  @Inject BillingNavigator navigator;
-  @Inject BillingFactory billingFactory;
+  @Inject PaymentMethodsPresenter presenter;
 
-  private Billing billing;
   private PublishRelay<Void> backButton;
   private ClickHandler handler;
 
@@ -63,8 +61,6 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
 
     getFragmentComponent(savedInstanceState).inject(this);
 
-    billing = billingFactory.create(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
     backButton = PublishRelay.create();
 
     setHasOptionsMenu(true);
@@ -87,8 +83,7 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
         LayoutInflater.from(getContext()), new SpannableFactory());
     list.setAdapter(adapter);
 
-    new PaymentMethodsPresenter(this, billing, AndroidSchedulers.mainThread(), navigator,
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)).present();
+    attachPresenter(presenter);
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
@@ -106,7 +101,6 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
     toolbar = null;
     adapter = null;
     list = null;
-    billing = null;
     backButton = null;
     handler = null;
     super.onDestroyView();

@@ -50,11 +50,8 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   private TextView authorizationDescription;
   private View authorizationContainer;
 
-  @Inject BillingAnalytics billingAnalytics;
-  @Inject BillingNavigator billingNavigator;
-  @Inject BillingFactory billingFactory;
+  @Inject PaymentPresenter presenter;
 
-  private Billing billing;
   private ClickHandler handler;
   private SpannableFactory spannableFactory;
   private PublishRelay<Void> cancelRelay;
@@ -74,8 +71,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     getFragmentComponent(savedInstanceState).inject(this);
-    billing = billingFactory.create(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
     spannableFactory = new SpannableFactory();
     cancelRelay = PublishRelay.create();
     setHasOptionsMenu(true);
@@ -114,8 +109,7 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     };
     registerClickHandler(handler);
 
-    attachPresenter(new PaymentPresenter(this, billing, billingNavigator, billingAnalytics,
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME), AndroidSchedulers.mainThread()));
+    attachPresenter(presenter);
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
@@ -138,7 +132,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     networkErrorDialog = null;
     unknownErrorDialog.dismiss();
     unknownErrorDialog = null;
-    billing = null;
     cancelRelay = null;
     handler = null;
     spannableFactory = null;

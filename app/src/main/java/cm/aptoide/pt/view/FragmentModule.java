@@ -21,8 +21,23 @@ import cm.aptoide.pt.account.view.user.CreateUserErrorMapper;
 import cm.aptoide.pt.account.view.user.ManageUserNavigator;
 import cm.aptoide.pt.account.view.user.ManageUserPresenter;
 import cm.aptoide.pt.account.view.user.ManageUserView;
+import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.BillingFactory;
+import cm.aptoide.pt.billing.view.BillingActivity;
+import cm.aptoide.pt.billing.view.BillingNavigator;
+import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationPresenter;
+import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationView;
+import cm.aptoide.pt.billing.view.login.PaymentLoginPresenter;
+import cm.aptoide.pt.billing.view.login.PaymentLoginView;
+import cm.aptoide.pt.billing.view.payment.PaymentMethodsPresenter;
+import cm.aptoide.pt.billing.view.payment.PaymentMethodsView;
+import cm.aptoide.pt.billing.view.payment.PaymentPresenter;
+import cm.aptoide.pt.billing.view.payment.PaymentView;
+import cm.aptoide.pt.billing.view.paypal.PayPalAuthorizationPresenter;
+import cm.aptoide.pt.billing.view.paypal.PayPalView;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.networking.image.ImageLoader;
+import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.permission.AccountPermissionProvider;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsPresenter;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsView;
@@ -71,6 +86,52 @@ import rx.schedulers.Schedulers;
             .getContentResolver(), ImageLoader.with(fragment.getContext()));
   }
 
+  @Provides @FragmentScope CreditCardAuthorizationPresenter provideCreditCardAuthorizationPresenter(
+      BillingFactory billingFactory, BillingAnalytics analytics, BillingNavigator navigator) {
+    return new CreditCardAuthorizationPresenter((CreditCardAuthorizationView) fragment,
+        billingFactory.create(arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)),
+        navigator, analytics, arguments.getString(BillingActivity.EXTRA_SERVICE_NAME),
+        AndroidSchedulers.mainThread());
+  }
+
+  @Provides @FragmentScope PaymentLoginPresenter providePaymentLoginPresenter(
+      AptoideAccountManager accountManager, AccountNavigator accountNavigator,
+      BillingAnalytics billingAnalytics, BillingNavigator billingNavigator,
+      AccountAnalytics accountAnalytics, AccountErrorMapper errorMapper,
+      ScreenOrientationManager orientationManager) {
+    return new PaymentLoginPresenter((PaymentLoginView) fragment,
+        Arrays.asList("email", "user_friends"), accountNavigator, Arrays.asList("email"),
+        accountManager, CrashReport.getInstance(), errorMapper, AndroidSchedulers.mainThread(),
+        orientationManager, accountAnalytics, billingAnalytics, billingNavigator,
+        arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+  }
+
+  @Provides @FragmentScope PaymentMethodsPresenter providePaymentMethodsPresenter(
+      BillingFactory billingFactory, BillingNavigator billingNavigator) {
+    return new PaymentMethodsPresenter((PaymentMethodsView) fragment,
+        billingFactory.create(arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)),
+        AndroidSchedulers.mainThread(), billingNavigator,
+        arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
+  }
+
+  @Provides @FragmentScope PaymentPresenter providePaymentPresenter(BillingFactory billingFactory,
+      BillingNavigator billingNavigator, BillingAnalytics billingAnalytics) {
+    return new PaymentPresenter((PaymentView) fragment,
+        billingFactory.create(arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)),
+        billingNavigator, billingAnalytics,
+        arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME),
+        AndroidSchedulers.mainThread());
+  }
+
+  @Provides @FragmentScope PayPalAuthorizationPresenter providePayPalAuthorizationPresenter(
+      BillingFactory billingFactory, BillingNavigator billingNavigator,
+      BillingAnalytics billingAnalytics) {
+    return new PayPalAuthorizationPresenter((PayPalView) fragment,
+        billingFactory.create(arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)),
+        billingAnalytics, billingNavigator, AndroidSchedulers.mainThread(),
+        arguments.getString(BillingActivity.EXTRA_SERVICE_NAME));
+  }
+
   @FragmentScope @Provides ManageStorePresenter provideManageStorePresenter(
       UriToPathResolver uriToPathResolver, ManageStoreNavigator manageStoreNavigator,
       ManageStoreErrorMapper manageStoreErrorMapper, AptoideAccountManager accountManager) {
@@ -89,12 +150,6 @@ import rx.schedulers.Schedulers;
 
   @FragmentScope @Provides ImageValidator provideImageValidator() {
     return new ImageValidator(ImageLoader.with(fragment.getContext()), Schedulers.computation());
-  }
-
-  @FragmentScope @Provides CreateUserErrorMapper provideCreateUserErrorMapper(
-      AccountErrorMapper accountErrorMapper) {
-    return new CreateUserErrorMapper(fragment.getContext(), accountErrorMapper,
-        fragment.getResources());
   }
 
   @FragmentScope @Provides ManageStoreErrorMapper provideManageStoreErrorMapper() {

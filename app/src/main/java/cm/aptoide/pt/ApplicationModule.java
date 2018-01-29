@@ -37,6 +37,7 @@ import cm.aptoide.pt.account.LoginPreferences;
 import cm.aptoide.pt.account.MatureContentPersistence;
 import cm.aptoide.pt.account.view.AccountErrorMapper;
 import cm.aptoide.pt.account.view.store.StoreManager;
+import cm.aptoide.pt.account.view.user.CreateUserErrorMapper;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.ads.MinimalAdMapper;
@@ -275,6 +276,11 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
 
   @Singleton @Provides AccountErrorMapper provideAccountErrorMapper() {
     return new AccountErrorMapper(application, new ErrorsMapper());
+  }
+
+  @Singleton @Provides CreateUserErrorMapper provideCreateUserErrorMapper(
+      AccountErrorMapper accountErrorMapper) {
+    return new CreateUserErrorMapper(application, accountErrorMapper, application.getResources());
   }
 
   @Singleton @Provides BillingAnalytics provideBillingAnalytics() {

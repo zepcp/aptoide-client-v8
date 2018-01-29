@@ -32,6 +32,7 @@ import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
 import java.util.Arrays;
+import javax.inject.Inject;
 import rx.Observable;
 
 public class NotLoggedInShareFragment extends GooglePlayServicesFragment
@@ -48,16 +49,18 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
   private TextView appTitle;
   private ImageView appIcon;
   private View closeButton;
-  private ThrowableToStringMapper errorMapper;
   private RxAlertDialog facebookEmailRequiredDialog;
   private ImageView previewSocialContent;
   private ImageView fakeToolbar;
   private ImageView loginProgressIndicator;
-  private AptoideAccountManager accountManager;
-  private int requestCode;
   private View fakeTimeline;
-  private PublishRelay<Void> backButtonPress;
   private View outerLayout;
+
+  @Inject AccountErrorMapper errorMapper;
+  @Inject AptoideAccountManager accountManager;
+
+  private int requestCode;
+  private PublishRelay<Void> backButtonPress;
 
   public static NotLoggedInShareFragment newInstance(GetAppMeta.App app) {
     NotLoggedInShareFragment fragment = new NotLoggedInShareFragment();
@@ -69,15 +72,6 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
         .getAvg());
     fragment.setArguments(bundle);
     return fragment;
-  }
-
-  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    errorMapper = new AccountErrorMapper(getContext(), new ErrorsMapper());
-    accountManager =
-        ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
-    requestCode = getArguments().getInt(FragmentNavigator.REQUEST_CODE_EXTRA);
-    backButtonPress = PublishRelay.create();
   }
 
   @Override public ScreenTagHistory getHistoryTracker() {
@@ -93,6 +87,9 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    requestCode = getArguments().getInt(FragmentNavigator.REQUEST_CODE_EXTRA);
+    backButtonPress = PublishRelay.create();
     facebookLoginButton = (Button) view.findViewById(R.id.not_logged_in_share_facebook_button);
     googleLoginButton = (Button) view.findViewById(R.id.not_logged_in_share_google_button);
     appIcon = (ImageView) view.findViewById(R.id.not_logged_in_app_icon);

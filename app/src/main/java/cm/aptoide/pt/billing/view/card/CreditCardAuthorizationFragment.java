@@ -37,11 +37,8 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
   private Button nextButton;
   private Toolbar toolbar;
 
-  @Inject BillingFactory billingFactory;
-  @Inject BillingNavigator navigator;
-  @Inject BillingAnalytics analytics;
+  @Inject CreditCardAuthorizationPresenter presenter;
 
-  private Billing billing;
   private PublishRelay<Void> backButton;
   private PublishRelay<Void> keyboardNextRelay;
 
@@ -58,8 +55,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
 
     backButton = PublishRelay.create();
     keyboardNextRelay = PublishRelay.create();
-    billing = billingFactory.create(
-        getArguments().getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME));
 
     setHasOptionsMenu(true);
     toolbar = (Toolbar) view.findViewById(R.id.fragment_credit_card_authorization_toolbar);
@@ -102,9 +97,7 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
       keyboardNextRelay.call(null);
     });
 
-    attachPresenter(new CreditCardAuthorizationPresenter(this, billing, navigator, analytics,
-        getArguments().getString(BillingActivity.EXTRA_SERVICE_NAME),
-        AndroidSchedulers.mainThread()));
+    attachPresenter(presenter);
   }
 
   @Override public ScreenTagHistory getHistoryTracker() {
@@ -135,7 +128,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     cardForm = null;
     backButton = null;
     keyboardNextRelay = null;
-    billing = null;
     super.onDestroyView();
   }
 
