@@ -46,6 +46,6 @@ public class Purchase {
   }
 
   public static enum Status {
-    COMPLETED, FAILED
+    COMPLETED, NEW, FAILED
   }
 }

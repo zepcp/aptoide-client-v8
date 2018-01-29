@@ -5,11 +5,11 @@
 
 package cm.aptoide.pt.billing.networking;
 
-import cm.aptoide.pt.billing.product.Price;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
+import cm.aptoide.pt.billing.product.Price;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateAuthorizationRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetAuthorizationsRequest;
@@ -50,7 +50,7 @@ public class AuthorizationMapperV7 {
           .getData()));
     }
 
-    throw new IllegalStateException(V7.getErrorMessage(response.body()));
+    return Single.error(new IllegalStateException(V7.getErrorMessage(response.body())));
   }
 
   public Single<List<Authorization>> map(Response<GetAuthorizationsRequest.ResponseBody> response) {

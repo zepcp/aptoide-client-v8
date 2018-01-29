@@ -97,7 +97,7 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
               tokenInvalidator, sharedPreferences,
               new PurchaseMapperV7(billingBinderSerializer, purchaseFactory), new ProductMapperV7(),
               new PaymentMethodMapper(crashLogger, Build.VERSION.SDK_INT, minimumAPILevelAdyen,
-                  minimumAPILevelPayPal), purchaseFactory, authenticationPersistence,
+                  minimumAPILevelPayPal), authenticationPersistence,
               new AuthorizationMapperV7(authorizationFactory),
               new TransactionMapperV7(transactionFactory));
     }

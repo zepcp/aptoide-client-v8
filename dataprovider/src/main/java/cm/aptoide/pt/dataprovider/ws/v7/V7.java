@@ -470,7 +470,7 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Body GetRecommendedRequest.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
-    @POST("inapp/getPackage") Observable<GetMerchantRequest.ResponseBody> getBillingMerchant(
+    @POST("inapp/merchant/getMeta") Observable<GetMerchantRequest.ResponseBody> getBillingMerchant(
         @Body GetMerchantRequest.RequestBody body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 

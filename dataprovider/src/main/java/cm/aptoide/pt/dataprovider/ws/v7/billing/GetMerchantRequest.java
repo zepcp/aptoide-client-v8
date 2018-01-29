@@ -80,6 +80,7 @@ public class GetMerchantRequest
 
       private long id;
       private String name;
+      private String packageName;
 
       public long getId() {
         return id;
@@ -95,6 +96,14 @@ public class GetMerchantRequest
 
       public void setName(String name) {
         this.name = name;
+      }
+
+      public String getPackageName() {
+        return packageName;
+      }
+
+      public void setPackageName(String packageName) {
+        this.packageName = packageName;
       }
     }
   }

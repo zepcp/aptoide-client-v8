@@ -14,7 +14,6 @@ import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
-import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import cm.aptoide.pt.billing.transaction.Transaction;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
@@ -32,7 +31,6 @@ import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetTransactionRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.UpdateAuthorizationRequest;
 import cm.aptoide.pt.networking.AuthenticationPersistence;
-import java.util.Collections;
 import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
@@ -49,7 +47,6 @@ public class BillingServiceV7 implements BillingService {
   private final ProductMapperV7 productMapperV7;
   private final PaymentMethodMapper serviceMapper;
   private final BodyInterceptor<BaseBody> bodyInterceptorV7;
-  private final PurchaseFactory purchaseFactory;
   private final AuthenticationPersistence authenticationPersistence;
   private final AuthorizationMapperV7 authorizationMapper;
   private final TransactionMapperV7 transactionMapper;
@@ -58,7 +55,7 @@ public class BillingServiceV7 implements BillingService {
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, PurchaseMapperV7 purchaseMapper,
       ProductMapperV7 productMapperV7, PaymentMethodMapper serviceMapper,
-      PurchaseFactory purchaseFactory, AuthenticationPersistence authenticationPersistence,
+      AuthenticationPersistence authenticationPersistence,
       AuthorizationMapperV7 authorizationMapper, TransactionMapperV7 transactionMapper) {
     this.httpClient = httpClient;
     this.converterFactory = converterFactory;
@@ -68,7 +65,6 @@ public class BillingServiceV7 implements BillingService {
     this.productMapperV7 = productMapperV7;
     this.serviceMapper = serviceMapper;
     this.bodyInterceptorV7 = bodyInterceptorV7;
-    this.purchaseFactory = purchaseFactory;
     this.authenticationPersistence = authenticationPersistence;
     this.authorizationMapper = authorizationMapper;
     this.transactionMapper = transactionMapper;
@@ -96,8 +92,9 @@ public class BillingServiceV7 implements BillingService {
         .flatMap(response -> {
           if (response != null && response.isOk()) {
             return Single.just(new Merchant(response.getData()
-                .getId(), "Trivial Drive", response.getData()
-                .getName(), versionCode));
+                .getId(), response.getData()
+                .getName(), response.getData()
+                .getPackageName(), versionCode));
           } else {
             return Single.error(new IllegalArgumentException(V7.getErrorMessage(response)));
           }
@@ -123,16 +120,7 @@ public class BillingServiceV7 implements BillingService {
         tokenInvalidator, sharedPreferences)
         .observe(true, false)
         .toSingle()
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-            return Single.just(purchaseMapper.map(response.body()
-                .getList()));
-          }
-
-          // If user not logged in return a empty purchase list.
-          return Single.<List<Purchase>>just(Collections.emptyList());
-        });
+        .flatMap(response -> purchaseMapper.map(response));
   }
 
   @Override public Single<Purchase> getPurchase(long productId) {
@@ -140,16 +128,7 @@ public class BillingServiceV7 implements BillingService {
         tokenInvalidator, sharedPreferences)
         .observe(true, false)
         .toSingle()
-        .flatMap(response -> {
-
-          if (response.isSuccessful()) {
-            return Single.just(purchaseMapper.map(response.body()
-                .getData()));
-          }
-
-          return Single.just(
-              purchaseFactory.create(productId, null, null, Purchase.Status.FAILED, null));
-        });
+        .flatMap(response -> purchaseMapper.map(response, productId));
   }
 
   @Override public Single<List<Product>> getProducts(String merchantName, List<String> skus) {
