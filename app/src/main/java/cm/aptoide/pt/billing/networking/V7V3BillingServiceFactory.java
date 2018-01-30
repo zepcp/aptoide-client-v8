@@ -11,7 +11,6 @@ import cm.aptoide.pt.billing.binder.BillingBinderSerializer;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.purchase.PurchaseFactory;
 import cm.aptoide.pt.billing.transaction.TransactionFactory;
-import cm.aptoide.pt.crashreports.CrashLogger;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v3.BaseBody;
@@ -35,9 +34,9 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
   private final BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody>
       accountSettingsBodyInterceptorPoolV7;
   private final BillingBinderSerializer billingBinderSerializer;
-  private final CrashLogger crashLogger;
   private final int minimumAPILevelAdyen;
   private final AuthenticationPersistence authenticationPersistence;
+  private final String payPalIcon;
 
   private BillingServiceV3 billingServiceV3;
   private BillingServiceV7 billingServiceV7;
@@ -49,8 +48,8 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
       Resources resources, int minimumAPILevelPayPal, String marketName,
       TransactionFactory transactionFactory,
       BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> accountSettingsBodyInterceptorPoolV7,
-      BillingBinderSerializer billingBinderSerializer, CrashLogger crashLogger,
-      int minimumAPILevelAdyen, AuthenticationPersistence authenticationPersistence) {
+      BillingBinderSerializer billingBinderSerializer, int minimumAPILevelAdyen,
+      AuthenticationPersistence authenticationPersistence, String payPalIcon) {
     this.bodyInterceptorV3 = bodyInterceptorV3;
     this.httpClient = httpClient;
     this.converterFactory = converterFactory;
@@ -64,9 +63,9 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
     this.transactionFactory = transactionFactory;
     this.accountSettingsBodyInterceptorPoolV7 = accountSettingsBodyInterceptorPoolV7;
     this.billingBinderSerializer = billingBinderSerializer;
-    this.crashLogger = crashLogger;
     this.minimumAPILevelAdyen = minimumAPILevelAdyen;
     this.authenticationPersistence = authenticationPersistence;
+    this.payPalIcon = payPalIcon;
   }
 
   @Override public BillingService create(String merchantPackageName) {
@@ -82,10 +81,10 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
       billingServiceV3 =
           new BillingServiceV3(bodyInterceptorV3, httpClient, converterFactory, tokenInvalidator,
               sharedPreferences, new PurchaseMapperV3(purchaseFactory), new ProductMapperV3(),
-              new AuthorizationMapperV3(authorizationFactory), resources,
-              new PaymentMethod(1, PaymentMethod.PAYPAL, "PayPal", null, "", true),
-              Build.VERSION.SDK_INT, minimumAPILevelPayPal, marketName,
-              new TransactionMapperV3(transactionFactory), transactionFactory);
+              resources,
+              new PaymentMethod(1, PaymentMethod.PAYPAL, "PayPal", null, payPalIcon, true),
+              Build.VERSION.SDK_INT, minimumAPILevelPayPal, marketName, transactionFactory,
+              payPalIcon, authorizationFactory);
     }
     return billingServiceV3;
   }
@@ -96,7 +95,7 @@ public class V7V3BillingServiceFactory implements BillingServiceFactory {
           new BillingServiceV7(accountSettingsBodyInterceptorPoolV7, httpClient, converterFactory,
               tokenInvalidator, sharedPreferences,
               new PurchaseMapperV7(billingBinderSerializer, purchaseFactory), new ProductMapperV7(),
-              new PaymentMethodMapper(crashLogger, Build.VERSION.SDK_INT, minimumAPILevelAdyen,
+              new PaymentMethodMapper(Build.VERSION.SDK_INT, minimumAPILevelAdyen,
                   minimumAPILevelPayPal), authenticationPersistence,
               new AuthorizationMapperV7(authorizationFactory),
               new TransactionMapperV7(transactionFactory));

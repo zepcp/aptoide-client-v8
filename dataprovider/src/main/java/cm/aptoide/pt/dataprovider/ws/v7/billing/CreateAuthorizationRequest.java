@@ -44,6 +44,19 @@ public class CreateAuthorizationRequest
         converterFactory, bodyInterceptorV7, tokenInvalidator);
   }
 
+  public static CreateAuthorizationRequest ofPayPal(long productId,
+      SharedPreferences sharedPreferences, OkHttpClient httpClient,
+      Converter.Factory converterFactory, BodyInterceptor<BaseBody> bodyInterceptorV7,
+      TokenInvalidator tokenInvalidator, long paymentMethodId) {
+    final RequestBody requestBody = new RequestBody();
+    requestBody.setServiceId(paymentMethodId);
+    final RequestBody.Data data = new RequestBody.Data();
+    data.setProductId(productId);
+    requestBody.setServiceData(data);
+    return new CreateAuthorizationRequest(requestBody, getHost(sharedPreferences), httpClient,
+        converterFactory, bodyInterceptorV7, tokenInvalidator);
+  }
+
   @Override protected Observable<Response<ResponseBody>> loadDataFromNetwork(Interfaces interfaces,
       boolean bypassCache) {
     return interfaces.createBillingAuthorization(body, bypassCache);
@@ -65,6 +78,15 @@ public class CreateAuthorizationRequest
     public static class Data {
 
       private String token;
+      private Long productId;
+
+      public Long getProductId() {
+        return productId;
+      }
+
+      public void setProductId(Long productId) {
+        this.productId = productId;
+      }
 
       public String getToken() {
         return token;

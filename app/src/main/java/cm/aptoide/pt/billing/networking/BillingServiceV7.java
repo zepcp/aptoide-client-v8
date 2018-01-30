@@ -75,13 +75,7 @@ public class BillingServiceV7 implements BillingService {
         tokenInvalidator)
         .observe(false, false)
         .toSingle()
-        .flatMap(response -> {
-          if (response != null && response.isOk()) {
-            return Single.just(serviceMapper.map(response.getList()));
-          } else {
-            return Single.error(new IllegalStateException(V7.getErrorMessage(response)));
-          }
-        });
+        .flatMap(response -> serviceMapper.map(response));
   }
 
   @Override public Single<Merchant> getMerchant(String merchantName, int versionCode) {
@@ -207,8 +201,15 @@ public class BillingServiceV7 implements BillingService {
   }
 
   @Override
-  public Single<PayPalAuthorization> createPayPalAuthorization(String customerId, String token) {
-    return Single.error(new IllegalStateException("Not implemented!"));
+  public Single<PayPalAuthorization> createPayPalAuthorization(String customerId, long productId,
+      long paymentMethodId) {
+    return CreateAuthorizationRequest.ofPayPal(productId, sharedPreferences, httpClient,
+        converterFactory, bodyInterceptorV7, tokenInvalidator, paymentMethodId)
+        .observe(true, false)
+        .flatMapSingle(response -> authorizationMapper.map(-1, customerId, paymentMethodId,
+            Authorization.PAYPAL_SDK, response))
+        .cast(PayPalAuthorization.class)
+        .toSingle();
   }
 
   @Override public Single<CreditCardAuthorization> updateCreditCardAuthorization(String customerId,

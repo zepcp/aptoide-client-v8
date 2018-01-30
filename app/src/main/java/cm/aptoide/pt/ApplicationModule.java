@@ -243,6 +243,8 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
       Converter.Factory converterFactory, AuthenticationPersistence authenticationPersistence,
       PurchaseFactory purchaseFactory, BillingBinderSerializer billingBinderSerializer) {
 
+    final String payPalIcon =
+        "android.resource://" + application.getPackageName() + "/" + R.drawable.ic_paypal;
     return new BillingFactory.Builder().setMerchantVersionProvider(
         new MerchantPackageRepositoryVersionProvider(packageRepository))
         .setUserPersistence(new AccountUserPersistence(accountManager))
@@ -254,14 +256,14 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
                 PublishRelay.create())))
         .registerPaymentService(PaymentMethod.PAYPAL, new PayPalPaymentService())
         .setPayPalIcon(
-            "android.resource://" + application.getPackageName() + "/" + R.drawable.ic_paypal)
+            payPalIcon)
         .setBillingServiceFactory(
             new V7V3BillingServiceFactory(bodyInterceptorV3, defaultClient, converterFactory,
                 tokenInvalidator, sharedPreferences, purchaseFactory, new AuthorizationFactory(),
                 application.getResources(), Build.VERSION_CODES.JELLY_BEAN, marketName,
                 new TransactionFactory(), accountSettingsBodyInterceptorPoolV7,
-                billingBinderSerializer, CrashReport.getInstance(), Build.VERSION_CODES.JELLY_BEAN,
-                authenticationPersistence))
+                billingBinderSerializer, Build.VERSION_CODES.JELLY_BEAN,
+                authenticationPersistence, payPalIcon))
         .build();
   }
 

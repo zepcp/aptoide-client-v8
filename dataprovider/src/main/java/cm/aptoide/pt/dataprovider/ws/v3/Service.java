@@ -31,9 +31,6 @@ public interface Service {
   @POST("getApkInfo") @FormUrlEncoded Observable<PaidApp> getApkInfo(@FieldMap BaseBody args,
       @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
-  @POST("checkProductPayment") @FormUrlEncoded Observable<TransactionResponse> getTransaction(
-      @FieldMap BaseBody args);
-
   @POST("payProduct") @FormUrlEncoded Observable<TransactionResponse> createTransaction(
       @FieldMap BaseBody args, @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 

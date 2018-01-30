@@ -31,7 +31,7 @@ public class PurchaseMapperV7 {
 
   public Single<List<Purchase>> map(Response<GetPurchasesRequest.ResponseBody> response) {
 
-    if (response.code() == 401) {
+    if (response.code() == 401 || response.code() == 403) {
       // If user not logged in return a empty purchase list.
       return Single.<List<Purchase>>just(Collections.emptyList());
     }

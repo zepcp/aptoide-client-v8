@@ -6,59 +6,53 @@
 package cm.aptoide.pt.billing.networking;
 
 import cm.aptoide.pt.billing.payment.PaymentMethod;
-import cm.aptoide.pt.crashreports.CrashLogger;
+import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
+import cm.aptoide.pt.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
+import rx.Single;
 
 public class PaymentMethodMapper {
 
-  private final CrashLogger crashLogger;
   private final int currentAPILevel;
   private final int minimumAPILevelAdyen;
   private final int minimumAPILevelPayPal;
 
-  public PaymentMethodMapper(CrashLogger crashLogger, int currentAPILevel, int minimumAPILevelAdyen,
+  public PaymentMethodMapper(int currentAPILevel, int minimumAPILevelAdyen,
       int minimumAPILevelPayPal) {
-    this.crashLogger = crashLogger;
     this.currentAPILevel = currentAPILevel;
     this.minimumAPILevelAdyen = minimumAPILevelAdyen;
     this.minimumAPILevelPayPal = minimumAPILevelPayPal;
   }
 
-  public List<PaymentMethod> map(List<GetServicesRequest.ResponseBody.Service> responseList) {
+  public Single<List<PaymentMethod>> map(GetServicesRequest.ResponseBody response) {
+    if (response != null && response.isOk()) {
 
-    final List<PaymentMethod> paymentMethods = new ArrayList<>(responseList.size());
-    for (GetServicesRequest.ResponseBody.Service service : responseList) {
-      try {
-        paymentMethods.add(map(service));
-      } catch (IllegalArgumentException exception) {
-        crashLogger.log(exception);
+      final List<PaymentMethod> paymentMethods = new ArrayList<>();
+      Logger.d("Billing", "Payment Methods: " + response.getList()
+          .size());
+      for (GetServicesRequest.ResponseBody.Service service : response.getList()) {
+        switch (service.getName()) {
+          case PaymentMethod.PAYPAL:
+            if (currentAPILevel >= minimumAPILevelPayPal) {
+              paymentMethods.add(
+                  new PaymentMethod(service.getId(), service.getName(), service.getLabel(),
+                      service.getDescription(), service.getIcon(), service.isDefaultService()));
+            }
+            break;
+          case PaymentMethod.CREDIT_CARD:
+            if (currentAPILevel >= minimumAPILevelAdyen) {
+              paymentMethods.add(
+                  new PaymentMethod(service.getId(), service.getName(), service.getLabel(),
+                      service.getDescription(), service.getIcon(), service.isDefaultService()));
+            }
+            break;
+        }
       }
-    }
-    return paymentMethods;
-  }
-
-  private PaymentMethod map(GetServicesRequest.ResponseBody.Service response) {
-    switch (response.getName()) {
-      case PaymentMethod.PAYPAL:
-        if (currentAPILevel >= minimumAPILevelPayPal) {
-          return new PaymentMethod(response.getId(),
-              response.getName(), response.getLabel(), response.getDescription(),
-              response.getIcon(), response.isDefaultService());
-        }
-        throw new IllegalArgumentException(
-            "PayPal not supported in Android API lower than " + minimumAPILevelPayPal);
-      case PaymentMethod.CREDIT_CARD:
-        if (currentAPILevel >= minimumAPILevelAdyen) {
-          return new PaymentMethod(response.getId(),
-              response.getName(), response.getLabel(), response.getDescription(),
-              response.getIcon(), response.isDefaultService());
-        }
-        throw new IllegalArgumentException(
-            "Adyen not supported in Android API lower than " + minimumAPILevelAdyen);
-      default:
-        throw new IllegalArgumentException("Payment service not supported: " + response.getName());
+      return Single.just(paymentMethods);
+    } else {
+      return Single.error(new IllegalStateException(V7.getErrorMessage(response)));
     }
   }
 }

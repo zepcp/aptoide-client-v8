@@ -13,9 +13,7 @@ import cm.aptoide.pt.billing.payment.PaymentServiceAdapter;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
@@ -130,11 +128,12 @@ public class Billing {
   }
 
   private Observable.Transformer<SelectProduct, Payment> selectProduct() {
-    return selectProduct -> selectProduct.flatMapSingle(data -> Single.zip(getMerchant(),
+    return selectProduct -> selectProduct.flatMap(data -> Single.zip(getMerchant(),
         billingService.getProduct(data.getSku(), merchantPackageName),
-        (merchant, product) -> Payment.withProduct(merchant, product, data.getPayload())))
+        (merchant, product) -> Payment.withProduct(merchant, product, data.getPayload()))
+        .toObservable()
         .onErrorReturn(throwable -> Payment.error())
-        .startWith(Payment.loading());
+        .startWith(Payment.loading()));
   }
 
   private Observable.Transformer<CreateTransaction, Payment> createTransaction() {
