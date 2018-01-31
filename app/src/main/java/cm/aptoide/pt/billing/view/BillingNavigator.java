@@ -5,6 +5,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.widget.Toast;
 import cm.aptoide.pt.BuildConfig;
+import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
+import cm.aptoide.pt.billing.payment.PayPalResult;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationFragment;
@@ -13,9 +15,7 @@ import cm.aptoide.pt.billing.view.payment.PaymentFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentMethodsFragment;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
-import cm.aptoide.pt.navigator.Result;
 import com.paypal.android.sdk.payments.PayPalConfiguration;
-import com.paypal.android.sdk.payments.PayPalFuturePaymentActivity;
 import com.paypal.android.sdk.payments.PayPalPayment;
 import com.paypal.android.sdk.payments.PayPalService;
 import com.paypal.android.sdk.payments.PaymentConfirmation;
@@ -24,6 +24,7 @@ import rx.Observable;
 
 public class BillingNavigator {
 
+  private static final String EXTRA_AUTHORIZATION_ID = "AUTHORIZATION_ID";
   private final Context context;
   private final PurchaseBundleMapper bundleMapper;
   private final ActivityNavigator activityNavigator;
@@ -65,17 +66,20 @@ public class BillingNavigator {
     fragmentNavigator.popBackStack();
   }
 
-  public void navigateToPayPalForResult(int requestCode, String currency, String description,
-      double amount) {
+  public void navigateToPayPalForResult(int requestCode, PayPalAuthorization authorization) {
 
     final Bundle bundle = new Bundle();
     bundle.putParcelable(PayPalService.EXTRA_PAYPAL_CONFIGURATION,
         new PayPalConfiguration().environment(BuildConfig.PAYPAL_ENVIRONMENT)
             .clientId(BuildConfig.PAYPAL_KEY)
+            .rememberUser(true)
             .merchantName(marketName));
     bundle.putParcelable(com.paypal.android.sdk.payments.PaymentActivity.EXTRA_PAYMENT,
-        new PayPalPayment(new BigDecimal(amount), currency, description,
+        new PayPalPayment(new BigDecimal(authorization.getPrice()
+            .getAmount()), authorization.getPrice()
+            .getCurrency(), authorization.getProductDescription(),
             PayPalPayment.PAYMENT_INTENT_SALE));
+    bundle.putLong(EXTRA_AUTHORIZATION_ID, authorization.getId());
 
     activityNavigator.navigateForResult(com.paypal.android.sdk.payments.PaymentActivity.class,
         requestCode, bundle);
@@ -83,7 +87,20 @@ public class BillingNavigator {
 
   public Observable<PayPalResult> payPalResults(int requestCode) {
     return activityNavigator.results(requestCode)
-        .map(result -> map(result));
+        .map(result -> {
+          if (result.getResultCode() == Activity.RESULT_OK) {
+            final long authorizationId = result.getData()
+                .getLongExtra(EXTRA_AUTHORIZATION_ID, -1);
+            final PaymentConfirmation confirmation = result.getData()
+                .getParcelableExtra(
+                    com.paypal.android.sdk.payments.PaymentActivity.EXTRA_RESULT_CONFIRMATION);
+            if (confirmation != null && confirmation.getProofOfPayment() != null) {
+              return new PayPalResult(false, true, confirmation.getProofOfPayment()
+                  .getPaymentId(), -1, authorizationId);
+            }
+          }
+          return new PayPalResult(false, false, null, -1, -1);
+        });
   }
 
   public void popViewWithResult(Purchase purchase) {
@@ -106,27 +123,6 @@ public class BillingNavigator {
     return bundle;
   }
 
-  private PayPalResult map(Result result) {
-    switch (result.getResultCode()) {
-      case Activity.RESULT_OK:
-        final PaymentConfirmation confirmation = result.getData()
-            .getParcelableExtra(
-                com.paypal.android.sdk.payments.PaymentActivity.EXTRA_RESULT_CONFIRMATION);
-        if (confirmation != null && confirmation.getProofOfPayment() != null) {
-          return new BillingNavigator.PayPalResult(BillingNavigator.PayPalResult.SUCCESS,
-              confirmation.getProofOfPayment()
-                  .getPaymentId());
-        } else {
-          return new BillingNavigator.PayPalResult(BillingNavigator.PayPalResult.ERROR, null);
-        }
-      case Activity.RESULT_CANCELED:
-        return new BillingNavigator.PayPalResult(BillingNavigator.PayPalResult.CANCELLED, null);
-      case PayPalFuturePaymentActivity.RESULT_EXTRAS_INVALID:
-      default:
-        return new BillingNavigator.PayPalResult(BillingNavigator.PayPalResult.ERROR, null);
-    }
-  }
-
   public void navigateToPaymentView(String merchantName) {
     fragmentNavigator.navigateToWithoutBackSave(
         PaymentFragment.create(getBillingBundle(merchantName, null)), true);
@@ -139,28 +135,5 @@ public class BillingNavigator {
 
   public void navigateToManageAuthorizationsView() {
     Toast.makeText(context, "Not implemented!", Toast.LENGTH_SHORT).show();
-  }
-
-  public static class PayPalResult {
-
-    public static final int SUCCESS = 0;
-    public static final int ERROR = 1;
-    public static final int CANCELLED = 2;
-
-    private final int status;
-    private final String paymentConfirmationId;
-
-    public PayPalResult(int status, String paymentConfirmationId) {
-      this.status = status;
-      this.paymentConfirmationId = paymentConfirmationId;
-    }
-
-    public int getStatus() {
-      return status;
-    }
-
-    public String getPaymentConfirmationId() {
-      return paymentConfirmationId;
-    }
   }
 }

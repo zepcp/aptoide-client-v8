@@ -7,11 +7,13 @@ package cm.aptoide.pt.billing;
 
 import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.customer.CustomerManager;
+import cm.aptoide.pt.billing.payment.PayPalResult;
 import cm.aptoide.pt.billing.payment.Payment;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
 import cm.aptoide.pt.billing.payment.PaymentServiceAdapter;
 import cm.aptoide.pt.billing.product.Product;
 import cm.aptoide.pt.billing.purchase.Purchase;
+import cm.aptoide.pt.billing.transaction.TransactionFactory;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import java.util.List;
 import rx.Completable;
@@ -29,12 +31,13 @@ public class Billing {
   private final PublishSubject<Action> actions;
   private final CustomerManager customerManager;
   private final Observable<Payment> paymentObservable;
+  private final TransactionFactory transactionFactory;
   private boolean setup;
 
   Billing(String merchantPackageName, BillingService billingService,
       PurchaseTokenDecoder tokenDecoder, MerchantVersionProvider versionProvider,
       PaymentServiceAdapter serviceAdapter, PublishSubject<Action> actions,
-      CustomerManager customerManager) {
+      CustomerManager customerManager, TransactionFactory transactionFactory) {
     this.billingService = billingService;
     this.tokenDecoder = tokenDecoder;
     this.merchantPackageName = merchantPackageName;
@@ -42,11 +45,12 @@ public class Billing {
     this.serviceAdapter = serviceAdapter;
     this.actions = actions;
     this.customerManager = customerManager;
+    this.transactionFactory = transactionFactory;
     this.setup = false;
     this.paymentObservable = actions.publish(published -> Observable.merge(
         published.ofType(SelectProduct.class)
-            .compose(selectProduct()), published.ofType(CreateTransaction.class)
-            .compose(createTransaction()), published.ofType(LoadPurchase.class)
+            .compose(selectProduct()), published.ofType(Pay.class)
+            .compose(startPayment()), published.ofType(LoadPurchase.class)
             .compose(loadPurchase())))
         .scan(Payment.loading(),
             (oldPayment, newPayment) -> Payment.consolidate(oldPayment, newPayment))
@@ -99,6 +103,26 @@ public class Billing {
     customerManager.clearPaymentMethodSelection();
   }
 
+  public Single<List<Product>> getProducts(List<String> skus) {
+    return billingService.getProducts(merchantPackageName, skus);
+  }
+
+  public Single<List<Purchase>> getPurchases() {
+    return billingService.getPurchases(merchantPackageName);
+  }
+
+  public Completable consumePurchase(String purchaseToken) {
+    return billingService.deletePurchase(tokenDecoder.decode(purchaseToken));
+  }
+
+  public void pay() {
+    actions.onNext(new Pay());
+  }
+
+  public void selectProduct(String sku, String payload) {
+    actions.onNext(new SelectProduct(sku, payload));
+  }
+
   private Observable.Transformer<LoadPurchase, Payment> loadPurchase() {
     return loadPurchase -> loadPurchase.flatMap(data -> {
 
@@ -136,63 +160,57 @@ public class Billing {
         .startWith(Payment.loading()));
   }
 
-  private Observable.Transformer<CreateTransaction, Payment> createTransaction() {
+  private Observable.Transformer<Pay, Payment> startPayment() {
     return createTransaction -> createTransaction.flatMap(__ -> paymentObservable.first()
         .flatMap(payment -> {
 
           if (payment.getStatus()
               .equals(Payment.Status.LOADED)) {
 
-            return serviceAdapter.pay(payment.getCustomer()
-                .getSelectedPaymentMethod()
-                .getType(), payment.getCustomer()
+            if (payment.getCustomer()
                 .getSelectedAuthorization()
-                .getId(), payment.getCustomer()
-                .getId(), payment.getProduct()
-                .getId(), payment.getPayload())
-                .flatMap(transaction -> {
-                  if (transaction.isCompleted()) {
-                    return billingService.getPurchase(payment.getProduct()
-                        .getId())
-                        .map(purchase -> Payment.withCustomer(payment.getCustomer(), transaction,
-                            purchase));
-                  }
-                  return Single.just(
-                      Payment.withCustomer(payment.getCustomer(), transaction, null));
-                })
-                .toObservable()
-                .onErrorReturn(throwable -> Payment.error())
-                .startWith(Payment.loading());
+                .isNew()) {
+              customerManager.authorize(new PayPalResult(true, false, null, payment.getProduct()
+                  .getId(), payment.getCustomer()
+                  .getSelectedAuthorization()
+                  .getId()));
+              return Observable.empty();
+            }
+
+            if (payment.getCustomer()
+                .getSelectedAuthorization()
+                .isActive()) {
+              return serviceAdapter.pay(payment.getCustomer()
+                  .getSelectedPaymentMethod()
+                  .getType(), payment.getCustomer()
+                  .getSelectedAuthorization()
+                  .getId(), payment.getCustomer()
+                  .getId(), payment.getProduct()
+                  .getId(), payment.getPayload())
+                  .flatMap(transaction -> {
+                    if (transaction.isCompleted()) {
+                      return billingService.getPurchase(payment.getProduct()
+                          .getId())
+                          .map(purchase -> Payment.withCustomer(payment.getCustomer(), transaction,
+                              purchase));
+                    }
+                    return Single.just(
+                        Payment.withCustomer(payment.getCustomer(), transaction, null));
+                  })
+                  .toObservable()
+                  .onErrorReturn(throwable -> Payment.error())
+                  .startWith(Payment.loading());
+            }
           }
 
           return Observable.just(Payment.error());
         }));
   }
 
-  public Single<List<Product>> getProducts(List<String> skus) {
-    return billingService.getProducts(merchantPackageName, skus);
-  }
-
-  public Single<List<Purchase>> getPurchases() {
-    return billingService.getPurchases(merchantPackageName);
-  }
-
-  public Completable consumePurchase(String purchaseToken) {
-    return billingService.deletePurchase(tokenDecoder.decode(purchaseToken));
-  }
-
-  public void pay() {
-    actions.onNext(new CreateTransaction());
-  }
-
-  public void selectProduct(String sku, String payload) {
-    actions.onNext(new SelectProduct(sku, payload));
-  }
-
   private static class Action {
   }
 
-  public static class CreateTransaction extends Action {
+  private static class Pay extends Action {
 
   }
 
@@ -215,7 +233,7 @@ public class Billing {
     }
   }
 
-  public static class LoadPurchase extends Action {
+  private static class LoadPurchase extends Action {
 
     private final Product product;
     private final Customer customer;

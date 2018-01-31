@@ -33,8 +33,6 @@ import cm.aptoide.pt.billing.view.payment.PaymentMethodsPresenter;
 import cm.aptoide.pt.billing.view.payment.PaymentMethodsView;
 import cm.aptoide.pt.billing.view.payment.PaymentPresenter;
 import cm.aptoide.pt.billing.view.payment.PaymentView;
-import cm.aptoide.pt.billing.view.paypal.PayPalAuthorizationPresenter;
-import cm.aptoide.pt.billing.view.paypal.PayPalView;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
@@ -121,15 +119,6 @@ import rx.schedulers.Schedulers;
         billingNavigator, billingAnalytics,
         arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME),
         AndroidSchedulers.mainThread());
-  }
-
-  @Provides @FragmentScope PayPalAuthorizationPresenter providePayPalAuthorizationPresenter(
-      BillingFactory billingFactory, BillingNavigator billingNavigator,
-      BillingAnalytics billingAnalytics) {
-    return new PayPalAuthorizationPresenter((PayPalView) fragment,
-        billingFactory.create(arguments.getString(BillingActivity.EXTRA_MERCHANT_PACKAGE_NAME)),
-        billingAnalytics, billingNavigator, AndroidSchedulers.mainThread(),
-        arguments.getString(BillingActivity.EXTRA_SERVICE_NAME));
   }
 
   @FragmentScope @Provides ManageStorePresenter provideManageStorePresenter(

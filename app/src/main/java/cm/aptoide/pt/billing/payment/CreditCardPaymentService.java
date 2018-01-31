@@ -3,17 +3,20 @@ package cm.aptoide.pt.billing.payment;
 import cm.aptoide.pt.billing.BillingService;
 import cm.aptoide.pt.billing.PaymentService;
 import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
+import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
 import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
+import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.billing.transaction.Transaction;
 import rx.Single;
 
 public class CreditCardPaymentService implements PaymentService<CreditCard> {
 
   private final Adyen adyen;
+  private final AuthorizationFactory authorizationFactory;
 
-  public CreditCardPaymentService(Adyen adyen) {
+  public CreditCardPaymentService(Adyen adyen, AuthorizationFactory authorizationFactory) {
     this.adyen = adyen;
+    this.authorizationFactory = authorizationFactory;
   }
 
   @Override
@@ -22,7 +25,7 @@ public class CreditCardPaymentService implements PaymentService<CreditCard> {
     return billingService.createTransaction(customerId, authorizationId, productId, payload);
   }
 
-  @Override public Single<Authorization> authorize(String customerId, CreditCard creditCard,
+  @Override public Single<CreditCardAuthorization> authorize(String customerId, CreditCard creditCard,
       AuthorizationPersistence authorizationPersistence, BillingService billingService,
       long paymentMethodId) {
     adyen.closeSession();
@@ -37,12 +40,12 @@ public class CreditCardPaymentService implements PaymentService<CreditCard> {
                 .flatMap(payload -> {
 
                   final CreditCardAuthorization cardAuthorization =
-                      new CreditCardAuthorization(authorization.getId(),
-                          authorization.getCustomerId(), authorization.getStatus(),
-                          authorization.getSession(), payload,
+                      (CreditCardAuthorization) authorizationFactory.create(authorization.getId(),
+                          authorization.getCustomerId(), authorization.getPaymentMethodId(),
                           authorization.getIcon(), authorization.getName(),
-                          authorization.getDescription(), authorization.isDefault(),
-                          authorization.getType(), authorization.getPaymentMethodId());
+                          authorization.getDescription(), authorization.getType(),
+                          authorization.isDefault(), authorization.getStatus(), payload, null, null,
+                          authorization.getSession());
 
                   return authorizationPersistence.saveAuthorization(cardAuthorization)
                       .andThen(Single.just(cardAuthorization));

@@ -7,10 +7,10 @@ import rx.Single;
 
 public interface PaymentService<T> {
 
-  public Single<Transaction> pay(String customerId, long productId, long authorizationId,
+  public Single<? extends Transaction> pay(String customerId, long productId, long authorizationId,
       BillingService billingService, String payload);
 
-  public Single<Authorization> authorize(String customerId, T metadata,
+  public Single<? extends Authorization> authorize(String customerId, T metadata,
       AuthorizationPersistence authorizationPersistence, BillingService authorizationService,
       long paymentMethodId);
 }

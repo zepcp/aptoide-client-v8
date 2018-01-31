@@ -7,6 +7,7 @@ package cm.aptoide.pt.billing.view.payment;
 
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
+import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.payment.Payment;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.presenter.Presenter;
@@ -16,6 +17,7 @@ import rx.Scheduler;
 
 public class PaymentPresenter implements Presenter {
 
+  private static final int PAY_APP_REQUEST_CODE = 12;
   private final PaymentView view;
   private final Billing billing;
   private final BillingNavigator navigator;
@@ -42,6 +44,8 @@ public class PaymentPresenter implements Presenter {
     handleCancelEvent();
 
     handleBuyEvent();
+
+    handlePayPalResultEvent();
   }
 
   private void handleChangeAuthorizationEvent() {
@@ -98,6 +102,16 @@ public class PaymentPresenter implements Presenter {
                 analytics.sendPaymentErrorEvent();
               }
 
+              if (payment.isPendingAuthorization()) {
+                navigator.navigateToPayPalForResult(PAY_APP_REQUEST_CODE,
+                    (PayPalAuthorization) payment.getCustomer()
+                        .getSelectedAuthorization());
+              }
+
+              if (payment.isRedeemed()) {
+                billing.pay();
+              }
+
               view.showMerchant(payment.getMerchant()
                   .getName());
               view.showProduct(payment.getProduct());
@@ -108,6 +122,16 @@ public class PaymentPresenter implements Presenter {
             }
           }
         }, throwable -> {
+          throw new OnErrorNotImplementedException(throwable);
+        });
+  }
+
+  private void handlePayPalResultEvent() {
+    view.getLifecycle()
+        .filter(event -> event.equals(View.LifecycleEvent.CREATE))
+        .flatMap(created -> navigator.payPalResults(PAY_APP_REQUEST_CODE))
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(result -> billing.authorize(result), throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
   }

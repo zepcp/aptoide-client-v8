@@ -48,7 +48,9 @@ import cm.aptoide.pt.analytics.TrackerFilter;
 import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.MerchantPackageRepositoryVersionProvider;
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
+import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.binder.BillingBinderSerializer;
 import cm.aptoide.pt.billing.customer.AccountUserPersistence;
 import cm.aptoide.pt.billing.networking.V7V3BillingServiceFactory;
@@ -245,21 +247,25 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
 
     final String payPalIcon =
         "android.resource://" + application.getPackageName() + "/" + R.drawable.ic_paypal;
+    final AuthorizationFactory authorizationFactory = new AuthorizationFactory();
+    final PayPalAuthorization defaultPayPalAuthotization =
+        (PayPalAuthorization) authorizationFactory.create(-1, null, 1, payPalIcon, "PayPal", null,
+            Authorization.PAYPAL_SDK, true, Authorization.Status.NEW, null, null, null, null);
     return new BillingFactory.Builder().setMerchantVersionProvider(
         new MerchantPackageRepositoryVersionProvider(packageRepository))
         .setUserPersistence(new AccountUserPersistence(accountManager))
         .setPurchaseTokenDecoder(new Base64PurchaseTokenDecoder())
         .setAuthorizationPersistence(new RealmAuthorizationPersistence(database,
-            new RealmAuthorizationMapper(new AuthorizationFactory()), Schedulers.io()))
+            new RealmAuthorizationMapper(authorizationFactory), Schedulers.io()))
         .registerPaymentService(PaymentMethod.CREDIT_CARD, new CreditCardPaymentService(
             new Adyen(application, Charset.forName("UTF-8"), Schedulers.io(),
-                PublishRelay.create())))
-        .registerPaymentService(PaymentMethod.PAYPAL, new PayPalPaymentService())
-        .setPayPalIcon(
-            payPalIcon)
+                PublishRelay.create()), authorizationFactory))
+        .registerPaymentService(PaymentMethod.PAYPAL,
+            new PayPalPaymentService(authorizationFactory, defaultPayPalAuthotization))
+        .setDefaultPayPalAuthotization(defaultPayPalAuthotization)
         .setBillingServiceFactory(
             new V7V3BillingServiceFactory(bodyInterceptorV3, defaultClient, converterFactory,
-                tokenInvalidator, sharedPreferences, purchaseFactory, new AuthorizationFactory(),
+                tokenInvalidator, sharedPreferences, purchaseFactory, authorizationFactory,
                 application.getResources(), Build.VERSION_CODES.JELLY_BEAN, marketName,
                 new TransactionFactory(), accountSettingsBodyInterceptorPoolV7,
                 billingBinderSerializer, Build.VERSION_CODES.JELLY_BEAN,

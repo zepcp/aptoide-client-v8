@@ -49,6 +49,10 @@ public class Transaction {
     return Status.FAILED.equals(status);
   }
 
+  public boolean isPendingServiceAuthorization() {
+    return Status.PENDING_SERVICE_AUTHORIZATION.equals(status);
+  }
+
   public enum Status {
     NEW, PENDING_SERVICE_AUTHORIZATION, PROCESSING, COMPLETED, FAILED
   }

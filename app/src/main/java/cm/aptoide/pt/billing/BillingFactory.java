@@ -1,11 +1,11 @@
 package cm.aptoide.pt.billing;
 
-import cm.aptoide.pt.billing.authorization.Authorization;
-import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
+import cm.aptoide.pt.billing.customer.AuthorizationPersistence;
 import cm.aptoide.pt.billing.customer.CustomerManager;
 import cm.aptoide.pt.billing.customer.UserPersistence;
 import cm.aptoide.pt.billing.payment.PaymentServiceAdapter;
+import cm.aptoide.pt.billing.transaction.TransactionFactory;
 import java.util.HashMap;
 import java.util.Map;
 import rx.subjects.PublishSubject;
@@ -22,6 +22,7 @@ public class BillingFactory {
   private final MerchantVersionProvider versionProvider;
   private final UserPersistence userPersistence;
   private final PayPalAuthorization payPalAuthorization;
+  private final TransactionFactory transactionFactory;
 
   private BillingFactory(Map<String, Billing> pool,
       Map<BillingService, PaymentServiceAdapter> adapters,
@@ -29,7 +30,7 @@ public class BillingFactory {
       BillingServiceFactory billingServiceFactory, Map<String, PaymentService> services,
       AuthorizationPersistence authorizationPersistence, PurchaseTokenDecoder tokenDecoder,
       MerchantVersionProvider versionProvider, UserPersistence userPersistence,
-      PayPalAuthorization payPalAuthorization) {
+      PayPalAuthorization payPalAuthorization, TransactionFactory transactionFactory) {
     this.pool = pool;
     this.adapters = adapters;
     this.customerManagers = customerManagers;
@@ -40,6 +41,7 @@ public class BillingFactory {
     this.versionProvider = versionProvider;
     this.userPersistence = userPersistence;
     this.payPalAuthorization = payPalAuthorization;
+    this.transactionFactory = transactionFactory;
   }
 
   public Billing create(String merchantPackageName) {
@@ -61,7 +63,7 @@ public class BillingFactory {
       pool.put(merchantPackageName,
           new Billing(merchantPackageName, billingService, tokenDecoder, versionProvider,
               adapters.get(billingService), PublishSubject.create(),
-              customerManagers.get(billingService)));
+              customerManagers.get(billingService), transactionFactory));
     }
 
     return pool.get(merchantPackageName);
@@ -74,7 +76,7 @@ public class BillingFactory {
     private MerchantVersionProvider versionProvider;
     private Map<String, PaymentService> services;
     private AuthorizationPersistence authorizationPersistence;
-    private String payPalIcon;
+    private PayPalAuthorization payPalAuthotization;
     private BillingServiceFactory serviceFactory;
 
     public Builder() {
@@ -106,8 +108,8 @@ public class BillingFactory {
       return this;
     }
 
-    public Builder setPayPalIcon(String payPalIcon) {
-      this.payPalIcon = payPalIcon;
+    public Builder setDefaultPayPalAuthotization(PayPalAuthorization payPalAuthotization) {
+      this.payPalAuthotization = payPalAuthotization;
       return this;
     }
 
@@ -124,8 +126,7 @@ public class BillingFactory {
 
       return new BillingFactory(new HashMap<>(), new HashMap<>(), new HashMap<>(), serviceFactory,
           services, authorizationPersistence, tokenDecoder, versionProvider, userPersistence,
-          new PayPalAuthorization(-1, null, null, null, null, null, payPalIcon, "PayPal", true,
-              Authorization.PAYPAL_SDK, null, 1));
+          payPalAuthotization, new TransactionFactory());
     }
   }
 }

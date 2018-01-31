@@ -129,6 +129,20 @@ public class Payment {
     return new Payment(merchant, customer, product, purchase, status, payload, transaction);
   }
 
+  public boolean isPendingAuthorization() {
+    return customer != null
+        && customer.getSelectedAuthorization() != null
+        && customer.getSelectedAuthorization()
+        .isPending();
+  }
+
+  public boolean isRedeemed() {
+    return customer != null
+        && customer.getSelectedAuthorization() != null
+        && customer.getSelectedAuthorization()
+        .isRedeemed();
+  }
+
   public static enum Status {
     LOADING, LOADING_ERROR, LOADED
   }

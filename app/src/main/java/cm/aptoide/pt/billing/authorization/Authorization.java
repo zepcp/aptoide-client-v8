@@ -84,50 +84,15 @@ public abstract class Authorization {
     return Status.PENDING.equals(status);
   }
 
+  public boolean isRedeemed() {
+    return Status.REDEEMED.equals(status);
+  }
+
+  public boolean isNew() {
+    return Status.NEW.equals(status);
+  }
+
   public enum Status {
-    PENDING, PROCESSING, REDEEMED, ACTIVE, FAILED, EXPIRED
-  }
-
-  @Override public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Authorization that = (Authorization) o;
-
-    if (id != that.id) return false;
-
-    return true;
-  }
-
-  @Override public int hashCode() {
-    return (int) (id ^ (id >>> 32));
-  }
-
-  @Override public String toString() {
-    return "Authorization{"
-        + "id="
-        + id
-        + ", customerId='"
-        + customerId
-        + '\''
-        + ", status="
-        + status
-        + ", icon='"
-        + icon
-        + '\''
-        + ", name='"
-        + name
-        + '\''
-        + ", type='"
-        + type
-        + '\''
-        + ", description='"
-        + description
-        + '\''
-        + ", defaultAuthorization="
-        + defaultAuthorization
-        + ", paymentMethodId="
-        + paymentMethodId
-        + '}';
+    NEW, PENDING, PROCESSING, REDEEMED, ACTIVE, FAILED, EXPIRED
   }
 }

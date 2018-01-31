@@ -7,8 +7,6 @@ package cm.aptoide.pt.billing.networking;
 
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.authorization.AuthorizationFactory;
-import cm.aptoide.pt.billing.authorization.CreditCardAuthorization;
-import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.product.Price;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.CreateAuthorizationRequest;
@@ -31,17 +29,9 @@ public class AuthorizationMapperV7 {
 
     if (response.code() == 409) {
 
-      if (type.equals(Authorization.PAYPAL_SDK)) {
-        return Single.just(
-            new PayPalAuthorization(authorizationId, customerId, Authorization.Status.FAILED, null,
-                null, null, null, null, false, Authorization.PAYPAL_SDK, null, paymentMethodId));
-      }
-
-      if (type.equals(Authorization.ADYEN_SDK)) {
-        return Single.just(
-            new CreditCardAuthorization(authorizationId, customerId, Authorization.Status.FAILED,
-                null, null, null, null, null, false, Authorization.ADYEN_SDK, paymentMethodId));
-      }
+      return Single.just(
+          authorizationFactory.create(authorizationId, customerId, paymentMethodId, null, null,
+              null, type, false, Authorization.Status.FAILED, null, null, null, null));
     }
 
     if (response.isSuccessful() && response.body() != null && response.body()

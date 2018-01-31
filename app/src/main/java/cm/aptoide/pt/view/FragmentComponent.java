@@ -9,7 +9,6 @@ import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationFragment;
 import cm.aptoide.pt.billing.view.login.PaymentLoginFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentMethodsFragment;
-import cm.aptoide.pt.billing.view.paypal.PayPalAuthorizationFragment;
 import cm.aptoide.pt.share.NotLoggedInShareFragment;
 import cm.aptoide.pt.updates.view.rollback.RollbackFragment;
 import dagger.Subcomponent;
@@ -36,8 +35,6 @@ public interface FragmentComponent {
   void inject(PaymentMethodsFragment paymentMethodsFragment);
 
   void inject(PaymentFragment paymentFragment);
-
-  void inject(PayPalAuthorizationFragment payPalAuthorizationFragment);
 
   void inject(NotLoggedInShareFragment notLoggedInShareFragment);
 }
