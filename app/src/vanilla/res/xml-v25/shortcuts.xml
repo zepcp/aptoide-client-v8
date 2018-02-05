@@ -4,7 +4,7 @@
     tools:targetApi="25">
   <shortcut
       android:enabled="true"
-      android:icon="@drawable/ic_search_icon"
+      android:icon="@drawable/ic_shortcut_search"
       android:shortcutId="search"
       android:shortcutShortLabel="@string/search_shortcut_short">
 
@@ -20,7 +20,7 @@
   </shortcut>
   <shortcut
       android:enabled="true"
-      android:icon="@drawable/ic_search_icon"
+      android:icon="@drawable/ic_shortcut_timeline"
       android:shortcutId="timeline"
       android:shortcutShortLabel="@string/timeline_shortcut_short">
 
