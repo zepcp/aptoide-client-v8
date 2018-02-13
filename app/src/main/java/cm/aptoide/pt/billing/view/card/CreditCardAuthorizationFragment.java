@@ -10,35 +10,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
-import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.billing.Billing;
-import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.payment.CreditCard;
-import cm.aptoide.pt.billing.view.BillingActivity;
-import cm.aptoide.pt.billing.view.BillingNavigator;
-import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import com.braintreepayments.cardform.view.CardForm;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
 import javax.inject.Inject;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     implements CreditCardAuthorizationView {
 
+  @Inject CreditCardAuthorizationPresenter presenter;
   private View progressBar;
   private ClickHandler clickHandler;
   private CardForm cardForm;
   private Button nextButton;
   private Toolbar toolbar;
-
-  @Inject CreditCardAuthorizationPresenter presenter;
-
   private PublishRelay<Void> backButton;
   private PublishRelay<Void> keyboardNextRelay;
 
@@ -79,7 +69,7 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
         .cvvRequired(true)
         .postalCodeRequired(false)
         .mobileNumberRequired(false)
-        .actionLabel(getString(R.string.fragment_credit_card_authorization_next_button))
+        .actionLabel(getString(R.string.iab_button_next))
         .setup(getActivity());
 
     showKeyboard(cardForm.getCardEditText());
@@ -131,14 +121,6 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
     super.onDestroyView();
   }
 
-  @Override public void showNetworkError() {
-    Toast.makeText(getContext(), R.string.connection_error, Toast.LENGTH_SHORT).show();
-  }
-
-  @Override public void showUnknownError() {
-    Toast.makeText(getContext(), R.string.all_message_general_error, Toast.LENGTH_SHORT).show();
-  }
-
   @Override public void showLoading() {
     progressBar.setVisibility(View.VISIBLE);
   }
@@ -155,5 +137,15 @@ public class CreditCardAuthorizationFragment extends PermissionServiceFragment
 
   @Override public Observable<Void> cancelEvent() {
     return backButton;
+  }
+
+  @Override public void showNetworkError() {
+    Toast.makeText(getContext(), R.string.connection_error, Toast.LENGTH_SHORT)
+        .show();
+  }
+
+  @Override public void showUnknownError() {
+    Toast.makeText(getContext(), R.string.all_message_general_error, Toast.LENGTH_SHORT)
+        .show();
   }
 }

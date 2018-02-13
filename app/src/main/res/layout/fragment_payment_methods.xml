@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="?attr/toolbarTheme"
-        app:title="@string/fragment_payment_methods_toolbar_title"
+        app:title="@string/iab_title_payment_methods"
         />
   </android.support.design.widget.AppBarLayout>
 
@@ -30,21 +30,21 @@
       />
 
   <TextView
-      android:gravity="center"
-      android:layout_centerInParent="true"
       android:id="@+id/fragment_payment_methods_empty_message"
       android:layout_width="match_parent"
-      android:text="@string/no_payments_available"
       android:layout_height="wrap_content"
+      android:layout_centerInParent="true"
+      android:gravity="center"
+      android:text="@string/no_payments_available"
       android:visibility="gone"
       tools:visibility="visible"
       />
 
   <LinearLayout
-      android:layout_below="@id/fragment_payment_methods_app_bar"
       android:id="@+id/fragment_payment_methods_progress_bar"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
+      android:layout_below="@id/fragment_payment_methods_app_bar"
       android:background="@color/white"
       android:clickable="true"
       android:focusable="true"
