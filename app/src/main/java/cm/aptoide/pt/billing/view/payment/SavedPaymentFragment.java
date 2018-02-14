@@ -58,7 +58,7 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
     selectPaymentSubject = PublishSubject.create();
     deleteMenuSubject = PublishSubject.create();
     removePaymentsSubject = PublishSubject.create();
-    setHasOptionsMenu(false);
+    setHasOptionsMenu(true);
   }
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -108,11 +108,13 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
     adapter.unsubscribeListeners();
     adapter = null;
     unregisterClickHandler(backClickHandler);
+    backRelay = null;
     super.onDestroy();
   }
 
   @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    inflater.inflate(R.menu.saved_payments_menu, menu);
+    //feature toggle - hidding delete payment option
+    //inflater.inflate(R.menu.saved_payments_menu, menu);
     super.onCreateOptionsMenu(menu, inflater);
   }
 
