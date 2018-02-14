@@ -3,7 +3,6 @@ package cm.aptoide.pt.billing.view;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.widget.Toast;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
 import cm.aptoide.pt.billing.payment.PayPalResult;
@@ -13,6 +12,7 @@ import cm.aptoide.pt.billing.view.card.CreditCardAuthorizationFragment;
 import cm.aptoide.pt.billing.view.login.PaymentLoginFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentFragment;
 import cm.aptoide.pt.billing.view.payment.PaymentMethodsFragment;
+import cm.aptoide.pt.billing.view.payment.SavedPaymentFragment;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import com.paypal.android.sdk.payments.PayPalConfiguration;
@@ -31,8 +31,8 @@ public class BillingNavigator {
   private final FragmentNavigator fragmentNavigator;
   private final String marketName;
 
-  public BillingNavigator(Context context, PurchaseBundleMapper bundleMapper, ActivityNavigator activityNavigator,
-      FragmentNavigator fragmentNavigator, String marketName) {
+  public BillingNavigator(Context context, PurchaseBundleMapper bundleMapper,
+      ActivityNavigator activityNavigator, FragmentNavigator fragmentNavigator, String marketName) {
     this.context = context;
     this.bundleMapper = bundleMapper;
     this.activityNavigator = activityNavigator;
@@ -70,7 +70,7 @@ public class BillingNavigator {
 
     final Bundle bundle = new Bundle();
     bundle.putParcelable(PayPalService.EXTRA_PAYPAL_CONFIGURATION,
-        new PayPalConfiguration().environment(BuildConfig.PAYPAL_ENVIRONMENT)
+        new PayPalConfiguration().environment(PayPalConfiguration.ENVIRONMENT_NO_NETWORK)
             .clientId(BuildConfig.PAYPAL_KEY)
             .rememberUser(true)
             .merchantName(marketName));
@@ -128,12 +128,17 @@ public class BillingNavigator {
         PaymentFragment.create(getBillingBundle(merchantName, null)), true);
   }
 
-  public void navigateToPaymentMethodsView(String merchantName) {
-    fragmentNavigator.navigateToWithoutBackSave(
-        PaymentMethodsFragment.create(getBillingBundle(merchantName, null)), true);
+  public void navigateToPaymentMethodsView(String merchantName, boolean checkPaymentSelection) {
+    Bundle bundle = getBillingBundle(merchantName, null);
+    bundle.putBoolean(PaymentMethodsFragment.CHANGE_PAYMENT_KEY, checkPaymentSelection);
+    fragmentNavigator.navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), true);
   }
 
-  public void navigateToManageAuthorizationsView() {
-    Toast.makeText(context, "Not implemented!", Toast.LENGTH_SHORT).show();
+  public void navigateToManageAuthorizationsView(String merchantName) {
+    //Bundle bundle = getBillingBundle(merchantName, null);
+    //bundle.putBoolean(CHANGE_PAYMENT_KEY, true);
+    //fragmentNavigator.navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), true);
+    fragmentNavigator.navigateTo(SavedPaymentFragment.create(getBillingBundle(merchantName, null)),
+        true);
   }
 }

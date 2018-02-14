@@ -34,7 +34,8 @@ public class CustomerManager {
     this.serviceAdapter = serviceAdapter;
     this.customerObservable = this.actions.publish(published -> Observable.merge(
         published.ofType(LoadCustomer.class)
-            .compose(loadCustomer()), published.ofType(SelectPaymentMethod.class)
+            .compose(loadCustomer()), published.ofType(SelectAuthorization.class)
+            .compose(selectAuthorization()), published.ofType(SelectPaymentMethod.class)
             .compose(selectPaymentMethod()), published.ofType(ClearPaymentMethod.class)
             .compose(clearPaymentMethod()), published.ofType(AuthorizePaymentMethod.class)
             .compose(authorizePaymentMethod()), published.ofType(SyncAuthorizations.class)
@@ -77,6 +78,25 @@ public class CustomerManager {
 
   public void selectPaymentMethod(PaymentMethod paymentMethod) {
     actions.onNext(new SelectPaymentMethod(paymentMethod));
+  }
+
+  public void selectAuthorization(Authorization authorization) {
+    actions.onNext(new SelectAuthorization(authorization));
+  }
+
+  private Observable.Transformer<SelectAuthorization, Customer> selectAuthorization() {
+    return select -> select.map(data -> data.getAuthorization())
+        .flatMap(authorization -> getCustomer().first()
+            .flatMapIterable(customer -> customer.getPaymentMethods())
+            .filter(paymentMethod -> paymentMethod.getId() == authorization.getPaymentMethodId())
+            .first()
+            .map(paymentMethod -> {
+              if (authorization.getType()
+                  .equals(Authorization.PAYPAL_SDK)) {
+                return Customer.withAuthorization(payPalAuthorization);
+              }
+              return Customer.withAuthorization(paymentMethod, authorization);
+            }));
   }
 
   public void clearPaymentMethodSelection() {
@@ -138,8 +158,7 @@ public class CustomerManager {
                     authorizations.ofType(PayPalAuthorization.class)
                         .flatMapSingle(authorization -> billingService.updatePayPalAuthorization(
                             authorization.getCustomerId(), authorization.getPayKey(),
-                            authorization.getPaymentMethodId(),
-                            authorization.getId()))))
+                            authorization.getPaymentMethodId(), authorization.getId()))))
                 .flatMapSingle(authorization -> authorizationPersistence.removeAuthorization(
                     authorization.getId())
                     .andThen(Single.just(authorization)))
@@ -213,6 +232,19 @@ public class CustomerManager {
 
     public PaymentMethod getPaymentMethod() {
       return paymentMethod;
+    }
+  }
+
+  private static class SelectAuthorization extends Action {
+
+    private final Authorization authorization;
+
+    public SelectAuthorization(Authorization authorization) {
+      this.authorization = authorization;
+    }
+
+    public Authorization getAuthorization() {
+      return authorization;
     }
   }
 

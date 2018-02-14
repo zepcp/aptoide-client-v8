@@ -13,17 +13,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.billing.Billing;
-import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.product.Product;
-import cm.aptoide.pt.billing.view.BillingActivity;
-import cm.aptoide.pt.billing.view.BillingNavigator;
-import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
@@ -33,10 +26,10 @@ import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
 import javax.inject.Inject;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class PaymentFragment extends PermissionServiceFragment implements PaymentView {
 
+  @Inject PaymentPresenter presenter;
   private View progressView;
   private ImageView productIcon;
   private TextView productName;
@@ -49,9 +42,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
   private ImageView authorizationIcon;
   private TextView authorizationDescription;
   private View authorizationContainer;
-
-  @Inject PaymentPresenter presenter;
-
   private ClickHandler handler;
   private SpannableFactory spannableFactory;
   private PublishRelay<Void> cancelRelay;
@@ -88,7 +78,8 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     authorizationIcon = (ImageView) view.findViewById(R.id.fragment_payment_authorization_icon);
     authorizationDescription =
         (TextView) view.findViewById(R.id.fragment_payment_authorization_description);
-    authorizationContainer = view.findViewById(R.id.fragment_payment_change_authorization_container);
+    authorizationContainer =
+        view.findViewById(R.id.fragment_payment_change_authorization_container);
 
     productPrice = (TextView) view.findViewById(R.id.include_payment_product_price);
 
@@ -110,6 +101,11 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     registerClickHandler(handler);
 
     attachPresenter(presenter);
+  }
+
+  @Override public ScreenTagHistory getHistoryTracker() {
+    return ScreenTagHistory.Builder.build(this.getClass()
+        .getSimpleName());
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
@@ -138,11 +134,6 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     super.onDestroyView();
   }
 
-  @Override public ScreenTagHistory getHistoryTracker() {
-    return ScreenTagHistory.Builder.build(this.getClass()
-        .getSimpleName());
-  }
-
   @Override public Observable<Void> cancelEvent() {
     return cancelRelay;
   }
@@ -151,31 +142,32 @@ public class PaymentFragment extends PermissionServiceFragment implements Paymen
     return RxView.clicks(buyButton);
   }
 
+  @Override public Observable<Void> changeAuthorizationEvent() {
+    return RxView.clicks(authorizationContainer);
+  }
+
   @Override public void showLoading() {
     progressView.setVisibility(View.VISIBLE);
   }
 
   @Override public void showAuthorization(Authorization authorization) {
+    if (authorization != null) {
+      Glide.with(this)
+          .load(authorization.getIcon())
+          .into(authorizationIcon);
 
-    Glide.with(this)
-        .load(authorization.getIcon())
-        .into(authorizationIcon);
+      CharSequence description;
+      if (TextUtils.isEmpty(authorization.getDescription())) {
+        description = authorization.getName();
+      } else {
+        description = spannableFactory.createTextAppearanceSpan(getContext(),
+            R.style.TextAppearance_Aptoide_Small,
+            authorization.getName() + "\n" + authorization.getDescription(),
+            authorization.getDescription());
+      }
 
-    CharSequence description;
-    if (TextUtils.isEmpty(authorization.getDescription())) {
-      description = authorization.getName();
-    } else {
-      description = spannableFactory.createTextAppearanceSpan(getContext(),
-          R.style.TextAppearance_Aptoide_Small,
-          authorization.getName() + "\n" + authorization.getDescription(),
-          authorization.getDescription());
+      authorizationDescription.setText(description);
     }
-
-    authorizationDescription.setText(description);
-  }
-
-  @Override public Observable<Void> changeAuthorizationEvent() {
-    return RxView.clicks(authorizationContainer);
   }
 
   @Override public void showProduct(Product product) {

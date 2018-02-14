@@ -103,7 +103,7 @@ public class PaymentLoginPresenter implements Presenter {
         .subscribe(__ -> {
           accountAnalytics.loginSuccess();
           billingAnalytics.sendCustomerAuthenticatedEvent(true);
-          billingNavigator.navigateToPaymentMethodsView(merchantName);
+          billingNavigator.navigateToPaymentMethodsView(merchantName, true);
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });

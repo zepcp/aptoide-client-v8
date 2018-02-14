@@ -53,7 +53,7 @@ public class PaymentPresenter implements Presenter {
         .filter(event -> View.LifecycleEvent.CREATE.equals(event))
         .flatMap(__ -> view.changeAuthorizationEvent())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> navigator.navigateToManageAuthorizationsView(), throwable -> {
+        .subscribe(__ -> navigator.navigateToManageAuthorizationsView(merchantName), throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
   }

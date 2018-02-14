@@ -15,11 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.billing.Billing;
-import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.payment.PaymentMethod;
-import cm.aptoide.pt.billing.view.BillingActivity;
-import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.permission.PermissionServiceFragment;
 import cm.aptoide.pt.view.spannable.SpannableFactory;
 import com.jakewharton.rxrelay.PublishRelay;
@@ -27,20 +23,18 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.subjects.PublishSubject;
 
 public class PaymentMethodsFragment extends PermissionServiceFragment
     implements PaymentMethodsView {
 
+  public static final String CHANGE_PAYMENT_KEY = "change_payment";
+  @Inject PaymentMethodsPresenter presenter;
   private Toolbar toolbar;
   private RecyclerView list;
   private PaymentAdapter adapter;
   private TextView noPaymentsMessage;
   private View progressBarContainer;
-
-  @Inject PaymentMethodsPresenter presenter;
-
   private PublishRelay<Void> backButton;
   private ClickHandler handler;
 
@@ -86,6 +80,11 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
     attachPresenter(presenter);
   }
 
+  @Override public ScreenTagHistory getHistoryTracker() {
+    return ScreenTagHistory.Builder.build(this.getClass()
+        .getSimpleName());
+  }
+
   @Override public boolean onOptionsItemSelected(MenuItem item) {
     if (item.getItemId() == android.R.id.home) {
       backButton.call(null);
@@ -106,19 +105,6 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
     super.onDestroyView();
   }
 
-  @Override public ScreenTagHistory getHistoryTracker() {
-    return ScreenTagHistory.Builder.build(this.getClass()
-        .getSimpleName());
-  }
-
-  @Override public Observable<PaymentMethod> getSelectedPaymentMethodEvent() {
-    return adapter.getSelectedPaymentMethod();
-  }
-
-  @Override public Observable<Void> getCancelEvent() {
-    return backButton;
-  }
-
   @Override public void showNoPaymentMethodsAvailableMessage() {
     noPaymentsMessage.setVisibility(View.VISIBLE);
     list.setVisibility(View.GONE);
@@ -128,6 +114,14 @@ public class PaymentMethodsFragment extends PermissionServiceFragment
     list.setVisibility(View.VISIBLE);
     noPaymentsMessage.setVisibility(View.GONE);
     adapter.updatePaymentMethods(paymentMethods);
+  }
+
+  @Override public Observable<PaymentMethod> getSelectedPaymentMethodEvent() {
+    return adapter.getSelectedPaymentMethod();
+  }
+
+  @Override public Observable<Void> getCancelEvent() {
+    return backButton;
   }
 
   @Override public void showLoading() {

@@ -5,6 +5,7 @@
 
 package cm.aptoide.pt.billing;
 
+import cm.aptoide.pt.billing.authorization.Authorization;
 import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.customer.CustomerManager;
 import cm.aptoide.pt.billing.payment.PayPalResult;
@@ -47,7 +48,7 @@ public class Billing {
     this.customerManager = customerManager;
     this.transactionFactory = transactionFactory;
     this.setup = false;
-    this.paymentObservable = actions.publish(published -> Observable.merge(
+    this.paymentObservable = this.actions.publish(published -> Observable.merge(
         published.ofType(SelectProduct.class)
             .compose(selectProduct()), published.ofType(Pay.class)
             .compose(startPayment()), published.ofType(LoadPurchase.class)
@@ -97,6 +98,10 @@ public class Billing {
 
   public void selectPaymentMethod(PaymentMethod paymentMethod) {
     customerManager.selectPaymentMethod(paymentMethod);
+  }
+
+  public void selectAuthorization(Authorization authorization) {
+    customerManager.selectAuthorization(authorization);
   }
 
   public void clearPaymentMethodSelection() {

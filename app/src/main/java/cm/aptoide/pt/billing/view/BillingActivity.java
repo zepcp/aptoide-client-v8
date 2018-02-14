@@ -31,8 +31,11 @@ public class BillingActivity extends BackButtonActivity {
     setContentView(R.layout.empty_frame);
 
     if (savedInstanceState == null) {
-      getFragmentNavigator().navigateToWithoutBackSave(
-          PaymentMethodsFragment.create(getIntent().getExtras()), true);
+      Bundle bundle = getIntent().getExtras();
+      if (bundle != null) {
+        bundle.putBoolean(PaymentMethodsFragment.CHANGE_PAYMENT_KEY, true);
+      }
+      getFragmentNavigator().navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), true);
     }
   }
 }

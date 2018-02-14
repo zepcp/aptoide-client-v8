@@ -50,8 +50,9 @@ import cm.aptoide.pt.app.view.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateAndCommentsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewScreenshotsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppsDisplayable;
+import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
-import cm.aptoide.pt.billing.exception.BillingException;
+import cm.aptoide.pt.billing.BillingFactory;
 import cm.aptoide.pt.billing.purchase.Purchase;
 import cm.aptoide.pt.billing.view.BillingActivity;
 import cm.aptoide.pt.billing.view.PurchaseBundleMapper;
@@ -127,6 +128,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import javax.inject.Inject;
 import okhttp3.OkHttpClient;
 import org.parceler.Parcels;
 import retrofit2.Converter;
@@ -150,9 +152,9 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private final String key_appId = "appId";
   private final String key_packageName = "packageName";
   private final String key_uname = "uname";
-
+  @Inject BillingAnalytics billingAnalytics;
+  @Inject BillingFactory billingFactory;
   private AppViewModel appViewModel;
-
   private AppViewHeader header;
   private InstallManager installManager;
   private Action0 unInstallAction;
@@ -168,7 +170,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private OkHttpClient httpClient;
   private Converter.Factory converterFactory;
   private StoredMinimalAdAccessor storedMinimalAdAccessor;
-  private BillingAnalytics billingAnalytics;
   private PurchaseBundleMapper purchaseBundleMapper;
   private ShareAppHelper shareAppHelper;
   private DownloadFactory downloadFactory;
@@ -180,6 +181,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
   private AccountNavigator accountNavigator;
   private NotLoggedInShareAnalytics notLoggedInShareAnalytics;
   private NavigationTracker navigationTracker;
+  private Billing billing;
 
   private CrashReport crashReport;
   private SearchNavigator searchNavigator;
@@ -364,7 +366,6 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
     installManager = application.getInstallManager(InstallerFactory.ROLLBACK);
     final BodyInterceptor<BaseBody> bodyInterceptor =
         application.getAccountSettingsBodyInterceptorPoolV7();
-    billingAnalytics = application.getBillingAnalytics();
     final TokenInvalidator tokenInvalidator = application.getTokenInvalidator();
     httpClient = application.getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
@@ -455,6 +456,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   @Override public void onDestroyView() {
     super.onDestroyView();
+    billingAnalytics = null;
+    billing = null;
     header = null;
     setSuggestedShowing(false);
     if (getStoreTheme() != null) {
@@ -465,6 +468,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    billing = billingFactory.create(BuildConfig.APPLICATION_ID);
     getLifecycle().filter(lifecycleEvent -> lifecycleEvent.equals(LifecycleEvent.CREATE))
         .flatMap(viewCreated -> accountNavigator.notLoggedInViewResults(LOGIN_REQUEST_CODE)
             .filter(success -> success)
@@ -605,8 +610,8 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
   public void buyApp(GetAppMeta.App app) {
     billingAnalytics.sendPaymentViewShowEvent();
-    startActivityForResult(
-        BillingActivity.getIntent(getActivity(), app.getId(), BuildConfig.APPLICATION_ID),
+    billing.selectProduct(String.valueOf(app.getId()), null);
+    startActivityForResult(BillingActivity.getIntent(getActivity(), BuildConfig.APPLICATION_ID),
         PAY_APP_REQUEST_CODE);
   }
 
@@ -622,11 +627,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
         installApp.putExtra(AppBoughtReceiver.APP_PATH, purchase.getSignatureData());
         fragmentActivity.sendBroadcast(installApp);
       } catch (Throwable throwable) {
-        if (throwable instanceof BillingException) {
-          ShowMessage.asSnack(header.badge, R.string.user_cancelled);
-        } else {
-          ShowMessage.asSnack(header.badge, R.string.unknown_error);
-        }
+        ShowMessage.asSnack(header.badge, R.string.unknown_error);
       }
     } else {
       super.onActivityResult(requestCode, resultCode, intent);

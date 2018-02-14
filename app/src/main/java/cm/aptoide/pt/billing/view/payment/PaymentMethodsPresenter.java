@@ -15,14 +15,16 @@ public class PaymentMethodsPresenter implements Presenter {
   private final Scheduler viewScheduler;
   private final BillingNavigator navigator;
   private final String merchantPackageName;
+  private boolean changePaymentMethod;
 
   public PaymentMethodsPresenter(PaymentMethodsView view, Billing billing, Scheduler viewScheduler,
-      BillingNavigator navigator, String merchantPackageName) {
+      BillingNavigator navigator, String merchantPackageName, boolean changePaymentMethod) {
     this.view = view;
     this.billing = billing;
     this.viewScheduler = viewScheduler;
     this.navigator = navigator;
     this.merchantPackageName = merchantPackageName;
+    this.changePaymentMethod = changePaymentMethod;
   }
 
   @Override public void present() {
@@ -50,11 +52,10 @@ public class PaymentMethodsPresenter implements Presenter {
   private void handlePaymentMethodSelectedEvent() {
     view.getLifecycle()
         .filter(event -> event.equals(View.LifecycleEvent.RESUME))
-        .flatMap(__ -> view.getSelectedPaymentMethodEvent())
+        .flatMap(__ -> view.getSelectedPaymentMethodEvent()
+            .doOnNext(ignore -> changePaymentMethod = true))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(paymentMethod -> {
-          billing.selectPaymentMethod(paymentMethod);
-        }, throwable -> {
+        .subscribe(paymentMethod -> billing.selectPaymentMethod(paymentMethod), throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
   }
@@ -68,16 +69,18 @@ public class PaymentMethodsPresenter implements Presenter {
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(customer -> {
 
-          if (customer.getStatus().equals(Customer.Status.LOADING)) {
+          if (customer.getStatus()
+              .equals(Customer.Status.LOADING)) {
             view.showLoading();
           }
 
-          if (customer.getStatus().equals(Customer.Status.LOADED)) {
+          if (customer.getStatus()
+              .equals(Customer.Status.LOADED)) {
             view.hideLoading();
             if (!customer.isAuthenticated()) {
               navigator.navigateToCustomerAuthenticationView(merchantPackageName);
             } else {
-              if (customer.isPaymentMethodSelected()) {
+              if (customer.isPaymentMethodSelected() && changePaymentMethod) {
                 if (customer.isAuthorizationSelected()) {
                   navigator.navigateToPaymentView(merchantPackageName);
                 } else {
@@ -95,7 +98,8 @@ public class PaymentMethodsPresenter implements Presenter {
             }
           }
 
-          if (customer.getStatus().equals(Customer.Status.LOADING_ERROR)) {
+          if (customer.getStatus()
+              .equals(Customer.Status.LOADING_ERROR)) {
             view.showNetworkError();
           }
         }, throwable -> {
