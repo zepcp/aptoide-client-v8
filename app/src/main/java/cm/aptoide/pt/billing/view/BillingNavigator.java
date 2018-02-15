@@ -128,10 +128,17 @@ public class BillingNavigator {
         PaymentFragment.create(getBillingBundle(merchantName, null)), true);
   }
 
+  public void navigateToPaymentMethodsViewWithBackSave(String merchantName,
+      boolean checkPaymentSelection) {
+    Bundle bundle = getBillingBundle(merchantName, null);
+    bundle.putBoolean(PaymentMethodsFragment.CHANGE_PAYMENT_KEY, checkPaymentSelection);
+    fragmentNavigator.navigateTo(PaymentMethodsFragment.create(bundle), false);
+  }
+
   public void navigateToPaymentMethodsView(String merchantName, boolean checkPaymentSelection) {
     Bundle bundle = getBillingBundle(merchantName, null);
     bundle.putBoolean(PaymentMethodsFragment.CHANGE_PAYMENT_KEY, checkPaymentSelection);
-    fragmentNavigator.navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), true);
+    fragmentNavigator.navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), false);
   }
 
   public void navigateToManageAuthorizationsView(String merchantName) {

@@ -53,7 +53,7 @@ public class SavedPaymentPresenter implements Presenter {
     view.getLifecycle()
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
         .flatMap(created -> view.addPaymentClicked()
-            .doOnNext(__ -> navigator.navigateToPaymentMethodsView(merchant, false))
+            .doOnNext(__ -> navigator.navigateToPaymentMethodsViewWithBackSave(merchant, false))
             .retry())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
