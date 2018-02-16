@@ -535,7 +535,7 @@
   <string name="iab_title_delete">Delete</string>
   <string name="iab_button_next">Next</string>
   <string name="iab_button_ok">OK</string>
-  <string name="iab_message_cvv">The CVV is the three-number code that appears in the sifnature bar on the back of your card.</string>
+  <string name="iab_message_cvv">The CVV is the three-number code that appears in the signature bar on the back of your card.</string>
   <string name="iab_title_payment_product_name">You\'re purchasing</string>
   <string name="iab_title_price">Price</string>
   <string name="iab_title_payment_method">Payment method</string>
@@ -544,13 +544,12 @@
   <string name="iab_button_done">Done</string>
   <string name="iab_button_retry">Retry</string>
   <string name="iab_message_error_general">The purchase couldn\'t be completed</string>
-  <string name="iab_message_error_card">Provide yur card information</string>
-  <string name="iab_title_credit_card">Credit card</string>
+  <string name="iab_message_error_card">Provide your card information</string>
 
   <!--Strings for shortcuts-->
   <string name="shortcut_button_search">Search</string>
   <string name="shortcut_button_timeline">Timeline</string>
   <string name="shortcut_button_my_store">My Store</string>
-  <string name="shortcut_button_pick_app">Surprise Me</string>
+  <string name="shortcut_button_pick_app">Surprise me</string>
 </resources>
 
