@@ -65,6 +65,7 @@ public class SavedPaymentPresenter implements Presenter {
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
         .flatMap(created -> view.paymentAuthorizationSelected()
             .doOnNext(billing::selectAuthorization)
+            .doOnNext(authorization -> view.setAuthorizationSelected(authorization))
             .doOnNext(__ -> navigator.popView())
             .retry())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))

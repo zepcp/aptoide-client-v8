@@ -27,4 +27,6 @@ public interface SavedPaymentView extends View {
   void enterPaymentMethodRemovalMode();
 
   void hidePaymentMethods(List<Authorization> authorizations);
+
+  void setAuthorizationSelected(Authorization authorization);
 }

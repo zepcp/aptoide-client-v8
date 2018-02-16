@@ -84,4 +84,8 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
   public void clearSelectedPayments() {
     selectedPayments.clear();
   }
+
+  public void setAuthorizationSelected(Authorization authorization) {
+
+  }
 }

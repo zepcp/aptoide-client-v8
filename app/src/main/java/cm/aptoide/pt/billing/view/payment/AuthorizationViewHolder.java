@@ -66,8 +66,9 @@ class AuthorizationViewHolder extends RecyclerView.ViewHolder {
     }
   }
 
-  private void setupDefaultPayment(Authorization authorizedPaymentMethod) {
-    if (authorizedPaymentMethod.isDefault() && !multiSelectionMode) {
+  private void setupDefaultPayment(Authorization authorizedPaymentMethod,
+      Authorization selectedAuthorization) {
+    if (authorizedPaymentMethod.equals(selectedAuthorization) && !multiSelectionMode) {
       defaultPaymentIcon.setVisibility(View.VISIBLE);
     } else {
       defaultPaymentIcon.setVisibility(View.GONE);
