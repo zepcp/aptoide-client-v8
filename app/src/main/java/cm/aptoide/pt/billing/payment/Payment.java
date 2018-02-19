@@ -27,46 +27,6 @@ public class Payment {
     this.transaction = transaction;
   }
 
-  public Merchant getMerchant() {
-    return merchant;
-  }
-
-  public Customer getCustomer() {
-    return customer;
-  }
-
-  public Product getProduct() {
-    return product;
-  }
-
-  public Purchase getPurchase() {
-    return purchase;
-  }
-
-  public Status getStatus() {
-    return status;
-  }
-
-  public String getPayload() {
-    return payload;
-  }
-
-  public boolean isProcessing() {
-    return transaction != null && transaction.isProcessing();
-  }
-
-  public boolean isCompleted() {
-    return transaction != null
-        && transaction.isCompleted()
-        && purchase != null
-        && purchase.isCompleted();
-  }
-
-  public boolean isFailed() {
-    return (transaction != null && transaction.isFailed()) || (purchase != null
-        && purchase.isFailed());
-  }
-
   public static Payment withProduct(Merchant merchant, Product product, String payload) {
     return new Payment(merchant, null, product, null, Status.LOADING, payload, null);
   }
@@ -129,6 +89,46 @@ public class Payment {
     return new Payment(merchant, customer, product, purchase, status, payload, transaction);
   }
 
+  public Merchant getMerchant() {
+    return merchant;
+  }
+
+  public Customer getCustomer() {
+    return customer;
+  }
+
+  public Product getProduct() {
+    return product;
+  }
+
+  public Purchase getPurchase() {
+    return purchase;
+  }
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public String getPayload() {
+    return payload;
+  }
+
+  public boolean isProcessing() {
+    return transaction != null && transaction.isProcessing();
+  }
+
+  public boolean isCompleted() {
+    return transaction != null
+        && transaction.isCompleted()
+        && purchase != null
+        && purchase.isCompleted();
+  }
+
+  public boolean isFailed() {
+    return (transaction != null && transaction.isFailed()) || (purchase != null
+        && purchase.isFailed());
+  }
+
   public boolean isPendingAuthorization() {
     return customer != null
         && customer.getSelectedAuthorization() != null
@@ -143,7 +143,7 @@ public class Payment {
         .isRedeemed();
   }
 
-  public static enum Status {
+  public enum Status {
     LOADING, LOADING_ERROR, LOADED
   }
 }
