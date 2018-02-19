@@ -1,7 +1,6 @@
 package cm.aptoide.pt.billing.view.payment;
 
 import cm.aptoide.pt.billing.Billing;
-import cm.aptoide.pt.billing.customer.Customer;
 import cm.aptoide.pt.billing.view.BillingNavigator;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
@@ -32,11 +31,12 @@ public class SavedPaymentPresenter implements Presenter {
   @Override public void present() {
     view.getLifecycle()
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
-        .flatMap(created -> billing.getCustomer()
-            .map(Customer::getAuthorizations))
+        .flatMap(created -> billing.getCustomer())
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(view::showAuthorizedPaymentMethods, throwable -> {
+        .subscribe(customer -> view.showAuthorizedPaymentMethods(customer.getAuthorizations(),
+            customer.getSelectedAuthorization()
+                .getId()), throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
 
@@ -65,7 +65,6 @@ public class SavedPaymentPresenter implements Presenter {
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
         .flatMap(created -> view.paymentAuthorizationSelected()
             .doOnNext(billing::selectAuthorization)
-            .doOnNext(authorization -> view.setAuthorizationSelected(authorization))
             .doOnNext(__ -> navigator.popView())
             .retry())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))

@@ -147,8 +147,9 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
     return adapter.authorizationSelected();
   }
 
-  @Override public void showAuthorizedPaymentMethods(List<Authorization> authorizedPayments) {
-    adapter.addAuthorizedPaymentMethods(authorizedPayments);
+  @Override public void showAuthorizedPaymentMethods(List<Authorization> authorizedPayments,
+      long selectedAuthorizationId) {
+    adapter.addAuthorizedPaymentMethods(authorizedPayments, selectedAuthorizationId);
   }
 
   @Override public void enterPaymentMethodRemovalMode() {
@@ -185,7 +186,4 @@ public class SavedPaymentFragment extends BackButtonFragment implements SavedPay
     adapter.removePaymentMethods(authorizations);
   }
 
-  @Override public void setAuthorizationSelected(Authorization authorization) {
-    adapter.setAuthorizationSelected(authorization);
-  }
 }
