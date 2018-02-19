@@ -31,7 +31,8 @@ public class SavedPaymentPresenter implements Presenter {
   @Override public void present() {
     view.getLifecycle()
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
-        .flatMap(created -> billing.getCustomer())
+        .flatMap(created -> billing.getCustomer()
+            .first())
         .observeOn(viewScheduler)
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(customer -> view.showAuthorizedPaymentMethods(customer.getAuthorizations(),
