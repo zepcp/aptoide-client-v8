@@ -50,7 +50,7 @@ public class PaymentPresenter implements Presenter {
 
   private void handleChangeAuthorizationEvent() {
     view.getLifecycle()
-        .filter(event -> View.LifecycleEvent.CREATE.equals(event))
+        .filter(View.LifecycleEvent.CREATE::equals)
         .flatMap(__ -> view.changeAuthorizationEvent())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> navigator.navigateToManageAuthorizationsView(merchantName), throwable -> {
@@ -60,7 +60,7 @@ public class PaymentPresenter implements Presenter {
 
   private void onViewCreatedShowPayment() {
     view.getLifecycle()
-        .filter(event -> event.equals(View.LifecycleEvent.RESUME))
+        .filter(View.LifecycleEvent.RESUME::equals)
         .doOnNext(__ -> view.showLoading())
         .flatMap(loading -> billing.getPayment()
             .compose(view.bindUntilEvent(View.LifecycleEvent.PAUSE)))
@@ -128,17 +128,17 @@ public class PaymentPresenter implements Presenter {
 
   private void handlePayPalResultEvent() {
     view.getLifecycle()
-        .filter(event -> event.equals(View.LifecycleEvent.CREATE))
+        .filter(View.LifecycleEvent.CREATE::equals)
         .flatMap(created -> navigator.payPalResults(PAY_APP_REQUEST_CODE))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(result -> billing.authorize(result), throwable -> {
+        .subscribe(billing::authorize, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
   }
 
   private void handleCancelEvent() {
     view.getLifecycle()
-        .filter(event -> View.LifecycleEvent.RESUME.equals(event))
+        .filter(View.LifecycleEvent.RESUME::equals)
         .flatMap(__ -> view.cancelEvent()
             .flatMap(serviceId -> billing.getPayment()
                 .first())
@@ -155,7 +155,7 @@ public class PaymentPresenter implements Presenter {
 
   private void handleBuyEvent() {
     view.getLifecycle()
-        .filter(event -> View.LifecycleEvent.CREATE.equals(event))
+        .filter(View.LifecycleEvent.CREATE::equals)
         .flatMap(__ -> view.buyEvent())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> billing.pay(), throwable -> {

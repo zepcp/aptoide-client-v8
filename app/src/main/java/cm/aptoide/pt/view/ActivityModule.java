@@ -183,7 +183,7 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 
   @ActivityScope @Provides BillingNavigator provideBillingNavigator(
       FragmentNavigator fragmentNavigator, PurchaseBundleMapper purchaseBundleMapper) {
-    return new BillingNavigator(activity, purchaseBundleMapper, (ActivityResultNavigator) activity,
+    return new BillingNavigator(purchaseBundleMapper, (ActivityResultNavigator) activity,
         fragmentNavigator, marketName);
   }
 

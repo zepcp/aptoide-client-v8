@@ -76,7 +76,7 @@ public class BillingFactory {
     private MerchantVersionProvider versionProvider;
     private Map<String, PaymentService> services;
     private AuthorizationPersistence authorizationPersistence;
-    private PayPalAuthorization payPalAuthotization;
+    private PayPalAuthorization paypalAuthorization;
     private BillingServiceFactory serviceFactory;
 
     public Builder() {
@@ -108,8 +108,8 @@ public class BillingFactory {
       return this;
     }
 
-    public Builder setDefaultPayPalAuthotization(PayPalAuthorization payPalAuthotization) {
-      this.payPalAuthotization = payPalAuthotization;
+    public Builder setDefaultPayPalAuthotization(PayPalAuthorization paypalAuthorization) {
+      this.paypalAuthorization = paypalAuthorization;
       return this;
     }
 
@@ -126,7 +126,7 @@ public class BillingFactory {
 
       return new BillingFactory(new HashMap<>(), new HashMap<>(), new HashMap<>(), serviceFactory,
           services, authorizationPersistence, tokenDecoder, versionProvider, userPersistence,
-          payPalAuthotization, new TransactionFactory());
+          paypalAuthorization, new TransactionFactory());
     }
   }
 }
