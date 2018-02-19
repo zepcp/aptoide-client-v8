@@ -93,7 +93,14 @@ public class CustomerManager {
             .map(paymentMethod -> {
               if (authorization.getType()
                   .equals(Authorization.PAYPAL_SDK)) {
-                return Customer.withAuthorization(payPalAuthorization);
+
+                PayPalAuthorization newPayPalAuthorization =
+                    new PayPalAuthorization(payPalAuthorization.getId(),
+                        payPalAuthorization.getCustomerId(), payPalAuthorization.getStatus(), null,
+                        null, payPalAuthorization.getDescription(), paymentMethod.getIcon(),
+                        "PayPal", true, payPalAuthorization.getType(), null, paymentMethod.getId());
+
+                return Customer.withAuthorization(newPayPalAuthorization);
               }
               return Customer.withAuthorization(paymentMethod, authorization);
             }));
@@ -108,7 +115,12 @@ public class CustomerManager {
         .map(paymentMethod -> {
           if (paymentMethod.getType()
               .equals(PaymentMethod.PAYPAL)) {
-            return Customer.withAuthorization(paymentMethod, payPalAuthorization);
+            PayPalAuthorization newPayPalAuthorization =
+                new PayPalAuthorization(payPalAuthorization.getId(),
+                    payPalAuthorization.getCustomerId(), payPalAuthorization.getStatus(), null,
+                    null, payPalAuthorization.getDescription(), paymentMethod.getIcon(), "PayPal",
+                    true, payPalAuthorization.getType(), null, paymentMethod.getId());
+            return Customer.withAuthorization(paymentMethod, newPayPalAuthorization);
           }
           return Customer.withPaymentMethod(paymentMethod);
         });

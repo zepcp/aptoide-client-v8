@@ -268,8 +268,8 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
                 tokenInvalidator, sharedPreferences, purchaseFactory, authorizationFactory,
                 application.getResources(), Build.VERSION_CODES.JELLY_BEAN, marketName,
                 new TransactionFactory(), accountSettingsBodyInterceptorPoolV7,
-                billingBinderSerializer, Build.VERSION_CODES.JELLY_BEAN,
-                authenticationPersistence, payPalIcon))
+                billingBinderSerializer, Build.VERSION_CODES.JELLY_BEAN, authenticationPersistence,
+                payPalIcon))
         .build();
   }
 
