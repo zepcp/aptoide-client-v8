@@ -1,7 +1,6 @@
 package cm.aptoide.pt.billing.view;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.billing.authorization.PayPalAuthorization;
@@ -15,6 +14,7 @@ import cm.aptoide.pt.billing.view.payment.PaymentMethodsFragment;
 import cm.aptoide.pt.billing.view.payment.SavedPaymentFragment;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
+import cm.aptoide.pt.navigator.Result;
 import com.paypal.android.sdk.payments.PayPalConfiguration;
 import com.paypal.android.sdk.payments.PayPalPayment;
 import com.paypal.android.sdk.payments.PayPalService;
@@ -25,19 +25,19 @@ import rx.Observable;
 public class BillingNavigator {
 
   private static final String EXTRA_AUTHORIZATION_ID = "AUTHORIZATION_ID";
-  private final Context context;
   private final PurchaseBundleMapper bundleMapper;
   private final ActivityNavigator activityNavigator;
   private final FragmentNavigator fragmentNavigator;
   private final String marketName;
+  private long paypalAuthorizationId;
 
-  public BillingNavigator(Context context, PurchaseBundleMapper bundleMapper,
-      ActivityNavigator activityNavigator, FragmentNavigator fragmentNavigator, String marketName) {
-    this.context = context;
+  public BillingNavigator(PurchaseBundleMapper bundleMapper, ActivityNavigator activityNavigator,
+      FragmentNavigator fragmentNavigator, String marketName) {
     this.bundleMapper = bundleMapper;
     this.activityNavigator = activityNavigator;
     this.fragmentNavigator = fragmentNavigator;
     this.marketName = marketName;
+    this.paypalAuthorizationId = -1;
   }
 
   public void navigateToCustomerAuthenticationView(String merchantName) {
@@ -70,7 +70,7 @@ public class BillingNavigator {
 
     final Bundle bundle = new Bundle();
     bundle.putParcelable(PayPalService.EXTRA_PAYPAL_CONFIGURATION,
-        new PayPalConfiguration().environment(PayPalConfiguration.ENVIRONMENT_NO_NETWORK)
+        new PayPalConfiguration().environment(BuildConfig.PAYPAL_ENVIRONMENT)
             .clientId(BuildConfig.PAYPAL_KEY)
             .rememberUser(true)
             .merchantName(marketName));
@@ -80,6 +80,7 @@ public class BillingNavigator {
             .getCurrency(), authorization.getProductDescription(),
             PayPalPayment.PAYMENT_INTENT_SALE));
     bundle.putLong(EXTRA_AUTHORIZATION_ID, authorization.getId());
+    paypalAuthorizationId = authorization.getId();
 
     activityNavigator.navigateForResult(com.paypal.android.sdk.payments.PaymentActivity.class,
         requestCode, bundle);
@@ -89,8 +90,7 @@ public class BillingNavigator {
     return activityNavigator.results(requestCode)
         .map(result -> {
           if (result.getResultCode() == Activity.RESULT_OK) {
-            final long authorizationId = result.getData()
-                .getLongExtra(EXTRA_AUTHORIZATION_ID, -1);
+            final long authorizationId = getPaypalAuthorizationId(result);
             final PaymentConfirmation confirmation = result.getData()
                 .getParcelableExtra(
                     com.paypal.android.sdk.payments.PaymentActivity.EXTRA_RESULT_CONFIRMATION);
@@ -101,6 +101,16 @@ public class BillingNavigator {
           }
           return new PayPalResult(false, false, null, -1, -1);
         });
+  }
+
+  private long getPaypalAuthorizationId(Result result) {
+    long id = result.getData()
+        .getLongExtra(EXTRA_AUTHORIZATION_ID, -1);
+    if (id < 0) {
+      id = paypalAuthorizationId;
+      paypalAuthorizationId = -1;
+    }
+    return id;
   }
 
   public void popViewWithResult(Purchase purchase) {
@@ -142,9 +152,6 @@ public class BillingNavigator {
   }
 
   public void navigateToManageAuthorizationsView(String merchantName) {
-    //Bundle bundle = getBillingBundle(merchantName, null);
-    //bundle.putBoolean(CHANGE_PAYMENT_KEY, true);
-    //fragmentNavigator.navigateToWithoutBackSave(PaymentMethodsFragment.create(bundle), true);
     fragmentNavigator.navigateTo(SavedPaymentFragment.create(getBillingBundle(merchantName, null)),
         true);
   }

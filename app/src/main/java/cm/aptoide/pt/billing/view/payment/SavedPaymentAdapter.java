@@ -19,6 +19,7 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
   private final List<Authorization> selectedPayments;
   private PaymentMethodSelectedListener paymentSelectionListener;
   private List<Authorization> authorizedPaymentMethods;
+  private long selectedAuthorizationId;
   private boolean multiSelectionMode;
 
   SavedPaymentAdapter(List<Authorization> authorizedPaymentMethods,
@@ -27,6 +28,7 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
     this.selectPaymentSubject = selectPaymentSubject;
     this.selectedPayments = new ArrayList<>();
     this.paymentSelectionListener = this::setSelected;
+    this.selectedAuthorizationId = -1;
   }
 
   @Override public AuthorizationViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
@@ -39,7 +41,7 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
   public void onBindViewHolder(AuthorizationViewHolder authorizationViewHolder, int position) {
     Authorization authorization = authorizedPaymentMethods.get(position);
     authorizationViewHolder.setAuthorization(authorization, multiSelectionMode,
-        selectedPayments.contains(authorization));
+        selectedPayments.contains(authorization), selectedAuthorizationId);
   }
 
   @Override public int getItemCount() {
@@ -58,8 +60,10 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
     paymentSelectionListener = null;
   }
 
-  void addAuthorizedPaymentMethods(List<Authorization> authorizedPaymentMethods) {
+  void addAuthorizedPaymentMethods(List<Authorization> authorizedPaymentMethods,
+      long selectedAuthorizationId) {
     this.authorizedPaymentMethods.addAll(authorizedPaymentMethods);
+    this.selectedAuthorizationId = selectedAuthorizationId;
     notifyDataSetChanged();
   }
 
@@ -84,4 +88,5 @@ class SavedPaymentAdapter extends RecyclerView.Adapter<AuthorizationViewHolder> 
   public void clearSelectedPayments() {
     selectedPayments.clear();
   }
+
 }

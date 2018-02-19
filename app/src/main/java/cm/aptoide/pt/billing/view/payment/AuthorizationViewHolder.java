@@ -40,15 +40,14 @@ class AuthorizationViewHolder extends RecyclerView.ViewHolder {
   }
 
   public void setAuthorization(Authorization authorizedPaymentMethod, boolean multiSelectionMode,
-      boolean isChecked) {
+      boolean isChecked, long selectedAuthorizationId) {
     this.multiSelectionMode = multiSelectionMode;
     ImageLoader.with(view.getContext())
         .load(authorizedPaymentMethod.getIcon(), logo);
     this.name.setText(authorizedPaymentMethod.getName());
     this.description.setText(authorizedPaymentMethod.getDescription());
 
-    //feature toggle
-    //setupDefaultPayment(authorizedPaymentMethod);
+    setupDefaultPayment(authorizedPaymentMethod.getId() == selectedAuthorizationId);
 
     setupSelectionMode(authorizedPaymentMethod, isChecked);
   }
@@ -66,8 +65,8 @@ class AuthorizationViewHolder extends RecyclerView.ViewHolder {
     }
   }
 
-  private void setupDefaultPayment(Authorization authorizedPaymentMethod) {
-    if (authorizedPaymentMethod.isDefault() && !multiSelectionMode) {
+  private void setupDefaultPayment(boolean isSelected) {
+    if (isSelected && !multiSelectionMode) {
       defaultPaymentIcon.setVisibility(View.VISIBLE);
     } else {
       defaultPaymentIcon.setVisibility(View.GONE);

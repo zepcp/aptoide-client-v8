@@ -22,7 +22,8 @@ public interface SavedPaymentView extends View {
 
   Observable<Authorization> paymentAuthorizationSelected();
 
-  void showAuthorizedPaymentMethods(List<Authorization> authorizedPayments);
+  void showAuthorizedPaymentMethods(List<Authorization> authorizedPayments,
+      long selectedAuthorizationId);
 
   void enterPaymentMethodRemovalMode();
 
