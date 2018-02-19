@@ -112,6 +112,7 @@ public class CreditCardAuthorizationPresenter implements Presenter {
         .subscribe(__ -> {
           billing.clearPaymentMethodSelection();
           analytics.sendAuthorizationCancelEvent(serviceName);
+          navigator.popViewWithResult();
         }, throwable -> {
           throw new OnErrorNotImplementedException(throwable);
         });
