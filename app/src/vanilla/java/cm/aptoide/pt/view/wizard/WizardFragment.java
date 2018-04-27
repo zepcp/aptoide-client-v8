@@ -128,7 +128,8 @@ public class WizardFragment extends UIComponentFragment
     final AccountAnalytics accountAnalytics =
         ((AptoideApplication) getContext().getApplicationContext()).getAccountAnalytics();
     WizardPresenter presenter =
-        new WizardPresenter(this, accountManager, CrashReport.getInstance(), accountAnalytics);
+        new WizardPresenter(this, accountManager, CrashReport.getInstance(), accountAnalytics,
+            AndroidSchedulers.mainThread());
     attachPresenter(presenter);
     viewPager.addOnPageChangeListener(presenter);
     viewPager.addOnPageChangeListener(pageChangeListener);

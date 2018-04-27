@@ -8,7 +8,7 @@ import cm.aptoide.pt.presenter.View;
 import cm.aptoide.pt.view.custom.AptoideViewPager;
 import rx.Completable;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
+import rx.Scheduler;
 
 public class WizardPresenter implements Presenter, AptoideViewPager.OnPageChangeListener {
 
@@ -16,27 +16,29 @@ public class WizardPresenter implements Presenter, AptoideViewPager.OnPageChange
   private final AptoideAccountManager accountManager;
   private final CrashReport crashReport;
   private final AccountAnalytics accountAnalytics;
+  private final Scheduler scheduler;
 
   public WizardPresenter(WizardView view, AptoideAccountManager accountManager,
-      CrashReport crashReport, AccountAnalytics accountAnalytics) {
+      CrashReport crashReport, AccountAnalytics accountAnalytics, Scheduler scheduler) {
     this.view = view;
     this.accountManager = accountManager;
     this.crashReport = crashReport;
     this.accountAnalytics = accountAnalytics;
+    this.scheduler = scheduler;
   }
 
   private Completable createViewsAndButtons() {
     return accountManager.accountStatus()
         .first()
         .toSingle()
-        .observeOn(AndroidSchedulers.mainThread())
+        .observeOn(scheduler)
         .flatMapCompletable(account -> view.createWizardAdapter(account));
   }
 
   private Observable<Void> setupHandlers() {
 
     Observable<Void> skipWizardClick = view.skipWizardClick()
-        .observeOn(AndroidSchedulers.mainThread())
+        .observeOn(scheduler)
         .doOnNext(__ -> view.skipWizard());
 
     return skipWizardClick;
