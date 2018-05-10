@@ -5,11 +5,12 @@ import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.app.AppViewAnalytics;
 import cm.aptoide.pt.app.AppViewManager;
+import cm.aptoide.pt.app.DetailedAppViewModel;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
+import rx.Completable;
 import rx.Scheduler;
-import rx.Single;
 import rx.exceptions.OnErrorNotImplementedException;
 
 /**
@@ -64,17 +65,31 @@ public class AppViewPresenter implements Presenter {
             __ -> appViewManager.getDetailedAppViewModel(view.getAppId(), view.getPackageName()))
         .observeOn(scheduler)
         .doOnNext(appViewModel -> view.populateAppDetails(appViewModel))
-        .flatMapSingle(appViewModel -> Single.zip(appViewManager.getReviewsViewModel(
-            appViewModel.getDetailedApp()
-                .getStore()
-                .getName(), view.getPackageName(), 5, view.getLanguageFilter()),
-            appViewManager.loadSimilarApps(view.getPackageName(), appViewModel.getDetailedApp()
-                .getMedia()
-                .getKeywords(), 2),
-            (reviews, similar) -> view.populateReviewsAndAds(reviews, similar)))
+        .flatMapCompletable(appViewModel -> Completable.merge(updateReviews(appViewModel),
+            updateSuggestedApps(appViewModel)))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
         }, throwable -> crashReport.log(throwable));
+  }
+
+  private Completable updateSuggestedApps(DetailedAppViewModel appViewModel) {
+    return appViewManager.loadSimilarApps(view.getPackageName(), appViewModel.getDetailedApp()
+        .getMedia()
+        .getKeywords(), 2)
+        .doOnSuccess(adsViewModel -> {
+          // TODO: 10/05/2018 view.updateSimilarApps
+        })
+        .toCompletable();
+  }
+
+  private Completable updateReviews(DetailedAppViewModel appViewModel) {
+    return appViewManager.getReviewsViewModel(appViewModel.getDetailedApp()
+        .getStore()
+        .getName(), view.getPackageName(), 5, view.getLanguageFilter())
+        .doOnSuccess(reviewsViewModel -> {
+          // TODO: 10/05/2018 view.updateReviews
+        })
+        .toCompletable();
   }
 
   private void handleClickOnScreenshot() {
