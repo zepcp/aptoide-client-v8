@@ -90,6 +90,7 @@ import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.view.app.AppCenter;
 import cm.aptoide.pt.view.wizard.WizardPresenter;
 import cm.aptoide.pt.view.wizard.WizardView;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import dagger.Module;
 import dagger.Provides;
 import java.util.Arrays;
@@ -261,17 +262,15 @@ import rx.subjects.PublishSubject;
       DownloadFactory downloadFactory, AppCenter appCenter, ReviewsManager reviewsManager,
       AdsManager adsManager, StoreManager storeManager, FlagManager flagManager,
       StoreUtilsProxy storeUtilsProxy, AptoideAccountManager aptoideAccountManager,
-      ABTestManager abTestManager,
-      AppViewConfiguration appViewConfiguration, PreferencesManager preferencesManager,
-      DownloadStateParser downloadStateParser, AppViewAnalytics appViewAnalytics,
-      NotificationAnalytics notificationAnalytics, InstallAnalytics installAnalytics,
-      Resources resources, WindowManager windowManager, SocialRepository socialRepository,
-      @Named("marketName") String marketName) {
+      ABTestManager abTestManager, AppViewConfiguration appViewConfiguration,
+      PreferencesManager preferencesManager, DownloadStateParser downloadStateParser,
+      AppViewAnalytics appViewAnalytics, NotificationAnalytics notificationAnalytics,
+      InstallAnalytics installAnalytics, Resources resources, WindowManager windowManager,
+      SocialRepository socialRepository, @Named("marketName") String marketName) {
     return new AppViewManager(installManager, downloadFactory, appCenter, reviewsManager,
         adsManager, storeManager, flagManager, abTestManager, storeUtilsProxy,
-        aptoideAccountManager,
-        appViewConfiguration, preferencesManager, downloadStateParser, appViewAnalytics,
-        notificationAnalytics, installAnalytics,
+        aptoideAccountManager, appViewConfiguration, preferencesManager, downloadStateParser,
+        appViewAnalytics, notificationAnalytics, installAnalytics,
         (Type.APPS_GROUP.getPerLineCount(resources, windowManager) * 6), socialRepository,
         marketName);
   }
@@ -279,7 +278,8 @@ import rx.subjects.PublishSubject;
   @FragmentScope @Provides AppViewPresenter providesAppViewPresenter(
       AccountNavigator accountNavigator, AppViewAnalytics analytics,
       AppViewNavigator appViewNavigator, AppViewManager appViewManager,
-      AptoideAccountManager accountManager, CrashReport crashReport) {
+      AptoideAccountManager accountManager, CrashReport crashReport,
+      @Named("recommendsDialog") BehaviorRelay<Boolean> recommendsDialogSubject) {
     return new AppViewPresenter((AppViewView) fragment, accountNavigator, analytics,
         appViewNavigator, appViewManager, accountManager, AndroidSchedulers.mainThread(),
         crashReport, new PermissionManager(), ((PermissionService) fragment.getContext()),

@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.BaseService;
 import cm.aptoide.pt.DeepLinkIntentReceiver;
@@ -25,6 +26,7 @@ import cm.aptoide.pt.download.DownloadAnalytics;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.repository.RepositoryFactory;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -53,10 +55,13 @@ public class InstallService extends BaseService {
   @Inject @Named("default") Installer defaultInstaller;
   @Inject InstalledRepository installedRepository;
   @Inject DownloadAnalytics downloadAnalytics;
+  @Inject @Named("recommendsDialog") BehaviorRelay<Boolean> recommendsDialogSubject;
   private InstallManager installManager;
   private CompositeSubscription subscriptions;
   private Notification notification;
   private String marketName;
+  private boolean isShown;
+  private String md5;
 
   @Override public void onCreate() {
     super.onCreate();
@@ -64,16 +69,18 @@ public class InstallService extends BaseService {
     Logger.getInstance()
         .d(TAG, "Install service is starting");
     final AptoideApplication application = (AptoideApplication) getApplicationContext();
+    handleRecommendsDialogResult();
     installManager = application.getInstallManager();
     marketName = application.getMarketName();
     subscriptions = new CompositeSubscription();
     setupNotification();
     installedRepository = RepositoryFactory.getInstalledRepository(getApplicationContext());
+    isShown = false;
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
     if (intent != null) {
-      String md5 = intent.getStringExtra(EXTRA_INSTALLATION_MD5);
+      md5 = intent.getStringExtra(EXTRA_INSTALLATION_MD5);
       if (ACTION_START_INSTALL.equals(intent.getAction())) {
         subscriptions.add(downloadAndInstall(this, md5, intent.getExtras()
             .getBoolean(EXTRA_FORCE_DEFAULT_INSTALL, false)).subscribe(
@@ -90,7 +97,7 @@ public class InstallService extends BaseService {
       }
     } else {
       subscriptions.add(
-          downloadAndInstallCurrentDownload(this, false).subscribe(hasNext -> treatNext(hasNext),
+          downloadAndInstallCurrentDownload(this).subscribe(hasNext -> treatNext(hasNext),
               throwable -> removeNotificationAndStop()));
     }
     return START_STICKY;
@@ -98,6 +105,7 @@ public class InstallService extends BaseService {
 
   @Override public void onDestroy() {
     subscriptions.unsubscribe();
+    recommendsDialogSubject = null;
     super.onDestroy();
   }
 
@@ -121,12 +129,10 @@ public class InstallService extends BaseService {
     }
   }
 
-  private Observable<Boolean> downloadAndInstallCurrentDownload(Context context,
-      boolean forceDefaultInstall) {
+  private Observable<Boolean> downloadAndInstallCurrentDownload(Context context) {
     return downloadManager.getCurrentDownload()
         .first()
-        .flatMap(currentDownload -> downloadAndInstall(context, currentDownload.getMd5(),
-            forceDefaultInstall));
+        .flatMap(currentDownload -> downloadAndInstall(context, currentDownload.getMd5(), false));
   }
 
   private Observable<Boolean> downloadAndInstall(Context context, String md5,
@@ -143,10 +149,11 @@ public class InstallService extends BaseService {
             downloadAnalytics.startProgress(download);
           }
         })
-        .first(download -> download.getOverallDownloadStatus() == Download.COMPLETED)
-        .flatMap(download -> stopForegroundAndInstall(context, download, true,
-            forceDefaultInstall).andThen(sendBackgroundInstallFinishedBroadcast(download))
-            .andThen(hasNextDownload()));
+        .first(download -> download.getOverallDownloadStatus() == Download.COMPLETED && !isShown)
+        .flatMap(
+            download -> stopForegroundAndInstall(context, download, forceDefaultInstall).andThen(
+                sendBackgroundInstallFinishedBroadcast(download))
+                .andThen(hasNextDownload()));
   }
 
   private void initInstallationProgress(Download download) {
@@ -179,9 +186,9 @@ public class InstallService extends BaseService {
   }
 
   private Completable stopForegroundAndInstall(Context context, Download download,
-      boolean removeNotification, boolean forceDefaultInstall) {
+      boolean forceDefaultInstall) {
     Installer installer = getInstaller(download.getMd5());
-    stopForeground(removeNotification);
+    stopForeground(true);
     switch (download.getAction()) {
       case Download.ACTION_INSTALL:
         return installer.install(context, download.getMd5(), forceDefaultInstall);
@@ -308,5 +315,22 @@ public class InstallService extends BaseService {
     installed.setType(Installed.TYPE_UNKNOWN);
     installed.setPackageName(download.getPackageName());
     return installed;
+  }
+
+  private Observable<Boolean> recommendsDialogResult() {
+    return recommendsDialogSubject;
+  }
+
+  private void handleRecommendsDialogResult() {
+    recommendsDialogResult().distinctUntilChanged()
+        .doOnNext(isShownResult -> isShown = isShownResult)
+        .filter(isShownResult -> !isShownResult)
+        .flatMap(__ -> downloadManager.getCurrentCompletedDownload(md5))
+        .first(download -> download.getOverallDownloadStatus() == Download.COMPLETED)
+        .flatMap(download -> stopForegroundAndInstall(this, download, false).andThen(
+            sendBackgroundInstallFinishedBroadcast(download))
+            .andThen(hasNextDownload()))
+        .doOnError(throwable -> Log.d("TAG123", throwable.toString()))
+        .subscribe();
   }
 }

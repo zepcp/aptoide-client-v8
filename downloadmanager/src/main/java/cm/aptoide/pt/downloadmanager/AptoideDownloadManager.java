@@ -148,6 +148,11 @@ public class AptoideDownloadManager {
         .filter(downloads -> downloads.getOverallDownloadStatus() == Download.PROGRESS);
   }
 
+  public Observable<Download> getCurrentCompletedDownload(String md5) {
+    return getDownloads().flatMapIterable(downloads -> downloads)
+        .filter(downloads -> downloads.getOverallDownloadStatus() == Download.COMPLETED && downloads.getMd5().equals(md5));
+  }
+
   public Observable<List<Download>> getDownloads() {
     return downloadAccessor.getAll();
   }
@@ -197,7 +202,7 @@ public class AptoideDownloadManager {
     startNextDownload();
   }
 
-  synchronized void startNextDownload() {
+  private synchronized void startNextDownload() {
     if (!isDownloading && !isPausing) {
       isDownloading = true;
       getNextDownload().first()
@@ -231,15 +236,6 @@ public class AptoideDownloadManager {
             return downloads.get(0);
           }
         });
-  }
-
-  /**
-   * check if there is any download in progress
-   *
-   * @return true if there is at least 1 download in progress, false otherwise
-   */
-  public boolean isDownloading() {
-    return isDownloading;
   }
 
   public void setDownloading(boolean downloading) {

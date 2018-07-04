@@ -1316,4 +1316,8 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
       ABTestCenterRepository abTestCenterRepository) {
     return new ABTestManager(abTestCenterRepository);
   }
+
+  @Singleton @Provides @Named("recommendsDialog") BehaviorRelay<Boolean> providesRecommendsDialogSubject(){
+    return BehaviorRelay.create();
+  }
 }

@@ -96,6 +96,7 @@ import cm.aptoide.pt.view.fragment.NavigationTrackFragment;
 import cm.aptoide.pt.view.recycler.LinearLayoutManagerWithSmoothScroller;
 import com.jakewharton.rxbinding.support.v7.widget.RxToolbar;
 import com.jakewharton.rxbinding.view.RxView;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -104,6 +105,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
+import javax.inject.Named;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Observable;
@@ -126,6 +128,7 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
 
   @Inject AppViewPresenter presenter;
   @Inject DialogUtils dialogUtils;
+  @Inject @Named("recommendsDialog") BehaviorRelay<Boolean> recommendsDialogSubject;
   private Menu menu;
   private Toolbar toolbar;
   private ActionBar actionBar;
@@ -1275,6 +1278,7 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
   @Override public void showRecommendsDialog(Experiment experiment) {
     LayoutInflater inflater = LayoutInflater.from(getActivity());
     AlertDialog alertDialog = new AlertDialog.Builder(getActivity()).create();
+    recommendsDialogSubject.call(true);
     View dialogView = inflater.inflate(R.layout.logged_in_share, null);
     alertDialog.setView(dialogView);
 
@@ -1305,18 +1309,21 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
         .setOnClickListener(__ -> {
           continueRecommendsDialogClick.onNext(null);
           alertDialog.dismiss();
+          recommendsDialogSubject.call(false);
         });
 
     dialogView.findViewById(R.id.skip_button)
         .setOnClickListener(__ -> {
           skipRecommendsDialogClick.onNext(null);
           alertDialog.dismiss();
+          recommendsDialogSubject.call(false);
         });
 
     dialogView.findViewById(R.id.dont_show_button)
         .setOnClickListener(__ -> {
           dontShowAgainRecommendsDialogClick.onNext(null);
           alertDialog.dismiss();
+          recommendsDialogSubject.call(false);
         });
     alertDialog.show();
   }

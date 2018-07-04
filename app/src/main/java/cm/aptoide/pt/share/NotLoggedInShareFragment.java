@@ -24,9 +24,11 @@ import cm.aptoide.pt.view.ThrowableToStringMapper;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import cm.aptoide.pt.view.share.NotLoggedInShareAnalytics;
 import com.jakewharton.rxbinding.view.RxView;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
 import java.util.Arrays;
 import javax.inject.Inject;
+import javax.inject.Named;
 import rx.Observable;
 
 public class NotLoggedInShareFragment extends GooglePlayServicesFragment
@@ -35,6 +37,7 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
   private static final String PACKAGE_NAME = "PACKAGE_NAME";
   @Inject AccountAnalytics accountAnalytics;
   @Inject NotLoggedInShareAnalytics analytics;
+  @Inject @Named("recommendsDialog") BehaviorRelay<Boolean> recommendsDialogSubject;
   private ProgressDialog progressDialog;
   private Button facebookLoginButton;
   private Button googleLoginButton;
@@ -82,6 +85,7 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    recommendsDialogSubject.call(true);
     closeButton = (Button) view.findViewById(R.id.close_button);
     facebookLoginButton = (Button) view.findViewById(R.id.not_logged_in_share_facebook_button);
     googleLoginButton = (Button) view.findViewById(R.id.not_logged_in_share_google_button);
@@ -111,6 +115,8 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
 
   @Override public void onDestroy() {
     super.onDestroy();
+    recommendsDialogSubject.call(false);
+    recommendsDialogSubject = null;
     backButtonPress = null;
   }
 
