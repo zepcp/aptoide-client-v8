@@ -146,4 +146,6 @@ public interface AppViewView extends InstallAppView {
       double appc, float rating, String icon, int downloads);
 
   void showApkfyElement(String appName);
+
+  void showFullScreenAd();
 }

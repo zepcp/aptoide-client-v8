@@ -20,7 +20,8 @@ public class HomeBundlesModel {
     offset = -1;
   }
 
-  public HomeBundlesModel(List<HomeBundle> list, boolean loading, int offset) {
+  public
+  HomeBundlesModel(List<HomeBundle> list, boolean loading, int offset) {
     this.list = list;
     this.loading = loading;
     this.offset = offset;

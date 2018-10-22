@@ -94,6 +94,7 @@ import cm.aptoide.pt.view.dialog.DialogBadgeV7;
 import cm.aptoide.pt.view.dialog.DialogUtils;
 import cm.aptoide.pt.view.fragment.NavigationTrackFragment;
 import cm.aptoide.pt.view.recycler.LinearLayoutManagerWithSmoothScroller;
+import com.appnext.ads.interstitial.Interstitial;
 import com.jakewharton.rxbinding.support.v4.widget.RxNestedScrollView;
 import com.jakewharton.rxbinding.support.v7.widget.RxToolbar;
 import com.jakewharton.rxbinding.view.RxView;
@@ -656,18 +657,6 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
     similarBottomView.setVisibility(View.VISIBLE);
   }
 
-  @Override public Observable<ViewScrollChangeEvent> scrollVisibleSimilarApps(){
-    return RxNestedScrollView.scrollChangeEvents(scrollView)
-        .filter(__ -> isSimilarAppsVisible());
-  }
-
-  @Override public boolean isSimilarAppsVisible(){
-    Rect scrollBounds = new Rect();
-    scrollView.getHitRect(scrollBounds);
-    return similarDownloadView.getLocalVisibleRect(scrollBounds)
-        || similarBottomView.getLocalVisibleRect(scrollBounds);
-  }
-
   @Override public Observable<FlagsVote.VoteType> clickWorkingFlag() {
     return RxView.clicks(workingWellLayout)
         .flatMap(__ -> Observable.just(FlagsVote.VoteType.GOOD));
@@ -702,6 +691,18 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
     String messageToDisplay = String.format(getString(R.string.store_followed), storeName);
     Toast.makeText(getContext(), messageToDisplay, Toast.LENGTH_SHORT)
         .show();
+  }
+
+  @Override public Observable<ViewScrollChangeEvent> scrollVisibleSimilarApps() {
+    return RxNestedScrollView.scrollChangeEvents(scrollView)
+        .filter(__ -> isSimilarAppsVisible());
+  }
+
+  @Override public boolean isSimilarAppsVisible() {
+    Rect scrollBounds = new Rect();
+    scrollView.getHitRect(scrollBounds);
+    return similarDownloadView.getLocalVisibleRect(scrollBounds)
+        || similarBottomView.getLocalVisibleRect(scrollBounds);
   }
 
   @Override public Observable<Void> clickDeveloperWebsite() {
@@ -1035,6 +1036,13 @@ public class NewAppViewFragment extends NavigationTrackFragment implements AppVi
     String message = getString(R.string.appview_message_apkfy_1);
     ((TextView) apkfyElement.findViewById(R.id.apkfy_message_1)).setText(
         String.format(message, appName));
+  }
+
+  @Override public void showFullScreenAd() {
+    Interstitial fullAd =
+        new Interstitial(this.getContext(), "4fa5aa9b-8dcf-4fb9-ba9a-b9e1469068ae");
+    fullAd.loadAd();
+    fullAd.showAd();
   }
 
   private void manageSimilarAppsVisibility(boolean hasSimilarApps, boolean isDownloading) {

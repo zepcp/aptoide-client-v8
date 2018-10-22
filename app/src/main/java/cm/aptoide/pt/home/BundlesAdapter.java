@@ -21,6 +21,8 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
   private static final int LOADING = R.layout.progress_item;
   private static final int EDITORIAL = R.layout.editorial_action_item;
   private static final int INFO = R.layout.info_action_item;
+  private static final int BANNER = R.layout.banner_item;
+  private static final int LARGE_BANNER = R.layout.large_banner_item;
   private final ProgressBundle progressBundle;
   private final DecimalFormat oneDecimalFormatter;
   private final PublishSubject<HomeEvent> uiEventsListener;
@@ -63,6 +65,12 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
       case LOADING:
         return new LoadingBundleViewHolder(LayoutInflater.from(parent.getContext())
             .inflate(LOADING, parent, false));
+      case BANNER:
+        return new BannerBundleViewHolder(LayoutInflater.from(parent.getContext())
+            .inflate(BANNER, parent, false));
+      case LARGE_BANNER:
+        return new LargeBannerBundleViewHolder(LayoutInflater.from(parent.getContext())
+            .inflate(LARGE_BANNER, parent, false));
       default:
         throw new IllegalStateException("Invalid bundle view type");
     }
@@ -92,6 +100,10 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
         return LOADING;
       case EDITORIAL:
         return EDITORIAL;
+      case BANNER:
+        return BANNER;
+      case LARGE_BANNER:
+        return LARGE_BANNER;
       default:
         throw new IllegalStateException(
             "Bundle type not supported by the adapter: " + bundles.get(position)
