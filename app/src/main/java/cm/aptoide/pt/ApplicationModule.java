@@ -4,6 +4,7 @@ import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.arch.persistence.room.Room;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -69,8 +70,11 @@ import cm.aptoide.pt.ads.PackageRepositoryVersionCodeProvider;
 import cm.aptoide.pt.analytics.FirstLaunchAnalytics;
 import cm.aptoide.pt.analytics.TrackerFilter;
 import cm.aptoide.pt.analytics.analytics.AnalyticsBodyInterceptorV7;
+import cm.aptoide.pt.analytics.analytics.AptoideDatabase;
 import cm.aptoide.pt.analytics.analytics.RealmEventMapper;
 import cm.aptoide.pt.analytics.analytics.RealmEventPersistence;
+import cm.aptoide.pt.analytics.analytics.RoomEventMapper;
+import cm.aptoide.pt.analytics.analytics.RoomEventPersistence;
 import cm.aptoide.pt.app.AdsManager;
 import cm.aptoide.pt.app.AppCoinsManager;
 import cm.aptoide.pt.app.AppCoinsService;
@@ -1100,6 +1104,19 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
   @Singleton @Provides RealmEventMapper providesRealmEventMapper(
       @Named("default") ObjectMapper objectMapper) {
     return new RealmEventMapper(objectMapper);
+  }
+
+  @Singleton @Provides AptoideDatabase providesAptoideDataBase() {
+    return Room.databaseBuilder(application.getApplicationContext(), AptoideDatabase.class,
+        SQLiteDatabaseHelper.DATABASE_NAME)
+        //.addMigrations()
+        .build();
+  }
+
+  @Singleton @Provides RoomEventPersistence providesRoomEventPersistence(
+      AptoideDatabase aptoideDatabase, RoomEventMapper roomEventMapper) {
+    return new RoomEventPersistence(aptoideDatabase.eventDbAccessObject(),
+        roomEventMapper); //DAO can later be extracted to a provider of its own
   }
 
   @Singleton @Provides EventsPersistence providesEventsPersistence(Database database,

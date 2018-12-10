@@ -48,6 +48,11 @@ dependencies {
   implementation project(path: ':crashreports')
   implementation project(path: ':utils')
 
+  implementation "android.arch.persistence.room:runtime:1.1.1"
+  annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
+  implementation "android.arch.persistence.room:rxjava2:1.1.1"
+  testImplementation "android.arch.persistence.room:testing:1.1.1"
+
   testImplementation "junit:junit:${JUNIT_VERSION}"
   implementation "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
   implementation "io.reactivex:rxjava:${RXJAVA_VERSION}"
