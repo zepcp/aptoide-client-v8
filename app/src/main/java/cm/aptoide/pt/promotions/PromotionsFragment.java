@@ -17,20 +17,21 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.view.Window;
 import android.widget.TextView;
 import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.app.DownloadModel;
 import cm.aptoide.pt.networking.image.ImageLoader;
-import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.util.AppBarStateChangeListener;
+import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
+import cm.aptoide.pt.view.PromotionsNavigator;
 import cm.aptoide.pt.view.ThemeUtils;
 import cm.aptoide.pt.view.fragment.NavigationTrackFragment;
 import java.text.DecimalFormat;
@@ -41,7 +42,9 @@ import rx.subjects.PublishSubject;
 
 import static cm.aptoide.pt.promotions.PromotionsAdapter.CLAIM;
 import static cm.aptoide.pt.promotions.PromotionsAdapter.CLAIMED;
+import static cm.aptoide.pt.promotions.PromotionsAdapter.DOWNGRADE;
 import static cm.aptoide.pt.promotions.PromotionsAdapter.DOWNLOAD;
+import static cm.aptoide.pt.promotions.PromotionsAdapter.DOWNLOADING;
 import static cm.aptoide.pt.promotions.PromotionsAdapter.INSTALL;
 import static cm.aptoide.pt.promotions.PromotionsAdapter.UPDATE;
 import static cm.aptoide.pt.utils.GenericDialogs.EResponse.YES;
@@ -49,6 +52,7 @@ import static cm.aptoide.pt.utils.GenericDialogs.EResponse.YES;
 public class PromotionsFragment extends NavigationTrackFragment implements PromotionsView {
 
   @Inject PromotionsPresenter promotionsPresenter;
+  @Inject PromotionsNavigator promotionsNavigator;
   private RecyclerView promotionsList;
   private PromotionsAdapter promotionsAdapter;
   private PublishSubject<PromotionAppClick> promotionAppClick;
@@ -358,23 +362,16 @@ public class PromotionsFragment extends NavigationTrackFragment implements Promo
       }
       numberOfDownloads.setText(String.valueOf(promotionViewApp.getNumberOfDownloads()));
 
-      promotionAction.setText(getContext().getString(getButtonMessage(getState(
-          promotionViewApp.getDownloadModel()
-              .getAction())), promotionViewApp.getAppcValue()));
-      if (getState(promotionViewApp.getDownloadModel()
-          .getAction()) == CLAIMED) {
+      promotionAction.setText(getContext().getString(getButtonMessage(getState(promotionViewApp)),
+          promotionViewApp.getAppcValue()));
+      if (getState(promotionViewApp) == CLAIMED) {
         // TODO: 12/7/18 set button disabled state
+      } else if (getState(promotionViewApp) == CLAIM) {
+        promotionAction.setOnClickListener(__ -> promotionsNavigator.navigateToClaim());
       } else {
         promotionAction.setOnClickListener(__ -> promotionAppClick.onNext(
-            new PromotionAppClick(promotionViewApp, getClickType(getState(
-                promotionViewApp.getDownloadModel()
-                    .getAction())))));
+            new PromotionAppClick(promotionViewApp, getClickType(getState(promotionViewApp)))));
       }
-
-      promotionAction.setOnClickListener(view -> promotionAppClick.onNext(
-          new PromotionAppClick(promotionViewApp, getClickType(getState(
-              promotionViewApp.getDownloadModel()
-                  .getAction())))));
     }
   }
 
@@ -400,8 +397,35 @@ public class PromotionsFragment extends NavigationTrackFragment implements Promo
     return message;
   }
 
-  private int getState(DownloadModel.Action action) {
-    return 3;
+  private int getState(PromotionViewApp app) {
+    int state;
+    if (app.isClaimed()) {
+      return CLAIMED;
+    } else {
+      DownloadModel downloadModel = app.getDownloadModel();
+
+      if (downloadModel.isDownloading()) {
+        return DOWNLOADING;
+      } else {
+        switch (downloadModel.getAction()) {
+          case DOWNGRADE:
+            state = DOWNGRADE;
+            break;
+          case INSTALL:
+            state = INSTALL;
+            break;
+          case OPEN:
+            state = CLAIM;
+            break;
+          case UPDATE:
+            state = UPDATE;
+            break;
+          default:
+            throw new IllegalArgumentException("Invalid type of download action");
+        }
+        return state;
+      }
+    }
   }
 
   private PromotionAppClick.ClickType getClickType(int appState) {

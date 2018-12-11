@@ -25,9 +25,11 @@ import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.ads.IronSourceAdRepository;
 import cm.aptoide.pt.app.AppNavigator;
+import cm.aptoide.pt.app.DownloadStateParser;
 import cm.aptoide.pt.app.view.AppViewNavigator;
 import cm.aptoide.pt.app.view.EditorialNavigator;
 import cm.aptoide.pt.app.view.donations.DonationsAnalytics;
+import cm.aptoide.pt.appview.PreferencesManager;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.accessors.StoreAccessor;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
@@ -41,6 +43,7 @@ import cm.aptoide.pt.home.BottomNavigationMapper;
 import cm.aptoide.pt.home.BottomNavigationNavigator;
 import cm.aptoide.pt.home.apps.UpdatesManager;
 import cm.aptoide.pt.install.AutoUpdate;
+import cm.aptoide.pt.install.InstallAnalytics;
 import cm.aptoide.pt.install.InstallCompletedNotifier;
 import cm.aptoide.pt.install.InstallManager;
 import cm.aptoide.pt.install.InstalledRepository;
@@ -60,6 +63,12 @@ import cm.aptoide.pt.presenter.MainPresenter;
 import cm.aptoide.pt.presenter.MainView;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
+import cm.aptoide.pt.promotions.CaptchaService;
+import cm.aptoide.pt.promotions.ClaimPromotionsManager;
+import cm.aptoide.pt.promotions.PromotionViewAppMapper;
+import cm.aptoide.pt.promotions.PromotionsAnalytics;
+import cm.aptoide.pt.promotions.PromotionsManager;
+import cm.aptoide.pt.promotions.PromotionsService;
 import cm.aptoide.pt.repository.StoreRepository;
 import cm.aptoide.pt.search.SearchNavigator;
 import cm.aptoide.pt.search.analytics.SearchAnalytics;
@@ -297,5 +306,11 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 
   @ActivityScope @Provides IronSourceAdRepository providesIronSourceAdRepository() {
     return new IronSourceAdRepository(activity);
+  }
+
+  @ActivityScope @Provides ClaimPromotionsManager providesClaimPromotionsManager(
+      CaptchaService captchaService, PromotionsService promotionsService,
+      PromotionsManager promotionsManager) {
+    return new ClaimPromotionsManager(promotionsManager, captchaService);
   }
 }

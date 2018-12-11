@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import rx.Completable;
 import rx.Observable;
+import rx.Single;
 
 public class PromotionsManager {
 
@@ -25,12 +26,13 @@ public class PromotionsManager {
   private final NotificationAnalytics notificationAnalytics;
   private final InstallAnalytics installAnalytics;
   private final PreferencesManager preferencesManager;
+  private final PromotionsService promotionsService;
 
   public PromotionsManager(PromotionViewAppMapper promotionViewAppMapper,
       InstallManager installManager, DownloadFactory downloadFactory,
       DownloadStateParser downloadStateParser, PromotionsAnalytics promotionsAnalytics,
       NotificationAnalytics notificationAnalytics, InstallAnalytics installAnalytics,
-      PreferencesManager preferencesManager) {
+      PreferencesManager preferencesManager, PromotionsService promotionsService) {
     this.promotionViewAppMapper = promotionViewAppMapper;
     this.installManager = installManager;
     this.downloadFactory = downloadFactory;
@@ -39,6 +41,11 @@ public class PromotionsManager {
     this.notificationAnalytics = notificationAnalytics;
     this.installAnalytics = installAnalytics;
     this.preferencesManager = preferencesManager;
+    this.promotionsService = promotionsService;
+  }
+
+  public Single<List<PromotionApp>> getPromotionApps() {
+    return promotionsService.getPromotionApps();
   }
 
   public Observable<PromotionsModel> getPromotionsModel() {
@@ -56,12 +63,12 @@ public class PromotionsManager {
 
   @NonNull private List<PromotionApp> getPromotionAppsMocked() {
     List<PromotionApp> promotionAppList = new ArrayList<>();
-    promotionAppList.add(new PromotionApp("Wallet", "com.appcoins.wallet", 123,
-        "http://pool.apk.aptoide.com/lordballiwns/com-facebook-orca-132958908-42161891-bfb0e8f4a51fcbaa16f1840322eb232a.apk",
-        "http://pool.apk.aptoide.com/lordballiwns/alt/Y29tLWZhY2Vib29rLW9yY2EtMTMyOTU4OTA4LTQyMTYxODkxLWJmYjBlOGY0YTUxZmNiYWExNmYxODQwMzIyZWIyMzJh.apk",
-        "http://pool.img.aptoide.com/lordballiwns/76e0376928b8393227a150fbed5d6b4a_icon.png",
-        "This app belongs to wallet. It is an app.", 123133, 0.2f, 123012, "walletmd5", 12314,
-        false, "wallet version", null, 25));
+    promotionAppList.add(new PromotionApp("AppCoins BDS Wallet", "com.appcoins.wallet", 123,
+        "http://pool.apk.aptoide.com/bds-store/com-appcoins-wallet-49-42442511-8fb27f9653e7632d136dba69ca371eb6.apk",
+        "http://pool.apk.aptoide.com/bds-store/alt/Y29tLWFwcGNvaW5zLXdhbGxldC00OS00MjQ0MjUxMS04ZmIyN2Y5NjUzZTc2MzJkMTM2ZGJhNjljYTM3MWViNg.apk",
+        "http://pool.img.aptoide.com/bds-store/ccf6877713a2eecd8bea902bdc900273_icon.png",
+        "Appcoins BDS Wallet description", 15844591, 4.54f, 123012, "8fb27f9653e7632d136dba69ca371eb6", 49,
+        false, "1.3.0.2", null, 25));
 
     promotionAppList.add(new PromotionApp("Ana's app", "cm.aptoide.pt.ana", 123,
         "http://pool.apk.aptoide.com/lordballiwns/com-facebook-orca-132958908-42161891-bfb0e8f4a51fcbaa16f1840322eb232a.apk",
@@ -77,6 +84,19 @@ public class PromotionsManager {
         "joao version", null, 25));
 
     return promotionAppList;
+  }
+
+  public Single<ClaimStatusWrapper> claimPromotion(String walletAddress, String packageName,
+      String captcha) {
+    return promotionsService.claimPromotion(walletAddress, packageName, captcha);
+  }
+
+  public void saveCaptchaUrl(String captchaUrl) {
+    promotionsService.saveCaptchaUrl(captchaUrl);
+  }
+
+  public String getCaptchaUrl() {
+    return promotionsService.getCaptchaUrl();
   }
 
   public Observable<PromotionViewApp> getDownload(PromotionApp promotionApp) {
