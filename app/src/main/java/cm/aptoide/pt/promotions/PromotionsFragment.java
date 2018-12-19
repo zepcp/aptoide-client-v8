@@ -193,7 +193,7 @@ public class PromotionsFragment extends NavigationTrackFragment implements Promo
 
   @Override public void showPromotionApp(PromotionViewApp promotionViewApp) {
     if (promotionViewApp.getPackageName()
-        .equals("com.appcoins.wallet")) {
+        .equals(WALLET_PACKAGE_NAME)) {
       showWallet(promotionViewApp);
     } else {
       if (promotionViewApp.getDownloadModel()
