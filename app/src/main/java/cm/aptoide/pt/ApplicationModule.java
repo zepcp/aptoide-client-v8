@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -152,7 +153,6 @@ import cm.aptoide.pt.install.InstallManager;
 import cm.aptoide.pt.install.InstalledRepository;
 import cm.aptoide.pt.install.Installer;
 import cm.aptoide.pt.install.InstallerAnalytics;
-import cm.aptoide.pt.install.InstallerFactory;
 import cm.aptoide.pt.install.PackageRepository;
 import cm.aptoide.pt.install.RootInstallNotificationEventReceiver;
 import cm.aptoide.pt.install.installer.DefaultInstaller;
@@ -293,16 +293,15 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
   }
 
   @Singleton @Provides InstallManager providesInstallManager(
-      AptoideDownloadManager aptoideDownloadManager, InstallerAnalytics installerAnalytics,
+      AptoideDownloadManager aptoideDownloadManager, @Named("default") Installer defaultInstaller,
       RootAvailabilityManager rootAvailabilityManager,
       @Named("default") SharedPreferences defaultSharedPreferences,
       @Named("secureShared") SharedPreferences secureSharedPreferences,
       DownloadsRepository downloadsRepository, InstalledRepository installedRepository,
       @Named("cachePath") String cachePath, @Named("apkPath") String apkPath,
-      @Named("obbPath") String obbPath, DownloadAnalytics downloadAnalytics) {
+      @Named("obbPath") String obbPath) {
 
-    return new InstallManager(application, aptoideDownloadManager,
-        new InstallerFactory(new MinimalAdMapper(), installerAnalytics).create(application),
+    return new InstallManager(application, aptoideDownloadManager, defaultInstaller,
         rootAvailabilityManager, defaultSharedPreferences, secureSharedPreferences,
         downloadsRepository, installedRepository, cachePath, apkPath, obbPath, new FileUtils());
   }
@@ -414,19 +413,22 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
     return new DownloadsRepository(downloadAccessor);
   }
 
-  @Singleton @Provides DownloadStatusMapper downloadStatusMapper() {
+  @Singleton @Provides DownloadStatusMapper provideDownloadStatusMapper() {
     return new DownloadStatusMapper();
   }
 
+  @Singleton @Provides PackageManager providePackageManager() {
+    return application.getPackageManager();
+  }
+
   @Singleton @Provides @Named("default") Installer provideDefaultInstaller(
-      InstallationProvider installationProvider,
+      PackageManager packageManager, InstallationProvider installationProvider,
       @Named("default") SharedPreferences sharedPreferences,
       InstalledRepository installedRepository, RootAvailabilityManager rootAvailabilityManager,
       InstallerAnalytics installerAnalytics) {
-    return new DefaultInstaller(application.getPackageManager(), installationProvider,
-        new FileUtils(), ToolboxManager.isDebug(sharedPreferences) || BuildConfig.DEBUG,
-        installedRepository, 180000, rootAvailabilityManager, sharedPreferences,
-        installerAnalytics);
+    return new DefaultInstaller(packageManager, installationProvider, new FileUtils(),
+        ToolboxManager.isDebug(sharedPreferences) || BuildConfig.DEBUG, installedRepository, 180000,
+        rootAvailabilityManager, sharedPreferences, installerAnalytics);
   }
 
   @Singleton @Provides InstallationProvider provideInstallationProvider(
@@ -1049,8 +1051,8 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
         application.getPackageName());
   }
 
-  @Singleton @Provides PackageRepository providesPackageRepository() {
-    return new PackageRepository(application.getPackageManager());
+  @Singleton @Provides PackageRepository providesPackageRepository(PackageManager packageManager) {
+    return new PackageRepository(packageManager);
   }
 
   @Singleton @Provides @Named("defaultInterceptorV3")
@@ -1491,10 +1493,10 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
       StoreAccessor storeAccessor, IdsRepository idsRepository, @Named("pool-v7")
       BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v7.BaseBody> bodyInterceptorPoolV7,
       @Named("default") OkHttpClient okHttpClient, Converter.Factory converterFactory,
-      TokenInvalidator tokenInvalidator, @Named("default") SharedPreferences sharedPreferences) {
+      TokenInvalidator tokenInvalidator, @Named("default") SharedPreferences sharedPreferences,
+      PackageManager packageManager) {
     return new UpdateRepository(updateAccessor, storeAccessor, idsRepository, bodyInterceptorPoolV7,
-        okHttpClient, converterFactory, tokenInvalidator, sharedPreferences,
-        application.getPackageManager());
+        okHttpClient, converterFactory, tokenInvalidator, sharedPreferences, packageManager);
   }
 
   @Singleton @Provides NotLoggedInShareAnalytics providesNotLoggedInShareAnalytics(
@@ -1574,11 +1576,11 @@ import static com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API;
       PromotionViewAppMapper promotionViewAppMapper, DownloadFactory downloadFactory,
       DownloadStateParser downloadStateParser, PromotionsAnalytics promotionsAnalytics,
       NotificationAnalytics notificationAnalytics, InstallAnalytics installAnalytics,
-      PreferencesManager preferencesManager, PromotionsService promotionsService) {
+      PreferencesManager preferencesManager, PackageManager packageManager,
+      PromotionsService promotionsService) {
     return new PromotionsManager(promotionViewAppMapper, installManager, downloadFactory,
         downloadStateParser, promotionsAnalytics, notificationAnalytics, installAnalytics,
-        preferencesManager, application.getApplicationContext()
-        .getPackageManager(), promotionsService);
+        preferencesManager, packageManager, promotionsService);
   }
 
   @Singleton @Provides PromotionViewAppMapper providesPromotionViewAppMapper(
