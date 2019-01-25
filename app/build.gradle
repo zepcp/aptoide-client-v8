@@ -282,10 +282,21 @@ android {
       resValue "string", "TEST_FAIRY_TOKEN", "\"" + project.TEST_FAIRY_TOKEN + "\""
     }
 
-    variant.buildConfigField "String", "IRONSOURCE_APPLICATION_ID",
-        "\"" + project.IRONSOURCE_APPLICATION_ID + "\""
-    variant.buildConfigField "String", "IRONSOURCE_APPVIEW_INTERSTITIAL_9500_PLACEMENT_ID",
-        "\"" + project.IRONSOURCE_APPVIEW_INTERSTITIAL_9500_PLACEMENT_ID + "\""
+    variant.buildConfigField "String", "MOPUB_VIDEO_APPVIEW_PLACEMENT_ID",
+        "\"" + project.MOPUB_VIDEO_APPVIEW_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_NATIVE_APPVIEW_PLACEMENT_ID",
+        "\"" + project.MOPUB_NATIVE_APPVIEW_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_NATIVE_HOME_PLACEMENT_ID",
+        "\"" + project.MOPUB_NATIVE_HOME_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_NATIVE_SEARCH_PLACEMENT_ID",
+        "\"" + project.MOPUB_NATIVE_SEARCH_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_BANNER_50_APPVIEW_PLACEMENT_ID",
+        "\"" + project.MOPUB_BANNER_50_APPVIEW_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_BANNER_50_SEARCH_PLACEMENT_ID",
+        "\"" + project.MOPUB_BANNER_50_SEARCH_PLACEMENT_ID_PROD + "\""
+    variant.buildConfigField "String", "MOPUB_BANNER_50_HOME_PLACEMENT_ID",
+        "\"" + project.MOPUB_BANNER_50_HOME_PLACEMENT_ID_PROD + "\""
+
 
     variant.outputs.all { output ->
       def SEP = "_"
@@ -432,6 +443,15 @@ dependencies {
   implementation "com.ironsource.adapters:chartboostadapter:${CHARTBOOST_ADAPTER_VERSION}@jar"
   // UnityAds (IronSource mediation)
   implementation "com.ironsource.adapters:unityadsadapter:${UNITYADS_ADAPTER_VERSION}@jar"
+
+  // Mopub
+  implementation('com.mopub:mopub-sdk:5.4.0@aar') {
+    transitive = true
+    exclude module: 'moat-mobile-app-kit'
+    exclude group: "com.android.support"
+    exclude module: "support-annotations"
+    exclude module: "support-v4"
+  }
 
   // paypal SDK
   implementation("com.paypal.sdk:paypal-android-sdk:${PAYPAL_SDK}") {
