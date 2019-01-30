@@ -2,6 +2,8 @@ package cm.aptoide.pt.search;
 
 import android.content.SharedPreferences;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.pt.abtesting.experiments.MoPubBannerAdExperiment;
+import cm.aptoide.pt.abtesting.experiments.MoPubNativeAdExperiment;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.accessors.Database;
@@ -34,12 +36,16 @@ import rx.Single;
   private final AdsRepository adsRepository;
   private final Database database;
   private final AptoideAccountManager accountManager;
+  private final MoPubBannerAdExperiment moPubBannerAdExperiment;
+  private final MoPubNativeAdExperiment moPubNativeAdExperiment;
 
   public SearchManager(SharedPreferences sharedPreferences, TokenInvalidator tokenInvalidator,
       BodyInterceptor<BaseBody> bodyInterceptor, OkHttpClient httpClient,
       Converter.Factory converterFactory,
       HashMapNotNull<String, List<String>> subscribedStoresAuthMap, AdsRepository adsRepository,
-      Database database, AptoideAccountManager accountManager) {
+      Database database, AptoideAccountManager accountManager,
+      MoPubBannerAdExperiment moPubBannerAdExperiment,
+      MoPubNativeAdExperiment moPubNativeAdExperiment) {
     this.sharedPreferences = sharedPreferences;
     this.tokenInvalidator = tokenInvalidator;
     this.bodyInterceptor = bodyInterceptor;
@@ -49,6 +55,8 @@ import rx.Single;
     this.adsRepository = adsRepository;
     this.database = database;
     this.accountManager = accountManager;
+    this.moPubBannerAdExperiment = moPubBannerAdExperiment;
+    this.moPubNativeAdExperiment = moPubNativeAdExperiment;
   }
 
   public Observable<SearchAdResult> getAdsForQuery(String query) {
@@ -114,5 +122,13 @@ import rx.Single;
         && dataList.getList() != null
         && dataList.getList()
         .size() > 0;
+  }
+
+  public Single<Boolean> shouldLoadBannerAd() {
+    return moPubBannerAdExperiment.shouldLoadBanner();
+  }
+
+  public Single<Boolean> shouldLoadNativeAds() {
+    return moPubNativeAdExperiment.shouldLoadNative();
   }
 }

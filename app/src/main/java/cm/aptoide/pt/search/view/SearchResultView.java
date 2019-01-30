@@ -101,6 +101,12 @@ public interface SearchResultView extends SearchSuggestionsView {
 
   boolean shouldShowSuggestions();
 
+  void showBannerAd();
+
+  Observable<Boolean> showingSearchResultsView();
+
+  void showNativeAds(String query);
+
   interface Model {
 
     List<SearchAppResult> getFollowedStoresSearchAppResults();

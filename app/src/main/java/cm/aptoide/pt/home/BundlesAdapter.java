@@ -21,22 +21,26 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
   private static final int LOADING = R.layout.progress_item;
   private static final int EDITORIAL = R.layout.editorial_action_item;
   private static final int INFO = R.layout.info_action_item;
+  private static final int SMALL_BANNER = R.layout.ads_small_banner;
   private final ProgressBundle progressBundle;
   private final DecimalFormat oneDecimalFormatter;
   private final PublishSubject<HomeEvent> uiEventsListener;
   private final String marketName;
+  private final AdsBundlesViewHolderFactory adsBundlesViewHolderFactory;
   private List<HomeBundle> bundles;
   private PublishSubject<AdHomeEvent> adClickedEvents;
 
   public BundlesAdapter(List<HomeBundle> bundles, ProgressBundle homeBundle,
       PublishSubject<HomeEvent> uiEventsListener, DecimalFormat oneDecimalFormatter,
-      PublishSubject<AdHomeEvent> adPublishSubject, String marketName) {
+      PublishSubject<AdHomeEvent> adPublishSubject, String marketName,
+      AdsBundlesViewHolderFactory adsBundlesViewHolderFactory) {
     this.bundles = bundles;
     this.progressBundle = homeBundle;
     this.uiEventsListener = uiEventsListener;
     this.oneDecimalFormatter = oneDecimalFormatter;
     this.adClickedEvents = adPublishSubject;
     this.marketName = marketName;
+    this.adsBundlesViewHolderFactory = adsBundlesViewHolderFactory;
   }
 
   @Override public AppBundleViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -54,9 +58,7 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
         return new StoreBundleViewHolder(LayoutInflater.from(parent.getContext())
             .inflate(STORE, parent, false));
       case ADS:
-        return new AdsBundleViewHolder(LayoutInflater.from(parent.getContext())
-            .inflate(ADS, parent, false), uiEventsListener, oneDecimalFormatter, adClickedEvents,
-            marketName);
+        return adsBundlesViewHolderFactory.createViewHolder(parent);
       case INFO:
         return new InfoBundleViewHolder(LayoutInflater.from(parent.getContext())
             .inflate(INFO, parent, false), uiEventsListener);
@@ -66,6 +68,9 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
       case LOADING:
         return new LoadingBundleViewHolder(LayoutInflater.from(parent.getContext())
             .inflate(LOADING, parent, false));
+      case SMALL_BANNER:
+        return new SmallBannerAdBundleViewHolder(LayoutInflater.from(parent.getContext())
+            .inflate(SMALL_BANNER, parent, false));
       default:
         throw new IllegalStateException("Invalid bundle view type");
     }
@@ -95,6 +100,8 @@ public class BundlesAdapter extends RecyclerView.Adapter<AppBundleViewHolder> {
         return LOADING;
       case EDITORIAL:
         return EDITORIAL;
+      case SMALL_BANNER:
+        return SMALL_BANNER;
       default:
         throw new IllegalStateException(
             "Bundle type not supported by the adapter: " + bundles.get(position)

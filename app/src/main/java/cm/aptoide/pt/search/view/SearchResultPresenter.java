@@ -82,6 +82,21 @@ import rx.functions.Func2;
     handleClickOnBottomNavWithResults();
     handleClickOnBottomNavWithoutResults();
     listenToSearchQueries();
+
+    loadBannerAd();
+  }
+
+  private void loadBannerAd() {
+    view.getLifecycleEvent()
+        .filter(event -> event.equals(View.LifecycleEvent.CREATE))
+        .flatMap(__ -> view.showingSearchResultsView())
+        .flatMapSingle(__ -> searchManager.shouldLoadBannerAd())
+        .filter(loadBanner -> loadBanner)
+        .observeOn(viewScheduler)
+        .doOnNext(__ -> view.showBannerAd())
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(__ -> {
+        }, e -> crashReport.log(e));
   }
 
   @VisibleForTesting public void handleFragmentRestorationVisibility() {
@@ -334,7 +349,15 @@ import rx.functions.Func2;
         .doOnSuccess(data -> {
           final SearchResultView.Model viewModel = view.getViewModel();
           viewModel.incrementOffsetAndCheckIfReachedBottomOfAllStores(getItemCount(data));
-        });
+        })
+        .flatMap(nonFollowedStoresSearchResult -> searchManager.shouldLoadNativeAds()
+            .observeOn(viewScheduler)
+            .doOnSuccess(loadNativeAds -> {
+              if (loadNativeAds) {
+                view.showNativeAds(query);
+              }
+            })
+            .map(__ -> nonFollowedStoresSearchResult));
   }
 
   @NonNull private Single<List<SearchAppResult>> loadDataFromFollowedStores(String query,

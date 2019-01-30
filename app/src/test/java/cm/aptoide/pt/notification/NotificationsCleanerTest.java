@@ -20,7 +20,6 @@ import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by trinkes on 28/08/2017.
@@ -57,26 +56,18 @@ public class NotificationsCleanerTest {
         .size(), 0);
   }
 
-  private NotificationProvider getNotificationProvider() {
-    return Mockito.mock(NotificationProvider.class);
-  }
-
-  private AptoideAccountManager getAptoideAccountManager() {
-    return Mockito.mock(AptoideAccountManager.class);
-  }
-
   @Test public void cleanLimitExceededNotificationsWithAExpiredNotification() throws Exception {
     TestSubscriber<Object> objectTestSubscriber = TestSubscriber.create();
 
     Map<String, Notification> list = new HashMap<>();
     long timeStamp = System.currentTimeMillis();
-    Notification notification = createNotification(0L, timeStamp, "me", true);
+    Notification notification = createNotification(timeStamp, timeStamp, "me", true);
     list.put(notification.getKey(), notification);
     timeStamp = System.currentTimeMillis();
-    notification = createNotification(timeStamp + 1000, timeStamp - 1, "me", true);
+    notification = createNotification(timeStamp + 10000, timeStamp - 1000, "me", true);
     list.put(notification.getKey(), notification);
     timeStamp = System.currentTimeMillis();
-    notification = createNotification(timeStamp + 2000, timeStamp - 2, "me", true);
+    notification = createNotification(timeStamp + 20000, timeStamp - 2000, "me", true);
     list.put(notification.getKey(), notification);
     NotificationAccessor notificationAccessor = new NotAccessor(list);
     NotificationsCleaner notificationsCleaner = new NotificationsCleaner(notificationAccessor,
@@ -88,10 +79,10 @@ public class NotificationsCleanerTest {
     objectTestSubscriber.awaitTerminalEvent();
     objectTestSubscriber.assertCompleted();
     objectTestSubscriber.assertNoErrors();
-    assertEquals(notificationAccessor.getAllSorted(null)
+    assertEquals(2, notificationAccessor.getAllSorted(null)
         .toBlocking()
         .first()
-        .size(), 2);
+        .size());
   }
 
   @Test public void cleanLimitExceededNotificationsWithAExpiredNotificationAndExceedingLimit()
@@ -102,10 +93,10 @@ public class NotificationsCleanerTest {
     Notification notification = createNotification(0L, timeStamp, "me", true);
     list.put(notification.getKey(), notification);
     timeStamp = System.currentTimeMillis();
-    notification = createNotification(timeStamp + 2000, timeStamp - 1, "me", true);
+    notification = createNotification(timeStamp + 2000, timeStamp - 10000, "me", true);
     list.put(notification.getKey(), notification);
     timeStamp = System.currentTimeMillis();
-    notification = createNotification(timeStamp + 2000, timeStamp - 2, "me", true);
+    notification = createNotification(timeStamp + 2000, timeStamp - 20000, "me", true);
     list.put(notification.getKey(), notification);
     NotificationAccessor notificationAccessor = new NotAccessor(list);
     NotificationsCleaner notificationsCleaner = new NotificationsCleaner(notificationAccessor,
@@ -125,13 +116,12 @@ public class NotificationsCleanerTest {
         .toBlocking()
         .first()
         .size(), 1);
-    assertTrue(notificationAccessor.getAllSorted(Sort.DESCENDING)
+    assertEquals(notificationAccessor.getAllSorted(Sort.DESCENDING)
         .toBlocking()
         .first()
         .get(0)
-        .getKey()
-        .equals(notificationList.get(1)
-            .getKey()));
+        .getKey(), notificationList.get(1)
+        .getKey());
   }
 
   @Test public void cleanLimitExceededNotificationsExceedingLimit() throws Exception {
@@ -164,13 +154,12 @@ public class NotificationsCleanerTest {
         .toBlocking()
         .first()
         .size(), 1);
-    assertTrue(notificationAccessor.getAllSorted(Sort.DESCENDING)
+    assertEquals(notificationAccessor.getAllSorted(Sort.DESCENDING)
         .toBlocking()
         .first()
         .get(0)
-        .getKey()
-        .equals(notificationList.get(0)
-            .getKey()));
+        .getKey(), notificationList.get(0)
+        .getKey());
   }
 
   @Test public void cleanLimitExceededNotificationsNotExpiring() throws Exception {
@@ -198,6 +187,14 @@ public class NotificationsCleanerTest {
         .toBlocking()
         .first()
         .size(), 3);
+  }
+
+  private NotificationProvider getNotificationProvider() {
+    return Mockito.mock(NotificationProvider.class);
+  }
+
+  private AptoideAccountManager getAptoideAccountManager() {
+    return Mockito.mock(AptoideAccountManager.class);
   }
 
   @NonNull private Notification createNotification(Long expire, long timeStamp, String ownerId,

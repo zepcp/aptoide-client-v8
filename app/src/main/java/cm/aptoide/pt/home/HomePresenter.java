@@ -15,6 +15,7 @@ import rx.Scheduler;
 import rx.Single;
 import rx.exceptions.OnErrorNotImplementedException;
 
+import static cm.aptoide.pt.home.HomeBundle.BundleType.APPCOINS_ADS;
 import static cm.aptoide.pt.home.HomeBundle.BundleType.EDITORS;
 
 /**
@@ -38,7 +39,6 @@ public class HomePresenter implements Presenter {
     this.view = view;
     this.home = home;
     this.viewScheduler = viewScheduler;
-
     this.crashReporter = crashReporter;
     this.homeNavigator = homeNavigator;
     this.adMapper = adMapper;
@@ -186,23 +186,35 @@ public class HomePresenter implements Presenter {
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
         .observeOn(viewScheduler)
         .doOnNext(created -> view.showLoading())
-        .flatMapSingle(created -> loadBundles())
+        .flatMapSingle(__ -> loadHome())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
         }, crashReporter::log);
   }
 
-  @NonNull private Single<HomeBundlesModel> loadBundles() {
-    return home.loadHomeBundles()
+  private Single<Boolean> showNativeAds() {
+    return home.shouldLoadNativeAd()
         .observeOn(viewScheduler)
-        .doOnSuccess(bundlesModel -> {
-          if (bundlesModel.hasErrors()) {
-            handleError(bundlesModel.getError());
-          } else if (!bundlesModel.isLoading()) {
-            view.hideLoading();
-            view.showBundles(bundlesModel.getList());
-          }
-        });
+        .doOnSuccess(showNatives -> view.setAdsTest(showNatives));
+  }
+
+  private Single<HomeBundlesModel> loadHome() {
+    return Single.zip(showNativeAds(), loadBundles(), (aBoolean, bundlesModel) -> bundlesModel)
+        .observeOn(viewScheduler)
+        .doOnSuccess(bundlesModel -> handleBundlesResult(bundlesModel));
+  }
+
+  @NonNull private Single<HomeBundlesModel> loadBundles() {
+    return home.loadHomeBundles();
+  }
+
+  private void handleBundlesResult(HomeBundlesModel bundlesModel) {
+    if (bundlesModel.hasErrors()) {
+      handleError(bundlesModel.getError());
+    } else if (!bundlesModel.isLoading()) {
+      view.hideLoading();
+      view.showBundles(bundlesModel.getList());
+    }
   }
 
   private void handleError(HomeBundlesModel.Error error) {
@@ -237,6 +249,14 @@ public class HomePresenter implements Presenter {
                     .getAppId(), click.getApp()
                     .getPackageName(), "", "", click.getApp()
                     .getTag(), String.valueOf(click.getAppPosition()));
+              } else if (click.getBundle()
+                  .getType()
+                  .equals(APPCOINS_ADS)) {
+                RewardApp rewardApp = (RewardApp) app;
+                homeAnalytics.convertAppcAdClick(rewardApp.getClickUrl());
+                homeNavigator.navigateWithDownloadUrlAndReward(rewardApp.getAppId(),
+                    rewardApp.getPackageName(), rewardApp.getTag(), rewardApp.getDownloadUrl(),
+                    rewardApp.getReward());
               } else {
                 homeNavigator.navigateToAppView(app.getAppId(), app.getPackageName(), app.getTag());
               }

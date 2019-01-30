@@ -98,7 +98,7 @@ public class HomePresenterTest {
         new AdMapper(), aptoideAccountManager, homeAnalytics);
     aptoide =
         new Application("Aptoide", "http://via.placeholder.com/350x150", 0, 1000, "cm.aptoide.pt",
-            300, "", false, false);
+            300, "", false);
     FakeBundleDataSource fakeBundleDataSource = new FakeBundleDataSource();
     bundlesModel = new HomeBundlesModel(fakeBundleDataSource.getFakeBundles(), false, 0);
     localTopAppsBundle = bundlesModel.getList()
@@ -126,6 +126,7 @@ public class HomePresenterTest {
     //When the user clicks the Home menu item
     //And loading of bundlesModel are requested
     when(home.loadHomeBundles()).thenReturn(Single.just(bundlesModel));
+    when(home.shouldLoadNativeAd()).thenReturn(Single.just(false));
     lifecycleEvent.onNext(View.LifecycleEvent.CREATE);
     //Then the progress indicator should be shown
     verify(view).showLoading();
@@ -142,6 +143,7 @@ public class HomePresenterTest {
     //And an unexpected error occured
     when(home.loadHomeBundles()).thenReturn(
         Single.just(new HomeBundlesModel(HomeBundlesModel.Error.GENERIC)));
+    when(home.shouldLoadNativeAd()).thenReturn(Single.just(false));
     lifecycleEvent.onNext(View.LifecycleEvent.CREATE);
     //Then the generic error message should be shown in the UI
     verify(view).showGenericError();
@@ -154,6 +156,7 @@ public class HomePresenterTest {
     //And an unexpected error occured
     when(home.loadHomeBundles()).thenReturn(
         Single.just(new HomeBundlesModel(HomeBundlesModel.Error.NETWORK)));
+    when(home.shouldLoadNativeAd()).thenReturn(Single.just(false));
     lifecycleEvent.onNext(View.LifecycleEvent.CREATE);
     //Then the generic error message should be shown in the UI
     verify(view).showNetworkError();

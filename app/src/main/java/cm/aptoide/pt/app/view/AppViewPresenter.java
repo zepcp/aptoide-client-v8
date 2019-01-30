@@ -15,6 +15,7 @@ import cm.aptoide.pt.app.AppViewAnalytics;
 import cm.aptoide.pt.app.AppViewManager;
 import cm.aptoide.pt.app.AppViewSimilarApp;
 import cm.aptoide.pt.app.AppViewViewModel;
+import cm.aptoide.pt.app.CampaignAnalytics;
 import cm.aptoide.pt.app.DownloadModel;
 import cm.aptoide.pt.app.ReviewsViewModel;
 import cm.aptoide.pt.app.SimilarAppsViewModel;
@@ -46,6 +47,7 @@ public class AppViewPresenter implements Presenter {
   private AppViewView view;
   private AccountNavigator accountNavigator;
   private AppViewAnalytics appViewAnalytics;
+  private CampaignAnalytics campaignAnalytics;
   private AppViewNavigator appViewNavigator;
   private AppViewManager appViewManager;
   private AptoideAccountManager accountManager;
@@ -53,13 +55,14 @@ public class AppViewPresenter implements Presenter {
   private CrashReport crashReport;
 
   public AppViewPresenter(AppViewView view, AccountNavigator accountNavigator,
-      AppViewAnalytics appViewAnalytics, AppViewNavigator appViewNavigator,
-      AppViewManager appViewManager, AptoideAccountManager accountManager, Scheduler viewScheduler,
-      CrashReport crashReport, PermissionManager permissionManager,
-      PermissionService permissionService) {
+      AppViewAnalytics appViewAnalytics, CampaignAnalytics campaignAnalytics,
+      AppViewNavigator appViewNavigator, AppViewManager appViewManager,
+      AptoideAccountManager accountManager, Scheduler viewScheduler, CrashReport crashReport,
+      PermissionManager permissionManager, PermissionService permissionService) {
     this.view = view;
     this.accountNavigator = accountNavigator;
     this.appViewAnalytics = appViewAnalytics;
+    this.campaignAnalytics = campaignAnalytics;
     this.appViewNavigator = appViewNavigator;
     this.appViewManager = appViewManager;
     this.accountManager = accountManager;
@@ -114,6 +117,21 @@ public class AppViewPresenter implements Presenter {
     handleInterstitialAdClick();
     handleInterstitialAdLoaded();
     showInterstitialAd();
+    showBannerAd();
+  }
+
+  private void showBannerAd() {
+    view.getLifecycleEvent()
+        .filter(lifecycleEvent -> lifecycleEvent == View.LifecycleEvent.CREATE)
+        .flatMapSingle(model -> appViewManager.shouldLoadBannerAd())
+        .filter(loadBanner -> loadBanner)
+        .observeOn(viewScheduler)
+        .doOnNext(__ -> view.showBannerAd())
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(created -> {
+        }, error -> {
+          throw new OnErrorNotImplementedException(error);
+        });
   }
 
   private void showInterstitialAd() {
@@ -128,7 +146,7 @@ public class AppViewPresenter implements Presenter {
             .filter(model -> model.getDownloadModel()
                 .isDownloading())
             .first()
-            .flatMap(model -> appViewManager.shouldLoadInterstitialAd())
+            .flatMapSingle(model -> appViewManager.shouldLoadInterstitialAd())
             .filter(loadInterstitial -> loadInterstitial)
             .observeOn(viewScheduler)
             .doOnNext(__ -> view.initInterstitialAd())
@@ -148,7 +166,7 @@ public class AppViewPresenter implements Presenter {
         .flatMap(__ -> view.interstitialAdLoaded())
         .doOnNext(__ -> view.showInterstitialAd())
         .doOnNext(__ -> appViewAnalytics.installInterstitialImpression())
-        .flatMap(__ -> appViewManager.recordInterstitialImpression())
+        .flatMapSingle(__ -> appViewManager.recordInterstitialImpression())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
         }, throwable -> crashReport.log(throwable));
@@ -159,7 +177,7 @@ public class AppViewPresenter implements Presenter {
         .filter(event -> event.equals(View.LifecycleEvent.CREATE))
         .flatMap(__ -> view.InterstitialAdClicked())
         .doOnNext(__ -> appViewAnalytics.installInterstitialClick())
-        .flatMap(__ -> appViewManager.recordInterstitialClick())
+        .flatMapSingle(__ -> appViewManager.recordInterstitialClick())
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
         }, throwable -> crashReport.log(throwable));
@@ -735,6 +753,17 @@ public class AppViewPresenter implements Presenter {
     return appViewManager.loadSimilarAppsViewModel(appViewModel.getPackageName(),
         appViewModel.getMedia()
             .getKeywords())
+        .flatMap(similarAppsViewModel -> appViewManager.shouldLoadNativeAds()
+            .observeOn(viewScheduler)
+            .doOnSuccess(loadNativeAds -> {
+              if (loadNativeAds) {
+                view.setSimilarAppsMoPubAdapters();
+                view.loadNativeAds();
+              } else {
+                view.setSimilarAppsAdapters();
+              }
+            })
+            .map(__ -> similarAppsViewModel))
         .observeOn(viewScheduler)
         .doOnError(__ -> view.hideSimilarApps())
         .doOnSuccess(adsViewModel -> {
@@ -827,9 +856,16 @@ public class AppViewPresenter implements Presenter {
                   completable = appViewManager.loadAppViewViewModel()
                       .flatMapCompletable(
                           appViewModel -> downloadApp(action, appViewModel).observeOn(viewScheduler)
-                              .doOnCompleted(() -> appViewAnalytics.clickOnInstallButton(
-                                  appViewModel.getPackageName(), appViewModel.getDeveloper()
-                                      .getName(), action.toString()))
+                              .doOnCompleted(() -> {
+                                String conversionUrl = appViewModel.getCampaignUrl();
+                                if (!conversionUrl.isEmpty()) {
+                                  campaignAnalytics.sendCampaignConversionEvent(conversionUrl,
+                                      appViewModel.getPackageName(), appViewModel.getVersionCode());
+                                }
+                                appViewAnalytics.clickOnInstallButton(appViewModel.getPackageName(),
+                                    appViewModel.getDeveloper()
+                                        .getName(), action.toString());
+                              })
                               .doOnCompleted(() -> showRecommendsDialog(account.isLoggedIn(),
                                   appViewModel.getPackageName()))
                               .toSingleDefault(true)
