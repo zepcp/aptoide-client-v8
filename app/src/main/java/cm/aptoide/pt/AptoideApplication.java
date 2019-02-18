@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.content.res.XmlResourceParser;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
-import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -96,8 +95,6 @@ import cm.aptoide.pt.utils.q.QManager;
 import cm.aptoide.pt.view.ActivityModule;
 import cm.aptoide.pt.view.ActivityProvider;
 import cm.aptoide.pt.view.BaseActivity;
-import cm.aptoide.pt.view.BaseFragment;
-import cm.aptoide.pt.view.FragmentModule;
 import cm.aptoide.pt.view.FragmentProvider;
 import cm.aptoide.pt.view.entry.EntryActivity;
 import cm.aptoide.pt.view.entry.EntryPointChooser;
@@ -376,22 +373,9 @@ public abstract class AptoideApplication extends Application {
    * @return Returns a new Activity Module for the Activity Component
    */
   public ActivityModule getActivityModule(BaseActivity activity, Intent intent,
-      NotificationSyncScheduler notificationSyncScheduler, View view, boolean firstCreated,
-      String fileProviderAuthority) {
+      NotificationSyncScheduler notificationSyncScheduler, View view, boolean firstCreated) {
 
-    return new ActivityModule(activity, intent, notificationSyncScheduler, view, firstCreated,
-        fileProviderAuthority);
-  }
-
-  /**
-   * Needs to be here, to be mocked for tests. Should be on BaseFragment if there were no tests
-   *
-   * @return Returns a new Fragment Module for the Fragment Component
-   */
-  public FragmentModule getFragmentModule(BaseFragment baseFragment, Bundle savedInstanceState,
-      Bundle arguments, boolean createStoreUserPrivacyEnabled, String packageName) {
-    return new FragmentModule(baseFragment, savedInstanceState, arguments,
-        createStoreUserPrivacyEnabled, packageName);
+    return new ActivityModule(activity, intent, notificationSyncScheduler, view, firstCreated);
   }
 
   @Override protected void attachBaseContext(Context base) {

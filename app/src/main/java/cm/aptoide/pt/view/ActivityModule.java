@@ -13,6 +13,7 @@ import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
 import cm.aptoide.pt.AppShortcutsAnalytics;
+import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.DeepLinkAnalytics;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.AccountAnalytics;
@@ -97,18 +98,15 @@ import static android.content.Context.WINDOW_SERVICE;
   private final Intent intent;
   private final NotificationSyncScheduler notificationSyncScheduler;
   private final View view;
-  private final String fileProviderAuthority;
   private boolean firstCreated;
 
   public ActivityModule(AppCompatActivity activity, Intent intent,
-      NotificationSyncScheduler notificationSyncScheduler, View view, boolean firstCreated,
-      String fileProviderAuthority) {
+      NotificationSyncScheduler notificationSyncScheduler, View view, boolean firstCreated) {
     this.activity = activity;
     this.intent = intent;
     this.notificationSyncScheduler = notificationSyncScheduler;
     this.view = view;
     this.firstCreated = firstCreated;
-    this.fileProviderAuthority = fileProviderAuthority;
   }
 
   @ActivityScope @Provides ApkFy provideApkFy(
@@ -196,7 +194,8 @@ import static android.content.Context.WINDOW_SERVICE;
     return new AccountPermissionProvider(((PermissionProvider) activity));
   }
 
-  @ActivityScope @Provides PhotoFileGenerator providePhotoFileGenerator() {
+  @ActivityScope @Provides PhotoFileGenerator providePhotoFileGenerator(
+      @Named("file-provider-authority") String fileProviderAuthority) {
     return new PhotoFileGenerator(activity,
         activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileProviderAuthority);
   }
@@ -326,5 +325,10 @@ import static android.content.Context.WINDOW_SERVICE;
   @ActivityScope @Provides PromotionsNavigator providesPromotionsNavigator(
       FragmentNavigator fragmentNavigator) {
     return new PromotionsNavigator(fragmentNavigator);
+  }
+
+  @ActivityScope @Provides @Named("file-provider-authority")
+  String providesFileProviderAuthority() {
+    return BuildConfig.APPLICATION_ID + ".provider";
   }
 }

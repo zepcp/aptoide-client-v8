@@ -1,10 +1,11 @@
 package cm.aptoide.pt.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.FlavourActivityModule;
+import cm.aptoide.pt.notification.NotificationSyncScheduler;
 import cm.aptoide.pt.presenter.View;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 import javax.inject.Inject;
@@ -33,10 +34,15 @@ public abstract class BaseActivity extends RxAppCompatActivity {
     if (activityComponent == null) {
       AptoideApplication aptoideApplication = ((AptoideApplication) getApplication());
       activityComponent = aptoideApplication.getApplicationComponent()
-          .plus(aptoideApplication.getActivityModule(this, getIntent(),
-              aptoideApplication.getNotificationSyncScheduler(), (View) this, firstCreated,
-              BuildConfig.APPLICATION_ID + ".provider"), new FlavourActivityModule());
+          .plus(getActivityModule(this, getIntent(),
+              aptoideApplication.getNotificationSyncScheduler(), (View) this, firstCreated),
+              new FlavourActivityModule());
     }
     return activityComponent;
+  }
+
+  private ActivityModule getActivityModule(BaseActivity activity, Intent intent,
+      NotificationSyncScheduler notificationSyncScheduler, View view, boolean firstCreated) {
+    return new ActivityModule(activity, intent, notificationSyncScheduler, view, firstCreated);
   }
 }

@@ -384,9 +384,6 @@ dependencies {
   }
   //dependencies needed for UITests
   androidTestImplementation "com.android.support:support-annotations:${SUPPORT_LIB_VERSION}"
-  androidTestImplementation "com.android.support.test.espresso:espresso-core:${ESPRESSO_VERSION}"
-  androidTestImplementation "com.android.support.test.espresso:espresso-contrib:${ESPRESSO_VERSION}"
-  androidTestImplementation "com.android.support.test.espresso:espresso-intents:${ESPRESSO_VERSION}"
   androidTestImplementation "com.android.support:recyclerview-v7:${SUPPORT_LIB_VERSION}"
   androidTestImplementation "com.jakewharton.rxrelay:rxrelay:${RX_RELAY}"
   androidTestImplementation "org.mockito:mockito-android:${MOCKITO_CORE_ANDROID_VERSION}"
