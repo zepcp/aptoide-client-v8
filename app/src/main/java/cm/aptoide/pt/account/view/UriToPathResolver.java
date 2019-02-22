@@ -25,8 +25,8 @@ public class UriToPathResolver {
       final String columnName = MediaStore.Images.Media.DATA;
       String[] projection = { columnName };
       cursor = contentResolver.query(contentUri, projection, null, null, null);
-      int column_index = cursor.getColumnIndexOrThrow(columnName);
       if (cursor != null) {
+        int column_index = cursor.getColumnIndexOrThrow(columnName);
         cursor.moveToFirst();
         return cursor.getString(column_index);
       }
@@ -45,8 +45,20 @@ public class UriToPathResolver {
 
   public String getCameraStoragePath(Uri uri) {
     Cursor cursor = contentResolver.query(uri, null, null, null, null);
-    cursor.moveToFirst();
-    int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-    return cursor.getString(idx);
+    try {
+      cursor.moveToFirst();
+      int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+      return cursor.getString(idx);
+    } catch (Exception e) {
+      Logger.getInstance()
+          .e(TAG, e);
+    } finally {
+      {
+        if (cursor != null && !cursor.isClosed()) {
+          cursor.close();
+        }
+      }
+    }
+    return uri.toString();
   }
 }

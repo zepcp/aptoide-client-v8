@@ -43,8 +43,8 @@ public class ImageValidator {
     Bitmap image = imageLoader.load(imagePath);
     if (image != null) {
       imageInfo = new ImageInfo(image.getWidth(), image.getHeight(), new File(imagePath).length());
+      image.recycle();
     }
-    image.recycle();
     return imageInfo;
   }
 

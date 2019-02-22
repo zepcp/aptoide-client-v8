@@ -109,6 +109,7 @@ public class ImagePickerPresenter implements Presenter {
                 .isGranted())
             .doOnNext(__2 -> view.dismissLoadImageDialog())
             .flatMap(__2 -> navigator.navigateToGalleryForImageUri(GALLERY_PICK))
+            .observeOn(uiScheduler)
             .flatMapCompletable(
                 selectedImageUri -> loadValidImageOrThrowForGallery(selectedImageUri))
             .doOnError(err -> {
@@ -124,7 +125,7 @@ public class ImagePickerPresenter implements Presenter {
   }
 
   @NonNull private Completable loadValidImageOrThrowForGallery(String selectedImageUri) {
-    return imageValidator.validateOrGetException(selectedImageUri)
+    return Completable.complete()
         .observeOn(uiScheduler)
         .doOnCompleted(() -> view.loadImage(selectedImageUri));
   }

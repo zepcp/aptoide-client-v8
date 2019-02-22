@@ -456,7 +456,7 @@ public class ImageLoader {
             .asBitmap()
             .load(apkIconPath)
             .apply(getRequestOptions())
-            .into(-1, -1) // full size
+            .submit(-1, -1) // full size
             .get();
       } catch (InterruptedException e) {
         e.printStackTrace();
