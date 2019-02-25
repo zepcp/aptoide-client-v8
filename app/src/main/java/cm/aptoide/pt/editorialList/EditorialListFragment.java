@@ -21,7 +21,9 @@ import cm.aptoide.pt.view.fragment.NavigationTrackFragment;
 import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding.view.RxView;
 import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
+import org.jetbrains.annotations.NotNull;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 
@@ -160,21 +162,6 @@ public class EditorialListFragment extends NavigationTrackFragment implements Ed
         .cast(Object.class);
   }
 
-  @Override public void populateView(EditorialListViewModel editorialListViewModel) {
-    adapter.add(editorialListViewModel.getCurationCards());
-  }
-
-  @Override public void showError(EditorialListViewModel.Error error) {
-    switch (error) {
-      case NETWORK:
-        noNetworkErrorView.setVisibility(View.VISIBLE);
-        break;
-      case GENERIC:
-        genericErrorView.setVisibility(View.VISIBLE);
-        break;
-    }
-  }
-
   @Override public void showLoadMore() {
     if (adapter != null) {
       adapter.addLoadMore();
@@ -208,5 +195,9 @@ public class EditorialListFragment extends NavigationTrackFragment implements Ed
     retryButton = null;
     userAvatar = null;
     super.onDestroyView();
+  }
+
+  @Override public void populateView(@NotNull List<? extends CurationCard> curationCards) {
+    adapter.add(curationCards);
   }
 }

@@ -122,13 +122,18 @@ public class EditorialListPresenter implements Presenter {
     return editorialListManager.loadEditorialListViewModel(loadMore)
         .observeOn(viewScheduler)
         .doOnSuccess(editorialListViewModel -> {
-          if (!editorialListViewModel.isLoading()) {
+          if (!editorialListViewModel.getLoading()) {
             view.hideLoading();
           }
           if (editorialListViewModel.hasError()) {
-            view.showError(editorialListViewModel.getError());
+            Error error = editorialListViewModel.getError();
+            if (error == Error.NETWORK) {
+              view.showNetworkError();
+            } else {
+              view.showGenericError();
+            }
           } else {
-            view.populateView(editorialListViewModel);
+            view.populateView(editorialListViewModel.getCurationCards());
           }
           view.hideLoadMore();
         })
